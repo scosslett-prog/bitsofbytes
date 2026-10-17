@@ -42,6 +42,8 @@ function saveStatus(s) {
 async function boot() {
   const api = await backend().catch((e) => { console.error(e); return null; });
   const content = createContent(api);
+  // show "Continue with Google" once the Google provider is switched on in Supabase
+  const providersP = api && api.auth.providers ? api.auth.providers() : Promise.resolve({});
 
   const store = createStore(api);
   const school = createSchool(api, () => store.user);
@@ -60,7 +62,7 @@ async function boot() {
     content,
     /* after joining a class or paying: fetch what this person can now open, then redraw */
     refreshContent: async () => { await content.load(); content.apply(); await pay.load(); },
-    google: api && api.name === 'supabase' && ENV.VITE_GOOGLE_SIGN_IN === 'on',
+    google: false,
   };
   await store.init(school);
   applyDisplay(store.S.display);
@@ -78,6 +80,7 @@ async function boot() {
   await content.load();
   content.apply();
   await pay.load();
+  window.BOB.google = api && api.name === 'supabase' && (ENV.VITE_GOOGLE_SIGN_IN === 'on' || !!(await providersP).google);
   if (land) history.replaceState(null, '', location.pathname + location.search + '#' + land);
   for (const f of APP) await script('/app/' + f);
   document.getElementById('boot')?.remove();

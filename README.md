@@ -67,7 +67,7 @@ python3 tests/smoke.py                                      # every page renders
 ## Deploying
 
 1. **Vercel or Netlify:** import this repository as a new project. Both detect the settings (`vercel.json`, `netlify.toml`): build command `npm run build`, output folder `dist`.
-2. **Environment variables:** none needed; the site has the live project's public address built in. Add `VITE_GOOGLE_SIGN_IN=on` once Google sign-in is set up.
+2. **Environment variables:** none needed; the site has the live project's public address built in.
 3. **Supabase → Authentication → URL Configuration:**
    - Set **Site URL** to the Vercel address (later, your own domain).
    - Under **Redirect URLs**, add `https://<your-domain>/**` and `http://localhost:5173/**`.
@@ -94,7 +94,7 @@ Add a new file to `supabase/migrations/`, named with a timestamp and a short des
 
 ## Sign in with Google
 
-The code is in place. The button appears once `VITE_GOOGLE_SIGN_IN=on` is set, which should only happen after the provider is set up:
+The code is in place. The **Continue with Google** button appears by itself once the Google provider is switched on in Supabase (step 3):
 
 1. Run `supabase/migrations/20261017040000_google_sign_in.sql` in the SQL Editor.
 2. **Google Cloud console:** create (or choose) a project, then open the [Google Auth Platform](https://console.cloud.google.com/auth/overview).
@@ -107,7 +107,6 @@ The code is in place. The button appears once `VITE_GOOGLE_SIGN_IN=on` is set, w
      - Copy the Client ID and Client secret.
 3. **Supabase → Authentication → Sign In / Providers → Google:** turn it on and paste the Client ID and secret.
 4. **Supabase → Authentication → URL Configuration:** the Site URL and Redirect URLs must include your site (`https://<domain>/**`) and `http://localhost:5173/**`.
-5. Set `VITE_GOOGLE_SIGN_IN=on` in `.env.local` and in Vercel, then redeploy.
 
 How it behaves:
 - People choose Student or Teacher (and can type a class code) before pressing Continue with Google; those choices are applied when they come back.

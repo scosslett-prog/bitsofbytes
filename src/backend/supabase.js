@@ -54,6 +54,13 @@ export async function supabaseBackend(url, key) {
     async resetPassword(email) { ok(await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/#reset' })); },
     async updatePassword(password) { ok(await sb.auth.updateUser({ password })); },
     onChange(cb) { sb.auth.onAuthStateChange((event, s) => cb(event, who(s))); },
+    /* sign-in methods switched on in Supabase (Authentication → Sign In / Providers) */
+    async providers() {
+      try {
+        const r = await fetch(url.replace(/\/$/, '') + '/auth/v1/settings', { headers: { apikey: key } });
+        return r.ok ? ((await r.json()).external || {}) : {};
+      } catch (e) { return {}; }
+    },
   };
   return { name: 'supabase', db, auth, fn };
 }
