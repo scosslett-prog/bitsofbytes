@@ -157,6 +157,7 @@ function classAssign(c){
     return `<details class="panel tasg"${TV.open[a.id]?" open":""} data-topen="${a.id}"><summary><div><b>${esc(a.title)}</b><span class="sub">${dueText(a.due)} · ${plural(ls.length,"lesson")} · ${a.mode==="qc"?"quick checks only":"complete each lesson"}</span></div>
       <div class="tasum"><span class="mono">${nd}/${st.length}</span><span class="sub">completed</span></div></summary><div class="tasgb">
      ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
+     ${lessonAsgInsights(a,st)}
      <div class="tchips">${ls.map(l=>`<a class="chip none" href="#l-${l.id}">${l.topic.code} · ${esc(l.title)}</a>`).join("")}</div>
      ${st.length?`<div class="tscroll"><table class="table ttab"><thead><tr><th>Student</th><th>Status</th><th>Score</th>${ls.map((l,i)=>`<th title="${esc(l.title)}">L${i+1}</th>`).join("")}</tr></thead><tbody>
       ${st.map(({s,r})=>`<tr><td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?r.score+"%":"–"}</td>${r.per.map(x=>`<td class="tck" title="${esc(x.l.title)}: ${x.ok?"complete":x.started?x.pct+"%":"not started"}">${x.ok?`<span class="tick">✓</span>`:x.started?`<span class="sub">${x.pct}%</span>`:`<span class="sub">·</span>`}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
@@ -307,6 +308,7 @@ function examAsgCard(a,studs){const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),n
   return `<details class="panel tasg"${TV.open[a.id]?" open":""} data-topen="${a.id}"><summary><div><b>${esc(a.title)}</b><span class="sub">${dueText(a.due)} · ${plural(qs.length,"exam question")} · ${tot} marks</span></div>
     <div class="tasum"><span class="mono">${nd}/${st.length}</span><span class="sub">completed</span></div></summary><div class="tasgb">
    ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
+   ${examAsgInsights(a,st)}
    <p class="sub" style="margin:0">Paper ${(sp.papers||[]).join(" and ")} · ${(sp.years||[]).join(", ")}${sp.big?" · includes 15-mark questions":""} · sections ${(sp.topics||[]).map(id=>(TOPICS.find(t=>t.id===id)||{code:id}).code).join(", ")}</p>
    ${st.length?`<div class="tscroll"><table class="table ttab"><thead><tr><th>Student</th><th>Status</th><th>Score</th>${qs.map((q,i)=>`<th title="${esc(exX(q.x).s)} ${exX(q.x).code} Q${q.n} · ${q.m} marks">Q${i+1}</th>`).join("")}<th></th></tr></thead><tbody>
     ${st.map(({s,r})=>`<tr><td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?`${r.marks}/${r.total} <span class="sub">${r.score}%</span>`:"–"}</td>${r.per.map(x=>`<td class="tck"><span class="${x.m==null?"sub":x.m===x.q.m?"tgood":x.m?"tpart":"tbad"}"${x.t?' title="Mark changed by you"':""}>${x.m==null?"·":x.m}${x.t?"<sup>*</sup>":""}</span></td>`).join("")}<td>${r.started||r.complete?`<button class="btn small" data-tc="rev" data-a="${a.id}" data-v="${s.id}">View answers</button>`:""}</td></tr>`).join("")}
@@ -417,3 +419,54 @@ function exDoneWrap(el,ids,markOf){const ins=exRoundInsights(ids,markOf);if(!ins
 /* during an exam assignment, the menu shows you're in your to-do list, not exam practice */
 const _nav0=nav;nav=function(route){_nav0(route);if(route==="exams"&&EX.asg){const ls=$("#links");if(!ls)return;
   ls.querySelectorAll('a[href="#exams"]').forEach(x=>x.classList.remove("on"));const t=ls.querySelector('a[href="#todo"]');if(t)t.classList.add("on")}};
+
+/* ---------- assignment insights for the teacher ---------- */
+const tile=(lab,val,sub)=>`<div class="tin"><span class="eyebrow">${lab}</span><b>${val}</b>${sub?`<span class="sub">${sub}</span>`:""}</div>`;
+function lessonAsgInsights(a,st){if(!st.length)return "";
+  const nd=st.filter(x=>x.r.complete).length,ns=st.filter(x=>!x.r.started&&!x.r.complete),late=st.filter(x=>x.r.late).length;
+  const avg=Math.round(st.reduce((t,x)=>t+x.r.score,0)/st.length);
+  const per=a.lessons.map((id,i)=>{const l=ALL_LESSONS.find(x=>x.id===id);if(!l)return null;const xs=st.map(x=>x.r.per.find(p=>p.l.id===id)).filter(Boolean);
+    return {l,i,ok:xs.filter(p=>p.ok).length,pct:xs.length?Math.round(xs.reduce((t,p)=>t+p.pct,0)/xs.length):0}}).filter(Boolean);
+  const best=per.length>1?[...per].sort((x,y)=>y.pct-x.pct)[0]:null,worst=per.length>1?[...per].sort((x,y)=>x.pct-y.pct)[0]:null;
+  return `<div class="tins"><div class="tingrid">
+    ${tile("Completed",`${nd}/${st.length}`,late?`${late} overdue`:"")}
+    ${tile("Average score",avg+"%",a.mode==="qc"?"best quick check":"completion of tasks")}
+    ${best?tile("Strongest lesson",best.pct+"%",`L${best.i+1} · ${esc(best.l.title)}`):""}
+    ${worst?tile("Weakest lesson",worst.pct+"%",`L${worst.i+1} · ${esc(worst.l.title)}`):""}</div>
+   ${ns.length?`<p class="tinote">Not started yet: ${ns.map(x=>esc(x.s.name)).join(", ")}.</p>`:""}</div>`}
+
+function examAsgInsights(a,st){const qs=a.qids.map(id=>EXQ.find(q=>q.id===id)).filter(Boolean);if(!st.length||!qs.length)return "";
+  const went=st.filter(x=>x.r.started||x.r.complete);
+  if(!went.length)return `<div class="tins"><p class="tinote" style="margin:0">Insights appear here once students start answering.</p></div>`;
+  const fin=st.filter(x=>x.r.complete),pool=fin.length?fin:went,scores=pool.map(x=>x.r.score);
+  const avg=Math.round(scores.reduce((t,v)=>t+v,0)/scores.length);
+  const hi=pool.reduce((m,x)=>x.r.score>m.r.score?x:m,pool[0]),lo=pool.reduce((m,x)=>x.r.score<m.r.score?x:m,pool[0]);
+  /* each question: share of available marks gained by the students who answered it */
+  const Q=qs.map((q,i)=>{const got=went.map(x=>x.r.per[i]).filter(p=>p&&p.m!=null);
+    return {q,i,n:got.length,pct:got.length?Math.round(got.reduce((t,p)=>t+p.m,0)/(got.length*q.m)*100):null,zero:got.filter(p=>p.m===0).length}}).filter(x=>x.n);
+  const best=Q.length>1?[...Q].sort((x,y)=>y.pct-x.pct)[0]:null,worst=Q.length>1?[...Q].sort((x,y)=>x.pct-y.pct)[0]:null;
+  const qlab=x=>`Q${x.i+1} · ${esc(exX(x.q.x).s)} ${exX(x.q.x).code} Q${x.q.n}`;
+  /* topics: marks lost per lesson */
+  const T={};Q.forEach(x=>{const l=x.q.l[0];if(!l)return;const t=T[l]=T[l]||{got:0,max:0};went.forEach(s=>{const p=s.r.per[x.i];if(p&&p.m!=null){t.got+=p.m;t.max+=x.q.m}})});
+  const weakT=Object.entries(T).filter(([,t])=>t.max&&t.got/t.max<.6).sort((x,y)=>x[1].got/x[1].max-y[1].got/y[1].max).slice(0,3).map(([l,t])=>({l:exL(l),pct:Math.round(t.got/t.max*100)})).filter(x=>x.l);
+  /* common mistakes: the same wrong answer given by more than one student (or by anyone, in a small class) */
+  const need=went.length<5?1:2,M=[];
+  qs.forEach((q,i)=>{const wrong={};
+    went.forEach(x=>{const A=subOf(a.id,x.s.id),e=A&&A.ans&&A.ans[q.id];const c=e&&e.c;if(!c)return;
+      const add=(k,txt,right)=>{const t=String(txt||"").trim();if(!t)return;const key=k+"|"+t.toLowerCase();(wrong[key]=wrong[key]||{k,t,right,n:0}).n++};
+      if(q.t==="mc"&&c.sel!=null&&c.sel!==q.a)add("",q.o[c.sel],q.o[q.a]);
+      else if(["ans","multi","set","cloze"].includes(q.t)&&c.R&&c.R.f)c.R.f.forEach((ok,k)=>{if(ok)return;
+        const lab=q.t==="multi"?q.f[k].lab.replace(/^_/,"parity bit for "):q.t==="cloze"?`gap ${k+1}`:"";
+        const right=q.t==="ans"?q.acc[0]:q.t==="multi"?q.f[k].acc[0]:q.t==="cloze"?[].concat(q.a[k])[0]:"";add(lab,(c.v||[])[k],right)});
+      else if(q.t==="pick")(c.pick||[]).filter(k=>!q.a.includes(k)).forEach(k=>add("",q.o[k],""))});
+    Object.values(wrong).filter(w=>w.n>=need).forEach(w=>M.push(Object.assign(w,{i})))});
+  M.sort((x,y)=>y.n-x.n);
+  const toCheck=went.reduce((t,x)=>t+qs.filter((q,i)=>EX_SELF.has(q.t)&&!(q.t==="wr"&&q.auto)&&x.r.per[i]&&x.r.per[i].ok&&!x.r.per[i].t).length,0);
+  return `<div class="tins"><div class="tingrid">
+    ${tile("Handed in",`${fin.length}/${st.length}`,went.length>fin.length?`${went.length-fin.length} still working`:"")}
+    ${tile(fin.length?"Average":"Average so far",avg+"%",pool.length>1?`highest ${hi.r.score}% · lowest ${lo.r.score}%`:"")}
+    ${best?tile("Best answered",best.pct+"%",qlab(best)):""}
+    ${worst?tile("Hardest",worst.pct+"%",qlab(worst)+(worst.zero?` · ${worst.zero} scored 0`:"")):""}</div>
+   ${M.length?`<div class="tinlist"><span class="eyebrow">Common mistakes</span><ul>${M.slice(0,5).map(w=>`<li><b>Q${w.i+1}</b>${w.k?` (${esc(w.k)})`:""}: ${plural(w.n,"student")} answered <span class="mono">“${esc(w.t)}”</span>${w.right?` · the answer is <span class="mono">${esc(w.right)}</span>`:""}</li>`).join("")}</ul></div>`:""}
+   ${weakT.length?`<div class="tinlist"><span class="eyebrow">Topics to revisit</span><ul>${weakT.map(x=>`<li><a href="#l-${x.l.id}">${x.l.topic.code} · ${esc(x.l.title)}</a> · ${x.pct}% of marks</li>`).join("")}</ul></div>`:""}
+   ${toCheck?`<p class="tinote">💬 ${plural(toCheck,"self-marked answer")} you haven't checked yet. Open <b>View answers</b> to confirm or change the marks.</p>`:""}</div>`}

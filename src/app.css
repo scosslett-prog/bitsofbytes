@@ -37,3 +37,14 @@ body.tbusy [data-tc],body.tbusy [data-adm],body.tbusy form button[type=submit]{p
 .trqn{margin:10px 0 -4px;font-size:1.15rem}
 .trqn:first-child{margin-top:0}
 .check.focus .fclose{margin-left:auto}
+/* teacher's assignments tab: new assignment on top, set assignments below, both full width */
+.tasgrid{grid-template-columns:1fr !important;gap:0}
+.tasgrid .tnew .tform{max-width:none}
+.tasl{border-top:2px solid var(--line);margin-top:28px;padding-top:24px}
+.tins{display:flex;flex-direction:column;gap:12px;padding:14px;border-radius:12px;background:var(--sunk)}
+.tingrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.tin{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tin b{font-family:"JetBrains Mono",monospace;font-size:1.35rem}
+.tin .sub{font-size:.8rem;overflow-wrap:anywhere}
+.tinlist ul{margin:6px 0 0;padding-left:18px;display:flex;flex-direction:column;gap:4px;font-size:.92rem}
+.tinote{margin:0;font-size:.9rem}
