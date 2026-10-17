@@ -116,8 +116,8 @@ How it works: the site calls the `billing` edge function to open Stripe Checkout
 Set-up:
 1. Run `supabase/migrations/20261017050000_payments.sql` in the SQL Editor.
 2. **Stripe → Product catalogue** (start in test mode): create
-   - "Class licence": recurring, yearly, per unit, in GBP;
-   - "Student subscription": two recurring prices in GBP, one monthly and one yearly.
+   - "Class licence": recurring, yearly, per unit (any currency; the site shows whatever Stripe uses);
+   - "Student subscription": two recurring prices in the same currency, one monthly and one yearly.
    Copy each price ID (`price_…`).
 3. **Stripe → Developers → API keys:** copy the secret key (`sk_test_…` in test mode).
 4. **Stripe → Developers → Webhooks → Add endpoint:** URL `https://cvijqlbtakistuikogoz.supabase.co/functions/v1/stripe-webhook`, events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`. Copy the signing secret (`whsec_…`).

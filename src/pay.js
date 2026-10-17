@@ -28,6 +28,6 @@ export function createPay(api, store, env) {
   };
   pay.checkout = async (plan, quantity) => { const r = await api.fn('billing', { action: 'checkout', plan, quantity }); location.href = r.url; };
   pay.portal = async () => { const r = await api.fn('billing', { action: 'portal' }); location.href = r.url; };
-  pay.money = (p) => (p && p.amount != null ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: (p.currency || 'gbp').toUpperCase(), minimumFractionDigits: p.amount % 100 ? 2 : 0 }).format(p.amount / 100) : null);
+  pay.money = (p) => (p && p.amount != null ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: (p.currency || 'gbp').toUpperCase(), currencyDisplay: 'narrowSymbol', minimumFractionDigits: p.amount % 100 ? 2 : 0 }).format(p.amount / 100) : null);
   return pay;
 }
