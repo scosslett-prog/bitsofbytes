@@ -4,6 +4,8 @@ const formErr=(id,m)=>{const x=$("#"+id);if(x){x.textContent=m;x.hidden=!m}};
 async function formBusy(form,fn){const b=form.querySelector("button[type=submit]"),t=b&&b.textContent;if(b){b.disabled=true;b.textContent="Please wait…"}
   try{return await fn()}finally{if(b&&document.body.contains(b)){b.disabled=false;b.textContent=t}}}
 
+const GLOGO=`<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>`;
+const googleBtn=(where)=>BOB.google?`<button class="btn gbtn" type="button" data-google="${where}">${GLOGO}<span>Continue with Google</span></button><div class="gor"><span>or ${where==="reg"?"sign up":"sign in"} with email</span></div>`:"";
 function register(){
   if(S.user)return `<div class="formwrap"><h1>You're signed in</h1><p>You're signed in as ${esc(S.user.email)}.</p><a class="btn primary" href="#dashboard">Go to your dashboard</a></div>`;
   return `<div class="formwrap"><div><div class="eyebrow">Create an account</div><h1 style="margin-top:8px">Join Bits of Bytes</h1></div>
@@ -13,10 +15,11 @@ function register(){
     <label><input type="radio" name="role" id="role-student" value="student" checked><span><b>Student</b><small>Study and track your own progress</small></span></label>
     <label><input type="radio" name="role" id="role-teacher" value="teacher"><span><b>Teacher</b><small>Manage classes and licences</small></span></label>
    </div>
+   <label for="rcode" id="rcodel">Class join code <span style="font-weight:400;color:var(--muted)">(optional, from your teacher)</span><input type="text" id="rcode" maxlength="8" autocomplete="off" style="text-transform:uppercase"></label>
+   ${googleBtn("reg")}
    <label for="rname">Full name<input type="text" id="rname" autocomplete="name" maxlength="100" required></label>
    <label for="remail">Email<input type="email" id="remail" autocomplete="email" required></label>
    <label for="rschool">School <span style="font-weight:400;color:var(--muted)">(optional)</span><input type="text" id="rschool" autocomplete="organization" maxlength="120"></label>
-   <label for="rcode" id="rcodel">Class join code <span style="font-weight:400;color:var(--muted)">(optional, from your teacher)</span><input type="text" id="rcode" maxlength="8" autocomplete="off" style="text-transform:uppercase"></label>
    <label for="rpass">Password <span style="font-weight:400;color:var(--muted)">(at least 8 characters)</span><input type="password" id="rpass" autocomplete="new-password" required minlength="8"></label>
    <p class="err" id="rerr" hidden></p>
    <button class="btn primary" type="submit"${BOB.auth.available()?"":" disabled"}>Create account</button>
@@ -27,6 +30,7 @@ function login(){
   if(S.user)return register();
   return `<div class="formwrap"><div><div class="eyebrow">Welcome back</div><h1 style="margin-top:8px">Sign in</h1></div>
   ${AUTH_OFF()}
+  ${googleBtn("log")}<p class="err" id="gerr" hidden></p>
   <form id="logForm" novalidate>
    <label for="lemail">Email<input type="email" id="lemail" autocomplete="email" required></label>
    <label for="lpass">Password<input type="password" id="lpass" autocomplete="current-password" required></label>
@@ -198,3 +202,9 @@ document.addEventListener("change",e=>{const t=e.target;if(!t.matches("[data-dse
 document.addEventListener("input",e=>{const t=e.target;if(!t.matches("[data-dcol]"))return;BOB.display.apply(Object.assign(dget(),{[t.dataset.dcol]:t.value}))});
 document.addEventListener("click",e=>{const p=e.target.closest("[data-dpre]");if(p){const [,a,b]=DPRESETS[+p.dataset.dpre];dset({c1:a,c2:b});return}
   if(e.target.closest("[data-dreset]")){S.display=null;BOB.display.apply(null);save();$("#app").innerHTML=displayPage()}});
+
+/* Continue with Google: on the sign-up form it keeps the chosen role and any class code */
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-google]");if(!b)return;e.preventDefault();
+  const reg=b.dataset.google==="reg",role=reg?(document.querySelector("input[name=role]:checked")||{}).value:"student";
+  const code=reg&&role==="student"&&$("#rcode")?$("#rcode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,""):"";
+  b.disabled=true;try{await BOB.auth.google({role,code})}catch(x){b.disabled=false;formErr(reg?"rerr":"gerr",x.message)}});

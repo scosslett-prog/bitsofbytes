@@ -10,6 +10,7 @@ const GUEST_KEY = 'bob-state-v1';
 const MERGE_KEY = 'bob-merge-guest';     // set at sign-in when this browser has guest progress
 const JOIN_KEY = 'bob-pending-join';     // a class code typed at sign-up, used at first sign-in
 const AFTER_KEY = 'bob-after-login';     // choose a landing page after signing in
+const ROLE_KEY = 'bob-pending-role';     // "teacher" chosen before signing up with Google
 const KINDS = ['lessons', 'scores', 'acts', 'ex'];
 const NOT_STATE = new Set(['user', 'account', 'asgAns', ...KINDS]);
 
@@ -121,6 +122,12 @@ export function createStore(api) {
 
   /* things to do once the school data is loaded: a join code from sign-up, landing page */
   st.afterLoad = async () => {
+    if (ls.get(ROLE_KEY) && st.user) {
+      const want = ls.get(ROLE_KEY); ls.del(ROLE_KEY);
+      if (want === 'teacher' && st.user.role === 'student') {
+        try { if (await api.db.rpc('claim_teacher', {})) { st.user.role = 'teacher'; st.S.user = st.user; await school.load(); } } catch (e) { console.warn(e); }
+      }
+    }
     if (st.merged) { st.merged = false; await flush(); }
     const code = ls.get(JOIN_KEY);
     if (code && st.user) {
@@ -221,6 +228,16 @@ export function createStore(api) {
       need();
       try { await api.auth.signIn(email, password); } catch (e) { throw new Error(friendly(e)); }
       landed();
+    },
+    /* Google: the page leaves for Google and comes back signed in; choices made on the form are kept until then */
+    async google({ role, code } = {}) {
+      need();
+      if (!api.auth.signInWithGoogle) throw new Error('Google sign-in only works on the live site.');
+      if (hasProgress(guestState())) ls.set(MERGE_KEY, '1');
+      ls.set(AFTER_KEY, '1');
+      if (role === 'teacher') ls.set(ROLE_KEY, 'teacher'); else ls.del(ROLE_KEY);
+      if (code) ls.set(JOIN_KEY, code);
+      try { await api.auth.signInWithGoogle(location.origin + '/'); } catch (e) { throw new Error(friendly(e)); }
     },
     async forgot(email) { need(); try { await api.auth.resetPassword(email); } catch (e) { throw new Error(friendly(e)); } },
     async setPassword(password) { need(); try { await api.auth.updatePassword(password); } catch (e) { throw new Error(friendly(e)); } },

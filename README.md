@@ -80,3 +80,25 @@ python3 tests/smoke.py                                      # every page renders
 ## Database changes
 
 Add a new file to `supabase/migrations/`, named with a timestamp and a short description. Never edit a migration that has already been applied. Run the file in the Supabase SQL Editor (or with `supabase db push`), and add tests to `tests/rls_test.py` for any new permission rules.
+
+## Sign in with Google
+
+The code is in place. The button appears once `VITE_GOOGLE_SIGN_IN=on` is set, which should only happen after the provider is set up:
+
+1. Run `supabase/migrations/20261017040000_google_sign_in.sql` in the SQL Editor.
+2. **Google Cloud console:** create (or choose) a project, then open the [Google Auth Platform](https://console.cloud.google.com/auth/overview).
+   - **Branding:** app name "Bits of Bytes", support email, logo (optional), and the home, privacy policy and terms page links.
+   - **Audience:** set the user type to External, then publish the app (while it's "Testing", only listed test users can sign in).
+   - **Data Access:** add the `openid` scope; email and profile are there already.
+   - **Clients → Create client:** choose Web application.
+     - Authorized JavaScript origins: your site address (e.g. `https://bitsofbytes.co`) and `http://localhost:5173`.
+     - Authorized redirect URI: `https://cvijqlbtakistuikogoz.supabase.co/auth/v1/callback`.
+     - Copy the Client ID and Client secret.
+3. **Supabase → Authentication → Sign In / Providers → Google:** turn it on and paste the Client ID and secret.
+4. **Supabase → Authentication → URL Configuration:** the Site URL and Redirect URLs must include your site (`https://<domain>/**`) and `http://localhost:5173/**`.
+5. Set `VITE_GOOGLE_SIGN_IN=on` in `.env.local` and in Vercel, then redeploy.
+
+How it behaves:
+- People choose Student or Teacher (and can type a class code) before pressing Continue with Google; those choices are applied when they come back.
+- Signing in with Google using the same email as an existing account signs into that account.
+- School Google accounts (Google Workspace for Education) may need the school's IT admin to allow the app; for students under 18 the admin has to mark it as trusted.

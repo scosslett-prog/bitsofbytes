@@ -40,6 +40,7 @@ export async function supabaseBackend(url, key) {
     },
     async signIn(email, password) { return who(ok(await sb.auth.signInWithPassword({ email, password })).session); },
     async signOut() { await sb.auth.signOut(); },
+    async signInWithGoogle(redirectTo) { ok(await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })); },
     async resetPassword(email) { ok(await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/#reset' })); },
     async updatePassword(password) { ok(await sb.auth.updateUser({ password })); },
     onChange(cb) { sb.auth.onAuthStateChange((event, s) => cb(event, who(s))); },

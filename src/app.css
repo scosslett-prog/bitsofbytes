@@ -176,3 +176,8 @@ footer .flink{color:var(--muted)}
 .dwrap label.dcheck,.dwrap label.dcol,.dwrap label.dopt{flex-direction:row;align-items:center;text-align:left;justify-content:flex-start}
 .dwrap label.dcheck input{width:20px;height:20px;flex:none}
 .dwrap .dswitch{align-self:flex-start}
+/* Continue with Google */
+.gbtn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;background:var(--surface);color:var(--ink);border:1px solid var(--line);font-weight:700}
+.gbtn:hover{background:var(--sunk)}
+.gor{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem}
+.gor::before,.gor::after{content:"";flex:1;border-top:1px solid var(--line)}

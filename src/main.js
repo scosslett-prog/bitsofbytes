@@ -53,6 +53,7 @@ async function boot() {
     auth: store.auth,
     notice: () => { const n = store.notice; store.notice = ''; return n; },
     display: { apply: applyDisplay, defaults: DISPLAY_DEFAULTS },
+    google: api && api.name === 'supabase' && ENV.VITE_GOOGLE_SIGN_IN === 'on',
   };
   await store.init(school);
   applyDisplay(store.S.display);

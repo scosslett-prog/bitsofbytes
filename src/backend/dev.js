@@ -32,6 +32,7 @@ export async function devBackend() {
     async signUp(email, password, meta) { set(await call('signup', { email, password, meta })); return { confirm: false }; },
     async signIn(email, password) { set(await call('signin', { email, password })); return me; },
     async signOut() { set(null); },
+    async signInWithGoogle() { throw new Error('Google sign-in only works on the live site.'); },
     async resetPassword() {},
     async updatePassword(password) { await call('password', { password }); },
     onChange() {},
