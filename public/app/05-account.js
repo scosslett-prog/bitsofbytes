@@ -135,3 +135,24 @@ document.addEventListener("submit",async e=>{const f=e.target;
   if(f.id==="grantForm"&&isAdmin()){e.preventDefault();const email=$("#gemail").value.trim(),n=Math.floor(+$("#gn").value);
     if(!email||!(n>=1))return;admDo(()=>BOB.school.admin.grant(email,n,$("#gnote").value.trim()),`${plural(n,"licence")} given to ${email}.`)}
 });
+
+/* ---------- the account menu in the top bar: a circle with the person's initials ---------- */
+const initials=n=>(String(n||"").trim().split(/\s+/).filter(Boolean).map(w=>w[0]).slice(0,2).join("")||"?").toUpperCase();
+function userMenu(route){const u=S.user,RL={student:"Student",teacher:"Teacher",admin:"Administrator"},c=myClass();
+  const on=r=>route===r?' class="on"':"",act=["account","pricing","admin"].includes(route);
+  return `<div class="umenu"><button class="uavatar${act?" on":""}" data-um="toggle" aria-haspopup="menu" aria-expanded="false" aria-controls="udrop" title="${esc(u.name)}"><span aria-hidden="true">${esc(initials(u.name))}</span><span class="vh">Account menu for ${esc(u.name)}</span></button>
+   <div class="udrop" id="udrop" role="menu" hidden>
+    <div class="uhead"><span class="uavatar big" aria-hidden="true">${esc(initials(u.name))}</span><div><b>${esc(u.name)}</b><span class="sub">${esc(u.email)}</span><span class="sub">${RL[u.role]||""}${c?` · ${esc(c.name)}`:u.school?` · ${esc(u.school)}`:""}</span></div></div>
+    <a role="menuitem" href="#account"${on("account")}>Account settings</a>
+    ${isAdmin()?`<a role="menuitem" href="#admin"${on("admin")}>Admin</a>`:""}
+    <a role="menuitem" href="#pricing"${on("pricing")}>Pricing</a>
+    <hr><a role="menuitem" href="#signout" class="uout">Sign out</a></div></div>`}
+function umenuSet(open){const b=document.querySelector('[data-um="toggle"]'),d=$("#udrop");if(!b||!d)return;d.hidden=!open;b.setAttribute("aria-expanded",open);
+  if(open){const f=d.querySelector('[role="menuitem"]');if(f)f.focus({preventScroll:true})}}
+document.addEventListener("click",e=>{const t=e.target.closest('[data-um="toggle"]');
+  if(t){const d=$("#udrop");umenuSet(d&&d.hidden);return}
+  if(!e.target.closest(".udrop"))umenuSet(false);else if(e.target.closest("a"))umenuSet(false)});
+document.addEventListener("keydown",e=>{const d=$("#udrop");if(!d||d.hidden)return;
+  if(e.key==="Escape"){umenuSet(false);document.querySelector('[data-um="toggle"]').focus();return}
+  if(e.key==="ArrowDown"||e.key==="ArrowUp"){const it=[...d.querySelectorAll('[role="menuitem"]')],i=it.indexOf(document.activeElement);e.preventDefault();
+    it[(i+(e.key==="ArrowDown"?1:-1)+it.length)%it.length].focus()}});

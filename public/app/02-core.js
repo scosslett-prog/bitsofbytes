@@ -32,8 +32,8 @@ function nav(route){
   <a href="#flashcards"${on("flashcards")}>Flash cards</a>
   <a href="#exams"${on("exam")}>Exam questions</a>
   ${isTeacher()?`<a href="#teacher"${route==="teacher"||route.startsWith("class-")?' class="on"':""}>My classes</a>`:myClass()?`<a href="#todo"${on("todo")}>To-do${todoCount()?` <span class="tbadge" aria-label="${todoCount()} to do">${todoCount()}</span>`:""}</a>`:""}
-  <a href="#dashboard"${on("dashboard")}>Dashboard</a><a href="#pricing"${on("pricing")}>Pricing</a>
-  ${isAdmin()?`<a href="#admin"${on("admin")}>Admin</a>`:""}${S.user?`<a href="#account"${on("account")}>Account</a><a href="#signout">Sign out</a>`:`<a href="#login"${on("login")}>Sign in</a><a class="btn primary small" href="#register">Register</a>`}`;
+  <a href="#dashboard"${on("dashboard")}>Dashboard</a>${S.user?"":`<a href="#pricing"${on("pricing")}>Pricing</a>`}
+  ${S.user?userMenu(route):`<a href="#login"${on("login")}>Sign in</a><a class="btn primary small" href="#register">Register</a>`}`;
 }
 
 /* views */
