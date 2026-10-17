@@ -357,13 +357,17 @@ const _exStart0=exStart;exStart=function(ids){_exStart0(ids);EX.asg=null};
 const _exRecord0=exRecord;exRecord=function(q,mark){_exRecord0(q,mark);
   if(EX.asg&&S.asgAns&&S.asgAns[EX.asg]){const c=JSON.parse(JSON.stringify(EX.c));delete c.sqlres;S.asgAns[EX.asg].ans[q.id]={m:mark,c};save()}};
 let EXQUIT=false;document.addEventListener("click",e=>{if(e.target.closest('#exw [data-ex="quit"]'))EXQUIT=true},true);
-const _exDraw0=exDraw;exDraw=function(){_exDraw0();const el=$("#exw");if(!el||!EX.asg)return;const a=SC.asg[EX.asg];if(!a){EX.asg=null;return}
+const _exDraw0=exDraw;exDraw=function(){_exDraw0();const el=$("#exw");if(!el)return;
+  if(!EX.asg){if(EX.mode==="done")exDoneWrap(el,Object.keys(EX.res||{}),id=>EX.res[id]);return}
+  const a=SC.asg[EX.asg];if(!a){EX.asg=null;return}
   const r=S.asgAns[a.id];
   if(EX.mode==="done"){if(!EXQUIT&&!r.done){r.done=true;r.date=Date.now();save()}EXQUIT=false;const st=asgStatus(a,me().id);
     el.innerHTML=`<div class="panel" style="${accent(1)}"><span class="eyebrow">Assignment · ${esc(a.title)}</span><h2 style="margin:0">${st.complete?"Handed in":"Progress saved"}</h2>
      ${st.complete?`<div class="tscore"><b>${st.marks}/${st.total}</b><span>${st.score}%</span></div><p style="margin:0">Your answers and marks have been sent to your teacher.</p>`:`<p style="margin:0">You've answered ${st.nOk} of ${st.per.length} questions. Carry on from your to-do list when you're ready; it's handed in when you finish the last question.</p>`}
-     <div class="tbb"><a class="btn primary" href="#todo" data-tc="asgleave">Back to my to-do list</a></div></div>`}};
-document.addEventListener("click",e=>{if(e.target.closest('[data-tc="asgleave"]')){EX.asg=null;EX.mode="setup"}});
+     <div class="tbb">${st.complete?`<button class="btn primary" data-tc="asgreview" data-v="${a.id}">Review my answers</button><a class="btn" href="#todo" data-tc="asgleave">Back to my to-do list</a>`:`<a class="btn primary" href="#todo" data-tc="asgleave">Back to my to-do list</a>`}</div></div>`;
+    exDoneWrap(el,a.qids.filter(id=>r.ans[id]),id=>{const tm=tMarks(a.id,me().id);return id in tm?tm[id]:r.ans[id]?r.ans[id].m:0})}};
+document.addEventListener("click",e=>{if(e.target.closest('[data-tc="asgleave"]')){EX.asg=null;EX.mode="setup"}
+  const rv=e.target.closest('[data-tc="asgreview"]');if(rv&&me()){EX.asg=null;EX.mode="setup";TV.rev={a:rv.dataset.v,e:me().id};location.hash="todo"}});
 function tPost(el){el.querySelectorAll(".trev pre.pc").forEach(pcDecorate)}
 
 /* teacher's own marks for exam assignments, kept separately from the student's answers */
@@ -384,3 +388,32 @@ const _exPage0=exPage;exPage=function(){const a=EX.asg&&SC.asg[EX.asg];if(!a)ret
   <div class="fcpage exfull"><div class="fcpanel"><h2 id="exh2"></h2><div class="exrun" id="exw"></div></div></div>`};
 /* leaving the exam page mid-assignment ends the assignment view; Continue on the to-do list picks it up again */
 addEventListener("hashchange",()=>{if(EX.asg&&location.hash!=="#exams"){EX.asg=null;EX.mode="setup"}});
+
+/* ---------- end of a round: how often these topics and question types come up in exams ---------- */
+function exRoundInsights(ids,markOf){const qs=ids.map(id=>EXQ.find(q=>q.id===id)).filter(Boolean);if(!qs.length)return "";
+  const P=exPap(qs[0].x),XS=EXAMS.filter(x=>exPap(x.id)===P),NP=XS.length,PQ=EXQ.filter(q=>exPap(q.x)===P);
+  const pct=(n,d)=>d?Math.round(n/d*100):0;
+  /* topics: every lesson these questions test */
+  const L=[...new Set(qs.flatMap(q=>q.l))].map(id=>{const all=PQ.filter(q=>q.l.includes(id)),papers=new Set(all.map(q=>q.x)).size,
+      mine=qs.filter(q=>q.l.includes(id)),got=mine.reduce((t,q)=>t+markOf(q.id),0),max=mine.reduce((t,q)=>t+q.m,0);
+      return {l:exL(id),papers,marks:all.reduce((t,q)=>t+q.m,0)/(NP||1),got,max}}).filter(x=>x.l).sort((a,b)=>b.papers-a.papers);
+  /* question types */
+  const T=[...new Set(qs.map(exType))].map(k=>{const def=EX_TYPES.find(t=>t[0]===k),all=PQ.filter(q=>exType(q)===k),
+      mine=qs.filter(q=>exType(q)===k),got=mine.reduce((t,q)=>t+markOf(q.id),0),max=mine.reduce((t,q)=>t+q.m,0);
+      return {k,lab:def?def[1]:k,papers:new Set(all.map(q=>q.x)).size,share:pct(all.reduce((t,q)=>t+q.m,0),PQ.reduce((t,q)=>t+q.m,0)),got,max}}).sort((a,b)=>b.papers-a.papers);
+  const bar=(n,d)=>`<span class="rbar" aria-hidden="true"><i style="width:${pct(n,d)}%"></i></span>`;
+  const you=(g,m)=>`<span class="rmine ${g===m?"tgood":g?"tpart":"tbad"}">${g}/${m}</span>`;
+  const weak=[...T].filter(t=>t.max&&t.got/t.max<.5).sort((a,b)=>b.papers-a.papers)[0];
+  return `<aside class="rins" aria-label="How often these come up">
+   <span class="eyebrow">How often this comes up</span>
+   <p class="sub" style="margin:0">Across all ${NP} Paper ${P} papers in the question bank.</p>
+   <h4>Topics</h4><ul>${L.map(x=>`<li><div class="rrow"><a href="#l-${x.l.id}">${x.l.topic.code} · ${esc(x.l.title)}</a>${you(x.got,x.max)}</div>${bar(x.papers,NP)}<span class="sub">In ${x.papers} of ${NP} papers · about ${x.marks<1?x.marks.toFixed(1):Math.round(x.marks)} mark${Math.round(x.marks)===1?"":"s"} a paper</span></li>`).join("")}</ul>
+   <h4>Question types</h4><ul>${T.map(x=>`<li><div class="rrow"><span>${esc(x.lab)}</span>${you(x.got,x.max)}</div>${bar(x.papers,NP)}<span class="sub">In ${x.papers} of ${NP} papers · ${x.share}% of all marks</span></li>`).join("")}</ul>
+   ${weak?`<p class="rtip">💡 <b>${esc(weak.lab)}</b> come up in ${weak.papers} of ${NP} papers and cost you marks here, so they're worth practising.</p>`:""}
+   <a class="btn small" href="#exam-insights" data-tc="asgleave" style="align-self:flex-start">See all exam insights</a></aside>`}
+function exDoneWrap(el,ids,markOf){const ins=exRoundInsights(ids,markOf);if(!ins||el.querySelector(".rins"))return;
+  el.innerHTML=`<div class="rdone"><div class="rmain">${el.innerHTML}</div>${ins}</div>`;el.querySelectorAll("pre.pc").forEach(pcDecorate)}
+
+/* during an exam assignment, the menu shows you're in your to-do list, not exam practice */
+const _nav0=nav;nav=function(route){_nav0(route);if(route==="exams"&&EX.asg){const ls=$("#links");if(!ls)return;
+  ls.querySelectorAll('a[href="#exams"]').forEach(x=>x.classList.remove("on"));const t=ls.querySelector('a[href="#todo"]');if(t)t.classList.add("on")}};
