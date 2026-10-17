@@ -83,3 +83,28 @@ a.lklock::after{content:" 🔒";font-size:.85em}
 .tmodal{align-items:center;padding:16px}
 .tmodal .tmodalp{border-radius:16px;width:min(560px,100%)}
 .tmodal form.trevb{padding:18px 22px 22px}
+/* lesson tasks spring open in the middle of the screen */
+@keyframes tspringc{0%{opacity:0;transform:translate(-50%,-46%) scale(.92)}55%{opacity:1;transform:translate(-50%,-50.8%) scale(1.02)}75%{transform:translate(-50%,-49.8%) scale(.995)}90%{transform:translate(-50%,-50.1%) scale(1.002)}100%{transform:translate(-50%,-50%)}}
+html .check.focus{animation:none}
+@media (prefers-reduced-motion:no-preference){html .check.focus{animation:tspringc .55s cubic-bezier(.2,.9,.3,1.2) both}}
+/* to-do list: one item per row, full width, folded by default */
+.todos{display:flex !important;flex-direction:column;gap:12px}
+details.todo{color:var(--ink);font-size:1rem;gap:0}
+details.todo>summary{list-style:none;cursor:pointer}
+details.todo>summary::-webkit-details-marker{display:none}
+.tdsum{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.tdtitle{flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.tdtitle h3{margin:0}
+.tdlate{color:var(--bad)}
+.tdright{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.tdmini{min-width:160px}
+.tdmini .bar{flex:1;display:block}
+.tdscore{font-family:"JetBrains Mono",monospace;font-size:.9rem;color:var(--muted)}
+.tdscore b{color:var(--ink);font-size:1.05rem}
+.tdsum::after{content:"";flex:none;width:9px;height:9px;margin:0 4px 4px 2px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+details.todo[open] .tdsum::after{transform:rotate(-135deg);margin-bottom:-4px}
+details.todo>summary:hover h3{text-decoration:underline}
+.todob{display:flex;flex-direction:column;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+@media (prefers-reduced-motion:no-preference){details.todo[open]>.todob{animation:tspring .5s cubic-bezier(.2,.9,.3,1.2) both;transform-origin:top center}}
+.stepper a.lklock::after{content:none}
+.stepper a.lklock{opacity:.35}

@@ -200,13 +200,11 @@ function todoPage(){const u=me(),c=myClass();
   markSeen();const as=myAsg().map(a=>({a,r:asgStatus(a,u.id)}));
   const todo=as.filter(x=>!x.r.complete),doneL=as.filter(x=>x.r.complete).reverse();
   const card=({a,r})=>{if(a.kind==="exam")return examTodoCard(a,r,c);const nx=r.per.find(x=>!x.ok);
-    return `<article class="panel todo ts-${r.key}"><div class="trow"><div><h3>${esc(a.title)}</h3><span class="sub">${esc(teacherOf(c).name)} · set ${new Date(a.set).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span></div>${stChip(r)}</div>
-     <p class="tdue ${r.late?"late":""}">${r.complete?`Due ${fmtDay(myDue(a))}`:dueText(myDue(a))}</p>
+    return tdCard(a,r,c,`${r.complete?`Due ${fmtDay(myDue(a))}`:dueText(myDue(a))} · ${plural(r.per.length,"lesson")}`,tdBar(r.nOk,r.per.length),`
      ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}${reFeedback(r,c)}
-     <div class="tprog"><div class="bar"><i style="width:${r.per.length?r.nOk/r.per.length*100:0}%"></i></div><span class="mono">${r.nOk}/${r.per.length}</span></div>
      <ul class="tdl">${r.per.map(x=>`<li class="${x.ok?"ok":""}"><span class="fdot ${x.ok?"ok":x.started?"part":""}" aria-hidden="true">${x.ok?"✓":""}</span><a href="#l-${x.l.id}">${x.l.topic.code} · ${esc(x.l.title)}</a><span class="sub">${x.ok?"Done":x.started?x.pct+"%":a.mode==="qc"?"Quick check":"Not started"}</span></li>`).join("")}</ul>
      ${nx?`<a class="btn primary small" style="align-self:flex-start" href="#l-${nx.l.id}">${nx.started?"Continue":"Start"}: ${esc(nx.l.title)}</a>`:""}
-     <p class="vfoot" style="margin:0">${a.mode==="qc"?"Pass the quick check (3 out of 4) in each lesson.":"Complete every task in each lesson: the quick check, key vocabulary and activities."}</p></article>`};
+     <p class="vfoot" style="margin:0">${a.mode==="qc"?"Pass the quick check (3 out of 4) in each lesson.":"Complete every task in each lesson: the quick check, key vocabulary and activities."}</p>`)};
   return `<div style="${accent(1)}"><div class="phead" style="padding-bottom:18px"><div class="eyebrow">${esc(c.name)} · ${esc(teacherOf(c).name)}</div><h1>To-do</h1>
    <p>${todo.length?`You have ${plural(todo.length,"assignment")} to do.`:"You're all caught up."} Your progress is shared with your teacher.</p></div>
   ${todo.length?`<div class="todos">${todo.map(card).join("")}</div>`:`<div class="panel"><p class="sub">Nothing to do right now. New assignments from your teacher will appear here.</p></div>`}
@@ -337,14 +335,19 @@ function examAsgCard(a,studs){const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),n
     <p class="sub" style="margin:0">${avg==null?"No one has finished yet.":`Average for students who have finished: ${avg}%.`} Answers that the computer can't mark are self-marked by the student against the mark scheme, so check them under View answers, where you can change any mark. * shows a mark you've changed.</p>`:`<p class="sub">No students in this class yet.</p>`}
    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></div></details>`}
 function examTodoCard(a,r,c){const u=me();
-  return `<article class="panel todo ts-${r.key}"><div class="trow"><div><h3>${esc(a.title)}</h3><span class="sub">${esc(teacherOf(c).name)} · set ${new Date(a.set).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span></div>${stChip(r)}</div>
-   <p class="tdue ${r.late?"late":""}">${r.complete?`Handed in ${r.date?new Date(r.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):""}`:dueText(myDue(a))}</p>
+  return tdCard(a,r,c,`${r.complete?`Handed in ${r.date?new Date(r.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):""}`:dueText(myDue(a))} · ${plural(r.per.length,"exam question")} · ${r.total} marks`,
+    r.complete?`<span class="tdscore"><b>${r.marks}/${r.total}</b> ${r.score}%</span>`:tdBar(r.nOk,r.per.length),`
    ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}${reFeedback(r,c)}
-   <p style="margin:0">${plural(r.per.length,"exam question")} · ${r.total} marks</p>
    ${r.complete?`<div class="tscore"><b>${r.marks}/${r.total}</b><span>${r.score}%</span></div><button class="btn small" style="align-self:flex-start" data-tc="rev" data-a="${a.id}" data-v="${u.id}">Review my answers</button>`
      :`<div class="tprog"><div class="bar"><i style="width:${r.per.length?r.nOk/r.per.length*100:0}%"></i></div><span class="mono">${r.nOk}/${r.per.length}</span></div>
       <button class="btn primary small" style="align-self:flex-start" data-tc="asgstart" data-v="${a.id}">${r.nOk?"Continue":"Start"} the questions</button>`}
-   <p class="vfoot" style="margin:0">${r.complete?"Your answers and marks have been sent to your teacher.":"Your answers save as you go. You can stop and carry on later; it's handed in when you finish the last question."}</p></article>`}
+   <p class="vfoot" style="margin:0">${r.complete?"Your answers and marks have been sent to your teacher.":"Your answers save as you go. You can stop and carry on later; it's handed in when you finish the last question."}</p>`)}
+/* a to-do item: folded it shows the title, status, due date and progress; open it for the rest */
+const tdBar=(n,m)=>`<span class="tprog tdmini"><span class="bar"><i style="width:${m?n/m*100:0}%"></i></span><span class="mono">${n}/${m}</span></span>`;
+function tdCard(a,r,c,line,right,body){const k="td-"+a.id;
+  return `<details class="panel todo ts-${r.key}"${TV.open[k]?" open":""} data-topen="${k}"><summary><div class="tdsum"><div class="tdtitle"><h3>${esc(a.title)}</h3><span class="sub${r.late&&!r.complete?" tdlate":""}">${line}</span></div>
+   <div class="tdright">${stChip(r)}${right}</div></div></summary>
+   <div class="todob"><span class="sub">Set by ${esc(teacherOf(c).name)} on ${new Date(a.set).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span>${body}</div></details>`}
 
 /* review a student's answers (teacher, or the student themselves) */
 function revOverlay(){if(!TV.rev)return "";const a=SC.asg[TV.rev.a];if(!a)return "";const teach=isTeacher();

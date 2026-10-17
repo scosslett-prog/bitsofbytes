@@ -20,7 +20,9 @@ with sync_playwright() as p:
         pg.on('dialog', lambda d: d.accept())
         pg.goto(B + '#home'); pg.wait_for_function('window.BOB && !document.getElementById("boot")')
         return pg
-    def go(pg, r): pg.evaluate(f'location.hash="{r}"'); pg.wait_for_timeout(150)
+    def go(pg, r):
+        pg.evaluate(f'location.hash="{r}"'); pg.wait_for_timeout(150)
+        if r == 'todo': pg.evaluate('document.querySelectorAll("details.todo").forEach(d=>d.open=true)'); pg.wait_for_timeout(100)
     def idle(pg): pg.wait_for_function('!document.body.classList.contains("tbusy")'); pg.wait_for_timeout(100)
     def register(pg, role, name, email, code='', school='Test School'):
         go(pg, 'register'); pg.check(f'#role-{role}'); pg.fill('#rname', name); pg.fill('#remail', email); pg.fill('#rschool', school)
