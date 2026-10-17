@@ -13,6 +13,13 @@ const progOf=id=>S.user&&id===S.user.id?progSnap():SC.prog[id];
 
 const me=()=>S.user?(SC.users[S.user.id]||Object.assign({cls:null},S.user)):null;
 const isTeacher=()=>!!(S.user&&(S.user.role==="teacher"||S.user.role==="admin"));
+/* home page buttons: guests are invited to register; signed-in people go to their own pages,
+   and students without full access are offered a subscription */
+function homeCtas(){const browse=`<a class="btn" href="#paper-1">Browse the course</a>`;
+  if(!S.user)return `<a class="btn primary" href="#register">Create a free account</a>${browse}`;
+  if(isTeacher())return `<a class="btn primary" href="#teacher">Go to my classes</a>${browse}`;
+  if(!BOB.pay.full())return `<a class="btn primary" href="#pricing">Subscribe for full access</a>${browse}`;
+  return `<a class="btn primary" href="#dashboard">Go to my dashboard</a>${browse}`}
 const isAdmin=()=>!!(S.user&&S.user.role==="admin");
 const myClass=()=>{const u=me();return u&&!isTeacher()&&u.cls&&SC.classes[u.cls]||null};
 const teacherOf=c=>SC.users[c.teacher]||{name:"Your teacher",school:""};

@@ -45,7 +45,7 @@ function home(){
     <div class="eyebrow">Cambridge IGCSE Computer Science · 0478</div>
     <h1 style="margin-top:10px">Every syllabus point, one byte at a time.</h1>
     <p class="lead">Notes, key vocabulary and self-tests for every topic in Paper 1 and Paper 2, with a dashboard that shows students and teachers exactly what is secure and what needs work.</p>
-    <div class="ctas"><a class="btn primary" href="#register">Create a free account</a><a class="btn" href="#paper-1">Browse the course</a></div>
+    <div class="ctas">${homeCtas()}</div>
    </div>
    <div class="register" aria-label="The letter b stored in an 8-bit register">
     <div class="row"><span></span>${[128,64,32,16,8,4,2,1].map(n=>`<span class="lbl" style="text-align:center">${n}</span>`).join("")}</div>
