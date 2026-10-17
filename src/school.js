@@ -7,7 +7,7 @@
 const ms = (t) => (t ? Date.parse(t) : 0);
 
 export function createSchool(api, getUser) {
-  const SC = { users: {}, classes: {}, lic: {}, asg: {}, subs: {}, tmarks: {}, seen: [], prog: {}, progLast: {}, admin: null };
+  const SC = { users: {}, classes: {}, lic: {}, asg: {}, subs: {}, tmarks: {}, re: {}, seen: [], prog: {}, progLast: {}, admin: null };
   const db = api && api.db;
 
   /* select rows whose column is in a (possibly long) list of ids, a few dozen at a time */
@@ -20,9 +20,9 @@ export function createSchool(api, getUser) {
 
   async function load() {
     const u = getUser();
-    const users = {}, classes = {}, asg = {}, subs = {}, tmarks = {}, lic = {};
+    const users = {}, classes = {}, asg = {}, subs = {}, tmarks = {}, lic = {}, re = {};
     let seen = [];
-    if (!u || !db) { Object.assign(SC, { users, classes, asg, subs, tmarks, lic, seen }); return; }
+    if (!u || !db) { Object.assign(SC, { users, classes, asg, subs, tmarks, lic, re, seen }); return; }
     users[u.id] = { id: u.id, name: u.name, email: u.email, role: u.role, school: u.school, cls: null };
     const teach = u.role === 'teacher' || u.role === 'admin';
     let cls, mem, inv;
@@ -51,11 +51,17 @@ export function createSchool(api, getUser) {
       mode: a.mode || 'all', due: a.due_date, set: ms(a.created_at), by: a.teacher_id, spec: a.spec || {} };
     const aids = Object.keys(asg);
     if (aids.length) {
-      const [sb, tm, sn] = await Promise.all([
+      const [sb, tm, sn, rs] = await Promise.all([
         teach ? selIn('assignment_submissions', 'assignment_id', aids) : db.select('assignment_submissions', { eq: { student_id: u.id } }),
         teach ? selIn('teacher_marks', 'assignment_id', aids) : db.select('teacher_marks', { eq: { student_id: u.id } }),
         teach ? Promise.resolve([]) : db.select('assignment_seen', { eq: { student_id: u.id } }),
+        (teach ? selIn('assignment_reassigns', 'assignment_id', aids) : db.select('assignment_reassigns', { eq: { student_id: u.id } })).catch(() => []),
       ]);
+      // each student's reassignments for an assignment, oldest first (the last one is in force)
+      for (const r of rs.sort((x, y) => ms(x.created_at) - ms(y.created_at))) {
+        const A = (re[r.assignment_id] = re[r.assignment_id] || {});
+        (A[r.student_id] = A[r.student_id] || []).push({ due: r.due_date, comment: r.comment || '', at: ms(r.created_at), prev: r.prev_score });
+      }
       for (const s of sb) (subs[s.assignment_id] = subs[s.assignment_id] || {})[s.student_id] = { ans: s.answers || {}, done: s.done, date: ms(s.submitted_at) };
       for (const t of tm) { const A = (tmarks[t.assignment_id] = tmarks[t.assignment_id] || {}); (A[t.student_id] = A[t.student_id] || {})[t.question_id] = t.mark; }
       seen = sn.map((x) => x.assignment_id);
@@ -70,7 +76,7 @@ export function createSchool(api, getUser) {
       lic[u.id] = { bought: c.total, used: c.used, hist: g.map((x) => ({ n: x.quantity, date: ms(x.created_at), note: x.note })),
         req: rq.map((r) => ({ id: r.id, n: r.quantity, status: r.status, date: ms(r.created_at), msg: r.message })) };
     }
-    Object.assign(SC, { users, classes, asg, subs, tmarks, lic, seen });
+    Object.assign(SC, { users, classes, asg, subs, tmarks, lic, re, seen });
   }
 
   /* students' lesson progress, fetched when a teacher opens a class (it can be a lot of rows) */
@@ -108,6 +114,7 @@ export function createSchool(api, getUser) {
     createAssignment: async (a) => (await db.insert('assignments', [{ class_id: a.cls, teacher_id: me(), kind: a.kind, title: a.title, note: a.note,
       due_date: a.due, mode: a.kind === 'lessons' ? a.mode : null, lesson_ids: a.lessons || [], question_ids: a.qids || [], spec: a.spec || null }]))[0].id,
     deleteAssignment: (id) => db.delete('assignments', { eq: { id } }),
+    reassign: (a, students, due, note, prev) => db.rpc('reassign', { a, students, due, note, prev }),
     markSeen: (aids) => (aids.length ? db.upsert('assignment_seen', aids.map((assignment_id) => ({ assignment_id, student_id: me() })), 'assignment_id,student_id') : null),
     setMark: (aid, sid, qid, v) => (v == null
       ? db.delete('teacher_marks', { eq: { assignment_id: aid, student_id: sid, question_id: qid } })

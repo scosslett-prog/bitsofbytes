@@ -38,17 +38,31 @@ async function tDo(fn,{reload=true,err=null,ok=null}={}){if(TBUSY)return false;T
   if(good){if(ok)ok();if(reload)tRender()}return good}
 
 /* assignment progress for one student */
-function asgStatus(a,id){if(a.kind==="exam")return asgExamStatus(a,id);
+/* reassignments: the latest one sets the student's due date; a reassigned lesson
+   assignment only counts work done after the reassignment */
+const reList=(aid,id)=>((SC.re[aid]||{})[id])||[];
+const reOf=(aid,id)=>{const l=reList(aid,id);return l.length?l[l.length-1]:null};
+const effDue=(a,id)=>{const r=reOf(a.id,id);return r?r.due:a.due};
+const myDue=a=>me()?effDue(a,me().id):a.due;
+function redoPart(l,a,since){const after=x=>!!(x&&x.date&&x.date>since),qc=S.lessons[l.id],qt=after(qc),qok=qt&&qc.last>=75;
+  if(a.mode==="qc")return {l,ok:qok,started:qt,pct:qt?qc.last:0};
+  const parts=[{ok:qok,t:qt,pct:qt?qc.last:0}];
+  if(l.v){const v=S.scores["lv-"+l.id],t=after(v);parts.push({ok:t,t,pct:t?v.last:0})}
+  (l.acts||[]).forEach(ac=>{const x=S.acts[l.id+"-"+ac.id],h=x&&x.hist?x.hist.filter(e=>e.date>since):[],last=h[h.length-1],q=x&&(x.qn||x.total);
+    parts.push({ok:h.length>0,t:h.length>0,pct:last&&q?Math.round(last.n/q*100):0})});
+  return {l,ok:parts.every(p=>p.ok),started:parts.some(p=>p.t),pct:Math.round(parts.reduce((t,p)=>t+p.pct,0)/parts.length)}}
+function asgStatus(a,id){if(a.kind==="exam")return asgExamStatus(a,id);const re=reOf(a.id,id),since=re?new Date(re.at).toISOString():null;
   return withProg(progOf(id),()=>{const ls=a.lessons.map(x=>ALL_LESSONS.find(l=>l.id===x)).filter(Boolean);
-    const per=ls.map(l=>{const lp=lessonParts(l),qc=S.lessons[l.id];
+    const per=ls.map(l=>{if(since)return redoPart(l,a,since);const lp=lessonParts(l),qc=S.lessons[l.id];
       const ok=a.mode==="qc"?qcPassed(l):done(l),started=a.mode==="qc"?!!qc:lp.started;
       return {l,ok,started,pct:a.mode==="qc"?(qc?qc.best:0):lp.overall}});
     const nOk=per.filter(x=>x.ok).length,score=per.length?Math.round(per.reduce((t,x)=>t+x.pct,0)/per.length):0;
     const complete=nOk===per.length&&per.length>0,started=per.some(x=>x.started||x.ok);
-    const late=!complete&&a.due<todayISO();
-    return {per,nOk,score,complete,started,late,key:complete?"done":late?"late":started?"prog":"todo"}})}
+    const late=!complete&&effDue(a,id)<todayISO();
+    return {per,nOk,score,complete,started,late,re,reN:reList(a.id,id).length,key:complete?"done":late?"late":started?"prog":"todo"}})}
 const ST_LBL={done:"Completed",prog:"In progress",todo:"Not started",late:"Overdue"},ST_CLS={done:"sec",prog:"dev",todo:"none",late:"start"};
-const stChip=s=>`<span class="chip ${ST_CLS[s.key]}">${ST_LBL[s.key]}</span>`;
+const reTip=(r)=>`Reassigned ${new Date(r.re.at).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}, due ${fmtDay(r.re.due)}${r.re.prev!=null?` · previous score ${r.re.prev}%`:""}${r.re.comment?` · “${r.re.comment}”`:""}`;
+const stChip=s=>`<span class="chip ${ST_CLS[s.key]}">${ST_LBL[s.key]}</span>${s.re?` <span class="chip tre" title="${esc(reTip(s))}">↻ Reassigned${s.reN>1?" ×"+s.reN:""}</span>`:""}`;
 const classAsg=c=>Object.values(SC.asg).filter(a=>a.cls===c.id).sort((a,b)=>a.due.localeCompare(b.due)||a.set-b.set);
 const myAsg=()=>{const c=myClass();return c?classAsg(c):[]};
 const unseen=()=>me()?myAsg().filter(a=>!SC.seen.includes(a.id)):[];
@@ -126,7 +140,7 @@ function classPage(id){const c=SC.classes[id],u=me();
   <div class="tabs ttabs" role="tablist">${tabs.map(([k,n])=>`<button role="tab" data-tc="tab" data-v="${k}" aria-selected="${TV.tab===k}">${n}</button>`).join("")}</div>
   <div class="tpane">${body}</div>
   <details class="tdanger"><summary>Class settings</summary><form id="renForm" class="tinline"><label for="renn">Class name<input type="text" id="renn" value="${esc(c.name)}" maxlength="60" required></label><button class="btn" type="submit">Rename</button></form>
-   <button class="btn small" data-tc="delcls">Delete this class</button><span class="vfoot">Students are removed from the class and their licences are freed. The class's assignments are deleted.</span></details>${revOverlay()}</div>`}
+   <button class="btn small" data-tc="delcls">Delete this class</button><span class="vfoot">Students are removed from the class and their licences are freed. The class's assignments are deleted.</span></details>${revOverlay()}${reModal()}</div>`}
 
 function classProgress(c){
   const studs=studentsOf(c);
@@ -160,8 +174,8 @@ function classAssign(c){
      ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
      ${lessonAsgInsights(a,st)}
      <div class="tchips">${ls.map(l=>`<a class="chip none" href="#l-${l.id}">${l.topic.code} · ${esc(l.title)}</a>`).join("")}</div>
-     ${st.length?`<div class="tscroll"><table class="table ttab"><thead><tr><th>Student</th><th>Status</th><th>Score</th>${ls.map((l,i)=>`<th title="${esc(l.title)}">L${i+1}</th>`).join("")}</tr></thead><tbody>
-      ${st.map(({s,r})=>`<tr><td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?r.score+"%":"–"}</td>${r.per.map(x=>`<td class="tck" title="${esc(x.l.title)}: ${x.ok?"complete":x.started?x.pct+"%":"not started"}">${x.ok?`<span class="tick">✓</span>`:x.started?`<span class="sub">${x.pct}%</span>`:`<span class="sub">·</span>`}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
+     ${st.length?`${reBar(a)}<div class="tscroll"><table class="table ttab"><thead><tr>${selHead(a,st)}<th>Student</th><th>Status</th><th>Score</th>${ls.map((l,i)=>`<th title="${esc(l.title)}">L${i+1}</th>`).join("")}<th></th></tr></thead><tbody>
+      ${st.map(({s,r})=>`<tr>${selBox(a,s)}<td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?r.score+"%":"–"}</td>${r.per.map(x=>`<td class="tck" title="${esc(x.l.title)}: ${x.ok?"complete":x.started?x.pct+"%":"not started"}">${x.ok?`<span class="tick">✓</span>`:x.started?`<span class="sub">${x.pct}%</span>`:`<span class="sub">·</span>`}</td>`).join("")}<td>${reBtn(a,s)}</td></tr>`).join("")}</tbody></table></div>
       <p class="sub" style="margin:0">Class average score ${sc}%. Score is ${a.mode==="qc"?"the best quick check result":"completion across all the lesson's tasks"}, averaged over the lessons.</p>`:`<p class="sub">No students in this class yet.</p>`}
      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></div></details>`}).join(""):`<p class="sub">No assignments yet.</p>`;
   const anim=TV.spring;TV.spring=false;
@@ -187,8 +201,8 @@ function todoPage(){const u=me(),c=myClass();
   const todo=as.filter(x=>!x.r.complete),doneL=as.filter(x=>x.r.complete).reverse();
   const card=({a,r})=>{if(a.kind==="exam")return examTodoCard(a,r,c);const nx=r.per.find(x=>!x.ok);
     return `<article class="panel todo ts-${r.key}"><div class="trow"><div><h3>${esc(a.title)}</h3><span class="sub">${esc(teacherOf(c).name)} · set ${new Date(a.set).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span></div>${stChip(r)}</div>
-     <p class="tdue ${r.late?"late":""}">${r.complete?`Due ${fmtDay(a.due)}`:dueText(a.due)}</p>
-     ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
+     <p class="tdue ${r.late?"late":""}">${r.complete?`Due ${fmtDay(myDue(a))}`:dueText(myDue(a))}</p>
+     ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}${reFeedback(r,c)}
      <div class="tprog"><div class="bar"><i style="width:${r.per.length?r.nOk/r.per.length*100:0}%"></i></div><span class="mono">${r.nOk}/${r.per.length}</span></div>
      <ul class="tdl">${r.per.map(x=>`<li class="${x.ok?"ok":""}"><span class="fdot ${x.ok?"ok":x.started?"part":""}" aria-hidden="true">${x.ok?"✓":""}</span><a href="#l-${x.l.id}">${x.l.topic.code} · ${esc(x.l.title)}</a><span class="sub">${x.ok?"Done":x.started?x.pct+"%":a.mode==="qc"?"Quick check":"Not started"}</span></li>`).join("")}</ul>
      ${nx?`<a class="btn primary small" style="align-self:flex-start" href="#l-${nx.l.id}">${nx.started?"Continue":"Start"}: ${esc(nx.l.title)}</a>`:""}
@@ -204,7 +218,7 @@ function schoolNotice(route){const n0=BOB.notice();if(n0)return `<div class="tba
   const inv=myInvites();if(inv.length&&route!=="dashboard"){const c=inv[0];
     return `<div class="tbanner" role="status"><span>📨 <b>${esc(teacherOf(c).name)}</b> invited you to join <b>${esc(c.name)}</b>.</span><span class="tbb"><button class="btn primary small" data-tc="accept" data-v="${c.id}">Join class</button><button class="btn small" data-tc="decline" data-v="${c.id}">Not now</button></span></div>`}
   if(route==="todo")return "";const n=unseen();if(!n.length)return "";const a=n[0];
-  return `<div class="tbanner" role="status"><span>📌 New assignment${n.length>1?`s (${n.length})`:""}: <b>${esc(a.title)}</b> · ${dueText(a.due)}</span><span class="tbb"><a class="btn primary small" href="#todo">Open to-do list</a><button class="btn small" data-tc="seen" aria-label="Dismiss">Dismiss</button></span></div>`}
+  return `<div class="tbanner" role="status"><span>${reOf(a.id,u.id)?"↻ Reassigned":"📌 New assignment"}${n.length>1?` (+${n.length-1} more)`:""}: <b>${esc(a.title)}</b> · ${dueText(myDue(a))}</span><span class="tbb"><a class="btn primary small" href="#todo">Open to-do list</a><button class="btn small" data-tc="seen" aria-label="Dismiss">Dismiss</button></span></div>`}
 
 /* dashboard panels */
 function schoolPanel(){const u=me();if(!u)return "";
@@ -214,7 +228,7 @@ function schoolPanel(){const u=me();if(!u)return "";
   const c=myClass();
   if(c){const as=myAsg().map(a=>({a,r:asgStatus(a,u.id)})).filter(x=>!x.r.complete);
     return `<div class="panel span3" style="${accent(1)}"><div class="trow"><div><h3>${esc(c.name)}</h3><p class="sub" style="margin:0">${esc(teacherOf(c).name)}${teacherOf(c).school?" · "+esc(teacherOf(c).school):""}</p></div><a class="btn primary" href="#todo">To-do list${as.length?` (${as.length})`:""}</a></div>
-     ${as.length?`<ul class="tdl">${as.slice(0,3).map(({a,r})=>`<li><span class="fdot ${r.started?"part":""}" aria-hidden="true"></span><a href="#todo">${esc(a.title)}</a><span class="sub${r.late?" bad":""}">${dueText(a.due)} · ${r.nOk}/${r.per.length}</span></li>`).join("")}</ul>`:`<p class="sub" style="margin:0">No assignments to do. Keep working through the lessons at your own pace.</p>`}</div>`}
+     ${as.length?`<ul class="tdl">${as.slice(0,3).map(({a,r})=>`<li><span class="fdot ${r.started?"part":""}" aria-hidden="true"></span><a href="#todo">${esc(a.title)}</a><span class="sub${r.late?" bad":""}">${dueText(myDue(a))} · ${r.nOk}/${r.per.length}</span></li>`).join("")}</ul>`:`<p class="sub" style="margin:0">No assignments to do. Keep working through the lessons at your own pace.</p>`}</div>`}
   const inv=myInvites();
   return `<div class="panel span3"><div class="trow"><div><h3>Studying with a school?</h3><p class="sub" style="margin:0">Enter the join code your teacher gives you. You can also keep working on your own.</p></div></div>
    ${inv.map(c=>`<div class="tjoin"><span>📨 <b>${esc(teacherOf(c).name)}</b> invited you to <b>${esc(c.name)}</b></span><button class="btn primary small" data-tc="accept" data-v="${c.id}">Join class</button><button class="btn small" data-tc="decline" data-v="${c.id}">Decline</button></div>`).join("")}
@@ -308,8 +322,8 @@ function examFields(F){const pool=examPool(F),n=Math.min(F.n,pool.length),avgM=p
 const subOf=(aid,id)=>S.user&&id===S.user.id?(S.asgAns||{})[aid]:((SC.subs[aid]||{})[id]);
 function asgExamStatus(a,id){const r=subOf(a.id,id),tot=a.qids.reduce((t,q)=>t+(EXQ.find(x=>x.id===q)||{m:0}).m,0);
   const ans=r?r.ans||{}:{},n=a.qids.filter(q=>ans[q]).length,tm=tMarks(a.id,id),mk=q=>q in tm?tm[q]:ans[q]?ans[q].m:0,marks=a.qids.reduce((t,q)=>t+mk(q),0);
-  const complete=!!(r&&r.done),started=!!r&&n>0,late=!complete&&a.due<todayISO();
-  return {exam:true,per:a.qids.map(q=>({id:q,ok:!!ans[q],m:ans[q]||q in tm?mk(q):null,t:q in tm,q:EXQ.find(x=>x.id===q)})),nOk:n,marks,total:tot,score:tot?Math.round(marks/tot*100):0,complete,started,late,date:r&&r.date,key:complete?"done":late?"late":started?"prog":"todo"}}
+  const complete=!!(r&&r.done),started=!!r&&n>0,late=!complete&&effDue(a,id)<todayISO(),re=reOf(a.id,id);
+  return {re,reN:reList(a.id,id).length,exam:true,per:a.qids.map(q=>({id:q,ok:!!ans[q],m:ans[q]||q in tm?mk(q):null,t:q in tm,q:EXQ.find(x=>x.id===q)})),nOk:n,marks,total:tot,score:tot?Math.round(marks/tot*100):0,complete,started,late,date:r&&r.date,key:complete?"done":late?"late":started?"prog":"todo"}}
 function examAsgCard(a,studs){const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),nd=st.filter(x=>x.r.complete).length,qs=a.qids.map(id=>EXQ.find(q=>q.id===id)).filter(Boolean),tot=qs.reduce((t,q)=>t+q.m,0);
   const fin=st.filter(x=>x.r.complete),avg=fin.length?Math.round(fin.reduce((t,x)=>t+x.r.score,0)/fin.length):null,sp=a.spec||{};
   return `<details class="panel tasg"${TV.open[a.id]?" open":""} data-topen="${a.id}"><summary><div><b>${esc(a.title)}</b><span class="sub">${dueText(a.due)} · ${plural(qs.length,"exam question")} · ${tot} marks</span></div>
@@ -317,15 +331,15 @@ function examAsgCard(a,studs){const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),n
    ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
    ${examAsgInsights(a,st)}
    <p class="sub" style="margin:0">Paper ${(sp.papers||[]).join(" and ")} · ${(sp.years||[]).join(", ")}${sp.big?" · includes 15-mark questions":""} · sections ${(sp.topics||[]).map(id=>(TOPICS.find(t=>t.id===id)||{code:id}).code).join(", ")}</p>
-   ${st.length?`<div class="tscroll"><table class="table ttab"><thead><tr><th>Student</th><th>Status</th><th>Score</th>${qs.map((q,i)=>`<th title="${esc(exX(q.x).s)} ${exX(q.x).code} Q${q.n} · ${q.m} marks">Q${i+1}</th>`).join("")}<th></th></tr></thead><tbody>
-    ${st.map(({s,r})=>`<tr><td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?`${r.marks}/${r.total} <span class="sub">${r.score}%</span>`:"–"}</td>${r.per.map(x=>`<td class="tck"><span class="${x.m==null?"sub":x.m===x.q.m?"tgood":x.m?"tpart":"tbad"}"${x.t?' title="Mark changed by you"':""}>${x.m==null?"·":x.m}${x.t?"<sup>*</sup>":""}</span></td>`).join("")}<td>${r.started||r.complete?`<button class="btn small" data-tc="rev" data-a="${a.id}" data-v="${s.id}">View answers</button>`:""}</td></tr>`).join("")}
-    <tr class="tqm"><td colspan="3" class="sub">Marks available</td>${qs.map(q=>`<td class="tck sub">${q.m}</td>`).join("")}<td></td></tr></tbody></table></div>
+   ${st.length?`${reBar(a)}<div class="tscroll"><table class="table ttab"><thead><tr>${selHead(a,st)}<th>Student</th><th>Status</th><th>Score</th>${qs.map((q,i)=>`<th title="${esc(exX(q.x).s)} ${exX(q.x).code} Q${q.n} · ${q.m} marks">Q${i+1}</th>`).join("")}<th></th></tr></thead><tbody>
+    ${st.map(({s,r})=>`<tr>${selBox(a,s)}<td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?`${r.marks}/${r.total} <span class="sub">${r.score}%</span>`:"–"}</td>${r.per.map(x=>`<td class="tck"><span class="${x.m==null?"sub":x.m===x.q.m?"tgood":x.m?"tpart":"tbad"}"${x.t?' title="Mark changed by you"':""}>${x.m==null?"·":x.m}${x.t?"<sup>*</sup>":""}</span></td>`).join("")}<td><div class="tbb tnowrap">${r.started||r.complete?`<button class="btn small" data-tc="rev" data-a="${a.id}" data-v="${s.id}">View answers</button>`:""}${reBtn(a,s)}</div></td></tr>`).join("")}
+    <tr class="tqm"><td colspan="4" class="sub">Marks available</td>${qs.map(q=>`<td class="tck sub">${q.m}</td>`).join("")}<td></td></tr></tbody></table></div>
     <p class="sub" style="margin:0">${avg==null?"No one has finished yet.":`Average for students who have finished: ${avg}%.`} Answers that the computer can't mark are self-marked by the student against the mark scheme, so check them under View answers, where you can change any mark. * shows a mark you've changed.</p>`:`<p class="sub">No students in this class yet.</p>`}
    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></div></details>`}
 function examTodoCard(a,r,c){const u=me();
   return `<article class="panel todo ts-${r.key}"><div class="trow"><div><h3>${esc(a.title)}</h3><span class="sub">${esc(teacherOf(c).name)} · set ${new Date(a.set).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span></div>${stChip(r)}</div>
-   <p class="tdue ${r.late?"late":""}">${r.complete?`Handed in ${r.date?new Date(r.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):""}`:dueText(a.due)}</p>
-   ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
+   <p class="tdue ${r.late?"late":""}">${r.complete?`Handed in ${r.date?new Date(r.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):""}`:dueText(myDue(a))}</p>
+   ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}${reFeedback(r,c)}
    <p style="margin:0">${plural(r.per.length,"exam question")} · ${r.total} marks</p>
    ${r.complete?`<div class="tscore"><b>${r.marks}/${r.total}</b><span>${r.score}%</span></div><button class="btn small" style="align-self:flex-start" data-tc="rev" data-a="${a.id}" data-v="${u.id}">Review my answers</button>`
      :`<div class="tprog"><div class="bar"><i style="width:${r.per.length?r.nOk/r.per.length*100:0}%"></i></div><span class="mono">${r.nOk}/${r.per.length}</span></div>
@@ -353,7 +367,7 @@ function revOverlay(){if(!TV.rev)return "";const a=SC.asg[TV.rev.a];if(!a)return
    <div class="trevh"><div><span class="eyebrow">${esc(a.title)}</span><h2>${teach?esc(st.name):"Your answers"}</h2><span class="sub">${r.marks}/${r.total} marks · ${r.score}% · ${r.complete?"handed in":"not finished yet"}</span></div>
     <div class="tbb">${nav}<button class="btn primary small" data-tc="revclose">Close</button></div></div>
    <div class="trevb">${body}</div></div></div>`}
-document.addEventListener("keydown",e=>{if(e.key==="Escape"&&TV.rev){TV.rev=null;tRender()}});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&(TV.rev||TV.reas)){TV.rev=null;TV.reas=null;tRender()}});
 
 /* running an exam assignment in the exam question runner */
 function asgStartRun(a){const u=me();if(!u)return;S.asgAns=S.asgAns||{};
@@ -393,7 +407,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-tc="tmrese
    no paper choice, practise/insights tabs, stats or topic picker to lead away from it */
 const _exPage0=exPage;exPage=function(){const a=EX.asg&&SC.asg[EX.asg];if(!a)return _exPage0();
   return `<div class="crumbs"><a href="#todo" data-tc="asgleave">To-do</a><span>/</span><span>${esc(a.title)}</span></div>
-  <div class="lhead"><div class="eyebrow">Assignment · ${dueText(a.due)} · answers save as you go</div><h1>${esc(a.title)}</h1>${a.note?`<p class="tnote" style="max-width:64ch">${esc(a.note)}</p>`:""}</div>
+  <div class="lhead"><div class="eyebrow">Assignment · ${dueText(myDue(a))} · answers save as you go</div><h1>${esc(a.title)}</h1>${a.note?`<p class="tnote" style="max-width:64ch">${esc(a.note)}</p>`:""}</div>
   <div class="fcpage exfull"><div class="fcpanel"><h2 id="exh2"></h2><div class="exrun" id="exw"></div></div></div>`};
 /* leaving the exam page mid-assignment ends the assignment view; Continue on the to-do list picks it up again */
 addEventListener("hashchange",()=>{if(EX.asg&&location.hash!=="#exams"){EX.asg=null;EX.mode="setup"}});
@@ -519,9 +533,9 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-tc="laall"
 function examHeat(c,studs){const ex=classAsg(c).filter(a=>a.kind==="exam").sort((a,b)=>a.set-b.set);if(!ex.length||!studs.length)return "";
   const LV=["sunk","bad-soft","warn-soft","good-soft"],short=s=>new Date(s+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
   const cell=(a,s)=>{const r=asgStatus(a,s.id);
-    if(!r.started&&!r.complete)return `<td style="background:var(--sunk)" title="${esc(s.name)} · ${esc(a.title)}: not started${r.late?" · overdue":""}">${r.late?`<span class="tlate">!</span>`:""}</td>`;
+    if(!r.started&&!r.complete)return `<td style="background:var(--sunk)" title="${esc(s.name)} · ${esc(a.title)}: not started${r.late?" · overdue":""}${r.re?" · "+esc(reTip(r)):""}">${r.late?`<span class="tlate">!</span>`:""}${r.re?`<sup class="trex">↻</sup>`:""}</td>`;
     const lv=r.score>=80?3:r.score>=50?2:1;
-    return `<td style="background:var(--${LV[lv]})"${r.complete?"":' class="tinprog"'} title="${esc(s.name)} · ${esc(a.title)}: ${r.marks}/${r.total} marks (${r.score}%)${r.complete?"":" · not handed in yet"}">${r.score}</td>`};
+    return `<td style="background:var(--${LV[lv]})"${r.complete?"":' class="tinprog"'} title="${esc(s.name)} · ${esc(a.title)}: ${r.marks}/${r.total} marks (${r.score}%)${r.complete?"":" · not handed in yet"}${r.re?" · "+esc(reTip(r)):""}">${r.score}${r.re?`<sup class="trex">↻</sup>`:""}</td>`};
   const avg=a=>{const f=studs.map(s=>asgStatus(a,s.id)).filter(r=>r.complete);return f.length?Math.round(f.reduce((t,r)=>t+r.score,0)/f.length):null};
   const leg=[["sunk","Not started"],["bad-soft","Below 50%"],["warn-soft","50 to 79%"],["good-soft","80% or more"]];
   return `<section class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><h3>Exam question assignments</h3>
@@ -529,4 +543,38 @@ function examHeat(c,studs){const ex=classAsg(c).filter(a=>a.kind==="exam").sort(
    <div class="tscroll"><table class="theat theatx"><thead><tr><th></th>${ex.map(a=>`<th title="${esc(a.title)} · due ${fmtDay(a.due)}"><button class="thx" data-tc="goasg" data-v="${a.id}">${esc(a.title)}</button><small>due ${short(a.due)}</small></th>`).join("")}</tr></thead><tbody>
    ${studs.map(s=>`<tr><th>${esc(s.name)}</th>${ex.map(a=>cell(a,s)).join("")}</tr>`).join("")}
    <tr class="tavg"><th>Class average</th>${ex.map(a=>{const v=avg(a);return `<td title="Average of students who have handed in">${v==null?"–":v}</td>`}).join("")}</tr></tbody></table></div>
-   <span class="sub">One column per exam question assignment, oldest first. Each cell is the student's score as a percentage; a faded cell isn't handed in yet and <b class="tlate">!</b> means overdue. Click a title to open that assignment.</span></section>`}
+   <span class="sub">One column per exam question assignment, oldest first. Each cell is the student's score as a percentage; a faded cell isn't handed in yet, <b class="tlate">!</b> means overdue and <b>↻</b> means reassigned. Click a title to open that assignment.</span></section>`}
+
+/* ---------- reassigning an assignment to one or more students ---------- */
+TV.sel={};
+const selIds=aid=>TV.sel[aid]||[];
+const selHead=(a,st)=>{const n=selIds(a.id).length;return `<th class="tsel"><input type="checkbox" data-tselall="${a.id}"${n&&n===st.length?" checked":""} aria-label="Select every student"></th>`};
+const selBox=(a,s)=>`<td class="tsel"><input type="checkbox" data-tsel="${a.id}" value="${s.id}"${selIds(a.id).includes(s.id)?" checked":""} aria-label="Select ${esc(s.name)}"></td>`;
+const reBtn=(a,s)=>`<button class="btn small" data-tc="reone" data-a="${a.id}" data-v="${s.id}">↻ Reassign</button>`;
+function reBar(a){const n=selIds(a.id).length;return `<div class="trebar"><button class="btn small${n?" primary":""}" data-tc="resel" data-v="${a.id}"${n?"":" disabled"}>↻ Reassign selected${n?` (${n})`:""}</button><span class="sub">Tick students to reassign to several at once.</span></div>`}
+function reFeedback(r,c){if(!r.re)return "";
+  return `<div class="tfeed"><b>↻ Reassigned by ${esc(teacherOf(c).name)} · ${new Date(r.re.at).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</b>${r.re.comment?`<p>${esc(r.re.comment)}</p>`:""}</div>`}
+function reModal(){if(!TV.reas)return "";const a=SC.asg[TV.reas.a];if(!a)return "";const ss=TV.reas.ids.map(id=>SC.users[id]).filter(Boolean);
+  return `<div class="trev tmodal" role="dialog" aria-modal="true" aria-labelledby="reh"><div class="trevp tmodalp">
+   <div class="trevh"><div><span class="eyebrow">Reassign</span><h2 id="reh">${esc(a.title)}</h2></div><button class="iconbtn" data-tc="reclose" aria-label="Close" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
+   <form id="reForm" class="trevb tform" novalidate>
+    <div><span class="tlab">${ss.length===1?"Student":plural(ss.length,"student")}</span><div class="tchips">${ss.map(s=>{const n=reList(a.id,s.id).length;return `<span class="chip none">${esc(s.name)}${n?` · reassigned ${n}×`:""}</span>`}).join("")}</div></div>
+    <label for="redue">New due date<input type="date" id="redue" value="${isoDay(new Date(Date.now()+7*864e5))}" min="${todayISO()}" required></label>
+    <label for="renote">Feedback <span class="sub">(optional)</span><textarea id="renote" rows="3" maxlength="500" placeholder="e.g. Have another look at the theory on the control unit before you try these again."></textarea></label>
+    <p class="vfoot" style="margin:0">${a.kind==="exam"?"Their answers and your marks are kept in the history, and the questions start again from blank.":"They need to redo each lesson's tasks after today for it to count. Their earlier work isn't deleted."} The assignment goes back on their to-do list with your feedback.</p>
+    <p class="err" id="reerr" hidden></p>
+    <div class="tbb"><button class="btn primary" type="submit">↻ Reassign${ss.length>1?` to ${ss.length} students`:""}</button><button class="btn" type="button" data-tc="reclose">Cancel</button></div>
+   </form></div></div>`}
+document.addEventListener("click",e=>{const b=e.target.closest('[data-tc="reone"],[data-tc="resel"],[data-tc="reclose"]');if(!b||!isTeacher())return;
+  const k=b.dataset.tc;
+  if(k==="reclose"){TV.reas=null;tRender();return}
+  const ids=k==="reone"?[b.dataset.v]:selIds(b.dataset.v),aid=k==="reone"?b.dataset.a:b.dataset.v;if(!ids.length)return;
+  TV.reas={a:aid,ids};TV.open[aid]=true;tRender();const n=$("#renote");if(n)n.focus({preventScroll:true})});
+document.addEventListener("change",e=>{const t=e.target;if(!isTeacher())return;
+  if(t.matches("[data-tsel]")){const a=t.dataset.tsel,S0=new Set(selIds(a));t.checked?S0.add(t.value):S0.delete(t.value);TV.sel[a]=[...S0];tRender();return}
+  if(t.matches("[data-tselall]")){const a=SC.asg[t.dataset.tselall];if(!a)return;TV.sel[a.id]=t.checked?studentsOf(SC.classes[a.cls]).map(s=>s.id):[];tRender()}});
+document.addEventListener("submit",e=>{if(e.target.id!=="reForm"||!TV.reas||!isTeacher())return;e.preventDefault();
+  const a=SC.asg[TV.reas.a],ids=TV.reas.ids.slice(),due=$("#redue").value,note=$("#renote").value.trim(),x=$("#reerr");
+  if(!due||due<todayISO()){x.textContent="Choose a due date from today onwards.";x.hidden=false;return}
+  const prev={};ids.forEach(id=>{const r=asgStatus(a,id);if(r.started||r.complete)prev[id]=r.score});
+  tDo(()=>SCH.A.reassign(a.id,ids,due,note,prev),{err:"reerr",ok:()=>{TV.reas=null;TV.sel[a.id]=[];TV.open[a.id]=true}})});

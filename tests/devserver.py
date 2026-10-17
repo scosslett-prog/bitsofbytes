@@ -38,7 +38,12 @@ RPC = {  # name: (kind, [(arg, type)])
     'join_class': ('scalar', [('code', 'text')]), 'accept_invite': ('scalar', [('c', 'uuid')]),
     'new_join_code': ('scalar', [('c', 'uuid')]), 'decide_licence_request': ('void', [('r', 'uuid'), ('approve', 'boolean')]),
     'licence_counts': ('set', [('t', 'uuid')]),
+    'reassign': ('scalar', [('a', 'uuid'), ('students', 'uuid[]'), ('due', 'date'), ('note', 'text'), ('prev', 'jsonb')]),
 }
+def argsql(a, ty):
+    if ty == 'uuid[]': return f"array(select jsonb_array_elements_text((select j from P)->'args'->'{a}'))::uuid[]"
+    if ty == 'jsonb': return f"((select j from P)->'args'->'{a}')"
+    return f"((select j from P)->'args'->>'{a}')::{ty}"
 
 def ident(x):
     if not IDENT.match(x or ''): raise RuntimeError('bad name ' + repr(x))
@@ -88,7 +93,7 @@ def rpc(uid, b):
     fn = b['fn']
     if fn not in RPC: raise RuntimeError('unknown function ' + fn)
     kind, params = RPC[fn]
-    args = ', '.join(f"{a} => ((select j from P)->'args'->>'{a}')::{ty}" for a, ty in params if a in (b.get('args') or {}))
+    args = ', '.join(f"{a} => {argsql(a, ty)}" for a, ty in params if a in (b.get('args') or {}))
     call = f'public.{fn}({args})'
     if kind == 'set': return run_as(uid, b, f"select coalesce(jsonb_agg(to_jsonb(r)), '[]') from {call} r")
     if kind == 'void': run_as(uid, b, f'select 1 from (select {call}) x'); return None
