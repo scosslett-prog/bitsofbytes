@@ -136,6 +136,8 @@ function foldMeta(l,id){const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
   if(id==="exlesson"){const st=exLessonStats([l.id]);return {st:st.n&&st.att===st.n?"ok":st.att?"part":"",t:st.att?`${st.att} of ${st.n} questions tried · ${st.b}/${st.m} marks`:"Not started"}}
   return {st:"fo",t:"Optional practice"}}
 function foldDecorate(el,l){const h=el.querySelector(":scope > .vhead");if(!h)return;const id=el.id,open=FOLDST[l.id+":"+id]===true;
+  if(el.classList.contains("focus")&&!h.querySelector('[data-act="afocus"],[data-fclose]'))h.insertAdjacentHTML("beforeend",`<button class="iconbtn fclose" data-fclose aria-label="Close full screen view" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>`);
+  if(!el.classList.contains("focus"))h.querySelector("[data-fclose]")?.remove();
   el.classList.toggle("folded",!open);h.setAttribute("role","button");h.tabIndex=0;h.setAttribute("aria-expanded",open);
   const h3=h.querySelector("h3");if(!h3)return;const old=h3.querySelector(".fsum");if(old)old.remove();
   const m=foldMeta(l,id);h3.insertAdjacentHTML("beforeend",`<small class="fsum"><i class="fdot ${m.st}" aria-hidden="true">${m.st==="ok"?"✓":""}</i>${m.t}</small>`)}
@@ -144,9 +146,11 @@ function foldInit(l){const side=$(".lside");if(!side)return;side.classList.add("
     g(side.querySelector(":scope > #fclesson"),"Revision","Extra practice for revision. Not needed to complete the lesson.","rev")}
   side.querySelectorAll(":scope > .check").forEach(el=>{
     new MutationObserver(()=>foldDecorate(el,l)).observe(el,{childList:true});foldDecorate(el,l);
-    const tog=()=>{if(el.classList.contains("focus"))return;const k=l.id+":"+el.id,open=!el.classList.contains("folded");
-      if(!open)side.querySelectorAll(":scope > .check").forEach(o=>{if(o!==el){FOLDST[l.id+":"+o.id]=false;foldDecorate(o,l)}});
-      FOLDST[k]=!open;foldDecorate(el,l);if(!open){const r=el.getBoundingClientRect();if(r.top<70)el.scrollIntoView({block:"start",behavior:"smooth"})}};
+    const tog=()=>{if(el.classList.contains("focus"))return;
+      side.querySelectorAll(":scope > .check").forEach(o=>{FOLDST[l.id+":"+o.id]=o===el;foldDecorate(o,l)});
+      const ib=el.querySelector(':scope > .vhead [data-act="afocus"]');
+      if(ib)ib.click();else{setFocus(el);foldDecorate(el,l)}
+      const f=el.querySelector('.vbody button:not([disabled]),.vbody input,[data-fclose],[data-act="afocus"]');if(f)f.focus({preventScroll:true})};
     el.addEventListener("click",e=>{const h=e.target.closest(".vhead");if(!h||h.parentElement!==el||e.target.closest("button,a,input,select,label"))return;tog()});
     el.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("vhead")&&e.target.parentElement===el){e.preventDefault();tog()}})})}
 function lcheck(l){
@@ -2564,12 +2568,15 @@ let SORT_DRAG_END=0;
 function setFocus(card){
   document.querySelectorAll(".check.focus").forEach(c=>c.classList.remove("focus"));
   let sc=document.getElementById("scrim");
-  if(!card){if(sc)sc.remove();document.documentElement.classList.remove("locked");return}
+  if(!card){if(sc)sc.remove();document.documentElement.classList.remove("locked");
+    const l=typeof ALL_LESSONS!=="undefined"&&ALL_LESSONS.find(x=>"l-"+x.id===location.hash.slice(1));
+    if(l)document.querySelectorAll(".lside.folding > .check:not(.folded)").forEach(o=>{FOLDST[l.id+":"+o.id]=false;foldDecorate(o,l)});return}
   if(!sc){sc=document.createElement("div");sc.id="scrim";document.body.append(sc)}
   card.classList.add("focus");document.documentElement.classList.add("locked");
 }
-document.addEventListener("click",e=>{if(e.target.id==="scrim"){const c=document.querySelector(".check.focus");if(c)c.querySelector(".iconbtn").click()}});
-document.addEventListener("keydown",e=>{if(e.key==="Escape"){const c=document.querySelector(".check.focus");if(c)c.querySelector(".iconbtn").click()}});
+function closeFocus(){const c=document.querySelector(".check.focus");if(!c)return;const ib=c.querySelector('[data-act="afocus"]');if(ib)ib.click();else setFocus(null)}
+document.addEventListener("click",e=>{if(e.target.id==="scrim"||e.target.closest("[data-fclose]"))closeFocus()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeFocus()});
 function lgTTask(q,r){const done=r!==undefined;if(AQ.ttk!==AQ.k||!AQ.tt){AQ.tt=q.rows.map(()=>-1);AQ.ttk=AQ.k}const g=done?String(AQ.typed):"";
   return `<p class="eyebrow">${q.prompt||"Complete the truth table"}</p>${q.html}
   <div class="tscroll"><table class="pvt lgtbl lgtt"><tr>${q.ins.map(n=>`<th>${n}</th>`).join("")}<th class="lgx">X</th></tr>${q.rows.map((row,i)=>`<tr>${[...row].map(b=>`<td>${b}</td>`).join("")}<td class="lgx">${done?`<span class="lgc ${g[i]===q.ans[i]?"right":"wrong"}">${g[i]}${g[i]!==q.ans[i]?` <small>should be ${q.ans[i]}</small>`:""}</span>`:`<button class="lgcell${AQ.tt[i]<0?" unset":""}" data-act="att" data-i="${i}" aria-label="Output for row ${i+1}, ${[...row].map((b,j)=>q.ins[j]+" = "+b).join(", ")}: ${AQ.tt[i]<0?"not set":AQ.tt[i]}">${AQ.tt[i]<0?"?":AQ.tt[i]}</button>`}</td></tr>`).join("")}</table></div>

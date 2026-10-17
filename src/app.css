@@ -33,3 +33,7 @@ body.tbusy [data-tc],body.tbusy [data-adm],body.tbusy form button[type=submit]{p
 .rmine{font-family:"JetBrains Mono",monospace;font-size:.8rem;white-space:nowrap}
 .rtip{margin:4px 0 0;padding:10px 12px;border-radius:10px;background:var(--sunk);font-size:.88rem}
 @media (max-width:820px){.rdone{grid-template-columns:1fr}}
+.lside.folding>*{flex-shrink:0}
+.trqn{margin:10px 0 -4px;font-size:1.15rem}
+.trqn:first-child{margin-top:0}
+.check.focus .fclose{margin-left:auto}
