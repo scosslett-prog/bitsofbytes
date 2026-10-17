@@ -10,3 +10,4 @@ body.tbusy [data-tc],body.tbusy [data-adm],body.tbusy form button[type=submit]{p
 .formwrap .panel{display:flex;flex-direction:column;gap:10px}
 .formwrap .panel h3{margin:0}
 .formwrap input:disabled{opacity:.7}
+[hidden]{display:none!important}

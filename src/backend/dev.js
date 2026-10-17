@@ -3,8 +3,10 @@
    row level security rules apply. Only used when no Supabase settings are present and
    the dev server answers. Never used on the live site. */
 export async function devBackend() {
+  // Vite's dev server answers any unknown path with index.html, so check for the real reply
   const r = await fetch('/__dev/ping').catch(() => null);
-  if (!r || !r.ok) return null;
+  const j = r && r.ok && /json/.test(r.headers.get('content-type') || '') ? await r.json().catch(() => null) : null;
+  if (!j || j.ok !== true) return null;
   const KEY = 'bob-dev-session';
   let me = null;
   try { me = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
@@ -12,7 +14,7 @@ export async function devBackend() {
     const res = await fetch('/__dev/' + path, {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-user': me ? me.id : '' }, body: JSON.stringify(body),
     });
-    const j = await res.json();
+    const j = await res.json().catch(() => ({ error: 'The local test server did not answer (' + res.status + ').' }));
     if (!res.ok) throw new Error(j.error || 'Request failed');
     return j.data;
   };
