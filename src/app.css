@@ -1,0 +1,12 @@
+/* start-up, saving and account styles (the rest of the site's styles are in styles.css) */
+.boot{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg,#fff);color:var(--muted,#555);font:600 1rem/1.4 "Atkinson Hyperlegible",system-ui,sans-serif;z-index:50;padding:16px;text-align:center}
+#savestat{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100vw - 32px);padding:8px 14px;border-radius:999px;font-size:.875rem;font-weight:700;z-index:60;pointer-events:none}
+#savestat:empty{display:none}
+#savestat.error{background:var(--bad-soft,#fde2e2);color:var(--bad,#a30000);border:1px solid currentColor}
+#savestat.saved{background:var(--good-soft,#dff5e3);color:var(--good,#116b2b);border:1px solid currentColor}
+body.tbusy{cursor:progress}
+body.tbusy [data-tc],body.tbusy [data-adm],body.tbusy form button[type=submit]{pointer-events:none;opacity:.6}
+.treq{display:flex;flex-direction:column;gap:6px}
+.formwrap .panel{display:flex;flex-direction:column;gap:10px}
+.formwrap .panel h3{margin:0}
+.formwrap input:disabled{opacity:.7}

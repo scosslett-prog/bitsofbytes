@@ -1,0 +1,75 @@
+"""Row level security tests against a local Postgres with the Supabase stub. Run: python3 tests/rls_test.py"""
+import subprocess,sys,uuid
+DB=['psql','-h','/tmp','-p','54329','-U','postgres','-d','bob','-qtAX','-v','ON_ERROR_STOP=1']
+fails=0
+def run(sql,uid=None,email=''):
+    pre=''
+    if uid: pre=f"set role authenticated; select set_config('request.jwt.claim.sub','{uid}',false); select set_config('request.jwt.claims','{{\"email\":\"{email}\"}}',false);"
+    p=subprocess.run(DB+['-c',pre+sql],capture_output=True,text=True)
+    out=[l for l in p.stdout.strip().split('\n') if l and l!=uid and not l.startswith('{')]
+    return p.returncode,'\n'.join(out),p.stderr.strip()
+def ok(name,cond,info=''):
+    global fails
+    print(('PASS ' if cond else 'FAIL ')+name+('' if cond else '  -> '+str(info)))
+    if not cond: fails+=1
+def user(email,role,name):
+    i=str(uuid.uuid4());run(f"insert into auth.users(id,email,raw_user_meta_data) values('{i}','{email}','{{\"role\":\"{role}\",\"full_name\":\"{name}\"}}')");return i
+run("truncate auth.users cascade")
+T=user('t@s.org','teacher','Ms Rivera');T2=user('t2@s.org','teacher','Mr Other');S=user('s@s.org','student','Kim');S2=user('s2@s.org','student','Lee');S3=user('s3@s.org','student','Ana');H=user('h@x.org','admin','Hacker')
+A=user('sam@bob.co','student','Sam');run(f"update profiles set role='admin' where id='{A}'")
+ok('admin role from sign-up is refused',run(f"select role from profiles where id='{H}'")[1]=='student')
+ok('teacher role from sign-up kept',run(f"select role from profiles where id='{T}'")[1]=='teacher')
+c,o,e=run("select role from profiles where id=auth.uid()",S);ok('student reads own profile',o=='student',e)
+run(f"update profiles set role='teacher', full_name='Kim P' where id='{S}'",S)
+ok('student cannot make themselves a teacher',run(f"select role||'|'||full_name from profiles where id='{S}'")[1]=='student|Kim P')
+c,o,e=run("select count(*) from profiles",S);ok('student sees only their own profile',o=='1',o)
+c,o,e=run("insert into classes(teacher_id,name) values(auth.uid(),'11A') returning join_code",T);code=o.strip();ok('teacher creates class with a join code',c==0 and len(code)==6,e)
+CID=run("select id from classes where name='11A'")[1]
+c,o,e=run("insert into classes(teacher_id,name) values(auth.uid(),'hack')",S);ok('student cannot create a class',c!=0)
+c,o,e=run(f"select join_class('{code.lower()}')",S);ok('joining fails with no licences',c!=0 and 'licences' in e,e)
+c,o,e=run(f"insert into licence_grants(teacher_id,quantity) values('{T}',100)",T);ok('teacher cannot grant themselves licences',c!=0)
+c,o,e=run("insert into licence_requests(teacher_id,quantity) values(auth.uid(),2) returning id",T);R=o;ok('teacher requests licences',c==0,e)
+c,o,e=run(f"select decide_licence_request('{R}',true)",T);ok('teacher cannot approve their own request',c!=0)
+c,o,e=run(f"select decide_licence_request('{R}',true)",A);ok('admin approves request',c==0,e)
+c,o,e=run("select total||'/'||used from licence_counts()",T);ok('licence counts 2/0',o=='2/0',o)
+c,o,e=run(f"select join_class('{code}')",S);ok('student joins with code',c==0,e)
+c,o,e=run(f"select join_class('{code}')",S2);ok('second student joins',c==0,e)
+c,o,e=run(f"select join_class('{code}')",S3);ok('third student refused: no free licences',c!=0 and 'licences' in e,e)
+c,o,e=run(f"select join_class('{code}')",T2);ok('a teacher cannot join as a student',c!=0)
+c,o,e=run(f"insert into class_members(class_id,student_id) values('{CID}',auth.uid())",S3);ok('student cannot insert themselves into a class directly',c!=0)
+c,o,e=run("select total||'/'||used from licence_counts()",T);ok('licence counts 2/2',o=='2/2',o)
+c,o,e=run(f"select total from licence_counts('{T}')",T2);ok("another teacher can't read someone's licences",c!=0)
+c,o,e=run("select count(*) from profiles",T);ok('teacher sees self + 2 students',o=='3',o)
+c,o,e=run("select full_name from profiles where role='teacher'",S);ok('student sees their teacher',o=='Ms Rivera',o)
+c,o,e=run("select count(*) from profiles",T2);ok('other teacher sees only themselves',o=='1',o)
+c,o,e=run("select count(*) from classes",T2);ok('other teacher sees no classes',o=='0',o)
+run("insert into user_progress(user_id,kind,key,data) values(auth.uid(),'lessons','3-1-buses','{\"best\":75}')",S)
+c,o,e=run(f"insert into user_progress(user_id,kind,key,data) values('{S2}','lessons','x','{{}}')",S);ok("student can't write another student's progress",c!=0)
+c,o,e=run("select count(*) from user_progress",T);ok("teacher reads their student's progress",o=='1',o)
+c,o,e=run("select count(*) from user_progress",S2);ok("classmate can't read another's progress",o=='0',o)
+c,o,e=run("select count(*) from user_progress",T2);ok("other teacher can't read the progress",o=='0',o)
+c,o,e=run(f"insert into class_invites(class_id,email) values('{CID}','s3@s.org')",T);ok('teacher invites by email',c==0,e)
+c,o,e=run("select k.name||'|'||p.full_name from classes k join profiles p on p.id=k.teacher_id",S3);ok('invited student sees class and teacher name',o=='11A|Ms Rivera',o)
+c,o,e=run(f"select accept_invite('{CID}')",S3);ok('accepting refused while licences are full',c!=0,e)
+run(f"delete from class_members where student_id='{S2}'",T)
+c,o,e=run(f"select accept_invite('{CID}')",S3);ok('accepting works after teacher removes a student',c==0,e)
+c,o,e=run("select count(*) from class_invites",S3);ok('invite cleared after joining',o=='0',(o,e))
+c,o,e=run(f"select accept_invite('{CID}')",S2);ok("uninvited student can't accept",c!=0)
+c,o,e=run(f"insert into assignments(class_id,teacher_id,kind,title,due_date,lesson_ids) values('{CID}',auth.uid(),'lessons','Buses','2026-12-01','{{3-1-buses}}') returning id",T);AS=o;ok('teacher sets assignment',c==0,e)
+c,o,e=run(f"insert into assignments(class_id,teacher_id,kind,title,due_date,lesson_ids) values('{CID}',auth.uid(),'lessons','x','2026-12-01','{{a}}')",T2);ok("other teacher can't set work for this class",c!=0)
+c,o,e=run("select title from assignments",S);ok('student sees the assignment',o=='Buses',o)
+c,o,e=run("select count(*) from assignments",S2);ok('student not in class sees nothing',o=='0',o)
+c,o,e=run(f"insert into assignment_submissions(assignment_id,student_id,answers) values('{AS}',auth.uid(),'{{}}') on conflict (assignment_id,student_id) do update set answers=excluded.answers",S);ok('student saves answers',c==0,e)
+run(f"update assignment_submissions set done=true where assignment_id='{AS}'",S)
+c,o,e=run(f"update assignment_submissions set answers='{{\"x\":1}}' where assignment_id='{AS}' returning 1",S);ok('handed-in work is locked',o=='',o)
+c,o,e=run(f"insert into teacher_marks(assignment_id,student_id,question_id,mark) values('{AS}','{S}','q1',3)",T);ok('teacher adds a mark',c==0,e)
+c,o,e=run("select mark from teacher_marks",S);ok('student sees their mark',o=='3',o)
+c,o,e=run(f"insert into teacher_marks(assignment_id,student_id,question_id,mark) values('{AS}','{S}','q2',9)",S);ok("student can't set marks",c!=0)
+c,o,e=run(f"insert into teacher_marks(assignment_id,student_id,question_id,mark) values('{AS}','{S2}','q1',3)",T);ok("teacher can't mark a student outside the class",c!=0)
+c,o,e=run(f"select new_join_code('{CID}')",S);ok("student can't change the join code",c!=0)
+c,o,e=run(f"select new_join_code('{CID}')",T);ok('teacher makes a new join code',c==0 and len(o)==6,e)
+c,o,e=run("select count(*) from class_members",S);ok('student sees only their own membership',o=='1',o)
+c,o,e=run(f"delete from classes where id='{CID}'",T);ok('teacher deletes class',c==0,e)
+c,o,e=run("select total||'/'||used from licence_counts()",T);ok('licences freed after class deleted',o=='2/0',o)
+c,o,e=run("select count(*) from profiles",'00000000-0000-0000-0000-000000000000');ok('unknown user sees nothing',o=='0',o)
+print('\n%d failure(s)'%fails);sys.exit(1 if fails else 0)
