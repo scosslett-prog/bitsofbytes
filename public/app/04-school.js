@@ -101,7 +101,7 @@ function needProg(c){if(!SCH.progPending(c.students))return "";
 
 function classPage(id){const c=SC.classes[id],u=me();
   if(!c||!isTeacher()||c.teacher!==u.id)return `<div class="formwrap"><h1>Class not found</h1><a class="btn" href="#teacher">Back to your classes</a></div>`;
-  const L=licInfo(u.id),tabs=[["students","Students"],["progress","Progress"],["assign","Assignments"]];
+  const L=licInfo(u.id),tabs=[["students","Students"],["progress","Progress"],["assign","Assignments"],["lessons","Lesson access"]];
   let body="";
   if(TV.tab==="students"){
     const studs=studentsOf(c);
@@ -118,6 +118,7 @@ function classPage(id){const c=SC.classes[id],u=me();
       ${studs.length?`<ul class="tlist">${studs.map(s=>`<li><span><b>${esc(s.name)}</b><br><span class="sub mono">${esc(s.email)}</span></span><button class="btn small" data-tc="remove" data-v="${s.id}">Remove</button></li>`).join("")}</ul>`:`<p class="sub">No students yet. Share the join code or add invitations.</p>`}
       <p class="vfoot" style="margin:0">Removing a student frees their licence. Their own progress isn't deleted.</p>
      </section></div>`}
+  else if(TV.tab==="lessons")body=classLessons(c);
   else body=needProg(c)||(TV.tab==="progress"?classProgress(c):classAssign(c));
   return `<div style="${accent(1)}"><div class="crumbs"><a href="#teacher">Your classes</a> / ${esc(c.name)}</div>
   <div class="phead" style="padding-bottom:16px"><div class="eyebrow">Class · join code ${c.code}</div><h1>${esc(c.name)}</h1>
@@ -144,7 +145,7 @@ function classProgress(c){
    <div class="legend">${[0,1,2,3].map(l=>`<span><i style="background:var(--${LV[l]})"></i>${LBL[l]}</span>`).join("")}</div></div>
    <div class="tscroll"><table class="theat"><thead><tr><th></th>${TOPICS.map(t=>`<th title="${esc(t.title)}"><a href="#t-${t.id}">${t.code}</a></th>`).join("")}</tr></thead><tbody>
    ${rows.map(({s,m})=>`<tr><th>${esc(s.name)}</th>${m.sec.map(x=>`<td style="background:var(--${LV[x.lv]})" title="${esc(s.name)} · ${x.t.code} ${esc(x.t.title)}: ${x.pct}%">${x.pct?x.pct:""}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
-   <span class="sub">Each cell is the student's completion across all the tasks in that section. Hover a cell for details.</span></section>`}
+   <span class="sub">Each cell is the student's completion across all the tasks in that section. Hover a cell for details.</span></section>${examHeat(c,studs)}`}
 
 function classAssign(c){
   const as=classAsg(c),studs=studentsOf(c);
@@ -224,6 +225,7 @@ function tRender(){const y=scrollY;render();scrollTo(0,y)}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-tc]");if(!b)return;const a=b.dataset.tc,v=b.dataset.v,r=location.hash.slice(1),u=me();
   const c=r.startsWith("class-")?SC.classes[r.slice(6)]:null;
   if(a==="tab"){TV.tab=v;tRender();return}
+  if(a==="goasg"){TV.tab="assign";TV.open={[v]:true};tRender();return}
   if(a==="newasg"){TV.newOpen=true;TV.spring=true;tRender();const t=$("#atitle");if(t)t.focus({preventScroll:true});return}
   if(a==="closeasg"){TV.newOpen=false;tRender();return}
   if(a==="copy"){try{navigator.clipboard.writeText(v);b.textContent="Copied"}catch(x){}return}
@@ -475,3 +477,56 @@ function examAsgInsights(a,st){const qs=a.qids.map(id=>EXQ.find(q=>q.id===id)).f
    ${M.length?`<div class="tinlist"><span class="eyebrow">Common mistakes</span><ul>${M.slice(0,5).map(w=>`<li><b>Q${w.i+1}</b>${w.k?` (${esc(w.k)})`:""}: ${plural(w.n,"student")} answered <span class="mono">“${esc(w.t)}”</span>${w.right?` · the answer is <span class="mono">${esc(w.right)}</span>`:""}</li>`).join("")}</ul></div>`:""}
    ${weakT.length?`<div class="tinlist"><span class="eyebrow">Topics to revisit</span><ul>${weakT.map(x=>`<li><a href="#l-${x.l.id}">${x.l.topic.code} · ${esc(x.l.title)}</a> · ${x.pct}% of marks</li>`).join("")}</ul></div>`:""}
    ${toCheck?`<p class="tinote">💬 ${plural(toCheck,"self-marked answer")} you haven't checked yet. Open <b>View answers</b> to confirm or change the marks.</p>`:""}</div>`}
+
+/* ---------- lesson access: a teacher can choose which lessons their class may open ---------- */
+/* open unless the student's class restricts lessons; lessons in an assignment are always open */
+function lessonOpen(l){const id=typeof l==="string"?l:l.id;if(!S.user||isTeacher())return true;const c=myClass();if(!c||!c.restrict)return true;
+  return c.released.includes(id)||myAsg().some(a=>a.kind==="lessons"&&a.lessons.includes(id))}
+function lockedPage(l){const t=l.topic,c=myClass(),next=t.lessons.find(x=>x!==l&&lessonOpen(x));
+  return `<div class="crumbs"><a href="#paper-${t.ch.paper}">Paper ${t.ch.paper}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
+  <div class="formwrap lockpage"><div class="lockicon" aria-hidden="true">🔒</div><div><div class="eyebrow">${t.code} · Lesson ${l.n}</div><h1 style="margin-top:8px">${esc(l.title)}</h1></div>
+   <p>${esc(teacherOf(c).name)} hasn't opened this lesson for ${esc(c.name)} yet. It will unlock here when they do.</p>
+   <div class="tbb">${next?`<a class="btn primary" href="#l-${next.id}">Go to ${esc(next.title)}</a>`:""}<a class="btn" href="#t-${t.id}">Back to ${t.code}</a>${myAsg().length?`<a class="btn" href="#todo">My to-do list</a>`:""}</div></div>`}
+/* mark links to locked lessons anywhere on the page */
+function markLocked(root){if(!S.user||isTeacher()||!myClass()||!myClass().restrict)return;
+  root.querySelectorAll('a[href^="#l-"]').forEach(a=>{const l=ALL_LESSONS.find(x=>"#l-"+x.id===a.getAttribute("href"));if(l&&!lessonOpen(l)){a.classList.add("lklock");a.title="Your teacher hasn't opened this lesson yet"}})}
+function classLessons(c){const R=new Set(c.released),AL=new Set(classAsg(c).filter(a=>a.kind==="lessons").flatMap(a=>a.lessons)),N=ALL_LESSONS.length;
+  const isOpen=l=>R.has(l.id)||AL.has(l.id),open=ALL_LESSONS.filter(isOpen).length;
+  const mode=`<div class="tkind" role="radiogroup" aria-label="Lesson access">${[["all","All lessons open","Students work through any lesson at their own pace"],["released","Only lessons I open","Students can open only the lessons you choose, plus any lesson in an assignment"]].map(([k,n,d])=>{const on=(k==="released")===c.restrict;
+    return `<label class="${on?"on":""}"><input type="radio" name="tacc" value="${k}" data-tacc="mode"${on?" checked":""}><span><b>${n}</b><small>${d}</small></span></label>`}).join("")}</div>`;
+  if(!c.restrict)return `<section class="panel"><h3>Lesson access</h3>${mode}<p class="sub" style="margin:0">Every lesson is open to students in ${esc(c.name)}. Choose <b>Only lessons I open</b> to release lessons as you teach them.</p></section>`;
+  const tree=[1,2].map(pp=>{const ls=ALL_LESSONS.filter(l=>l.topic.ch.paper===pp),n=ls.filter(isOpen).length;
+    return `<details class="tpaper"${TV.open["la"+pp]?" open":""} data-topen="la${pp}"><summary><span>Paper ${pp} · ${pp===1?"Computer systems":"Algorithms, programming and logic"}</span><span class="chip ${n===ls.length?"sec":n?"dev":"none"}">${n}/${ls.length} open</span></summary>
+     <div class="tbb" style="padding:10px 0 6px"><button class="btn small" data-tc="laall" data-v="${pp}">Open all of Paper ${pp}</button><button class="btn small" data-tc="lanone" data-v="${pp}">Close all of Paper ${pp}</button></div>
+     <div class="tpick">${TOPICS.filter(t=>t.ch.paper===pp&&t.lessons).map(t=>{const m=t.lessons.filter(isOpen).length;
+      return `<details${TV.open["la"+t.id]?" open":""} data-topen="la${t.id}"><summary><span>${t.code} ${esc(t.title)}</span><span class="chip ${m===t.lessons.length?"sec":m?"dev":"none"}">${m}/${t.lessons.length}</span></summary>
+       <div class="tpl"><label class="tall"><input type="checkbox" data-tacc="sec" value="${t.id}"${m===t.lessons.length?" checked":""}> <b>All of ${t.code}</b></label>
+       ${t.lessons.map(l=>{const as=AL.has(l.id);return `<label><input type="checkbox" data-tacc="l" value="${l.id}"${isOpen(l)?" checked":""}${as?" disabled":""}> ${l.n}. ${esc(l.title)}${as?` <span class="sub">· in an assignment</span>`:""}</label>`}).join("")}</div></details>`}).join("")}</div></details>`}).join("");
+  return `<section class="panel"><h3>Lesson access</h3>${mode}<p class="sub" style="margin:0"><b>${open}</b> of ${N} lessons open to ${esc(c.name)}. Changes save straight away. Lessons in an assignment are always open, and locked lessons are left out of exam question practice.</p>${tree}</section>`}
+function saveAccess(c,restrict,released){c.restrict=restrict;c.released=[...new Set(released)].sort((a,b)=>ALL_LESSONS.findIndex(l=>l.id===a)-ALL_LESSONS.findIndex(l=>l.id===b));tRender();
+  SCH.A.setAccess(c.id,c.restrict,c.released).catch(e=>{alert("That change wasn't saved: "+e.message);SCH.load().then(tRender)})}
+document.addEventListener("change",e=>{const t=e.target;if(!t.matches("[data-tacc]")||!isTeacher())return;const c=SC.classes[location.hash.slice(7)];if(!c||c.teacher!==me().id)return;
+  const k=t.dataset.tacc,R=new Set(c.released);
+  if(k==="mode")return saveAccess(c,t.value==="released",c.released);
+  const ids=k==="sec"?(TOPICS.find(x=>x.id===t.value).lessons||[]).map(l=>l.id):[t.value];
+  ids.forEach(id=>t.checked?R.add(id):R.delete(id));saveAccess(c,true,[...R])});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-tc="laall"],[data-tc="lanone"]');if(!b||!isTeacher())return;const c=SC.classes[location.hash.slice(7)];if(!c||c.teacher!==me().id)return;
+  const pp=+b.dataset.v,ids=ALL_LESSONS.filter(l=>l.topic.ch.paper===pp).map(l=>l.id),R=new Set(c.released);
+  if(b.dataset.tc==="lanone"&&!confirm(`Close every Paper ${pp} lesson for ${c.name}? Lessons in an assignment stay open.`))return;
+  ids.forEach(id=>b.dataset.tc==="laall"?R.add(id):R.delete(id));saveAccess(c,true,[...R])});
+
+/* ---------- progress tab: every exam question assignment, one column each ---------- */
+function examHeat(c,studs){const ex=classAsg(c).filter(a=>a.kind==="exam").sort((a,b)=>a.set-b.set);if(!ex.length||!studs.length)return "";
+  const LV=["sunk","bad-soft","warn-soft","good-soft"],short=s=>new Date(s+"T12:00:00").toLocaleDateString("en-GB",{day:"numeric",month:"short"});
+  const cell=(a,s)=>{const r=asgStatus(a,s.id);
+    if(!r.started&&!r.complete)return `<td style="background:var(--sunk)" title="${esc(s.name)} · ${esc(a.title)}: not started${r.late?" · overdue":""}">${r.late?`<span class="tlate">!</span>`:""}</td>`;
+    const lv=r.score>=80?3:r.score>=50?2:1;
+    return `<td style="background:var(--${LV[lv]})"${r.complete?"":' class="tinprog"'} title="${esc(s.name)} · ${esc(a.title)}: ${r.marks}/${r.total} marks (${r.score}%)${r.complete?"":" · not handed in yet"}">${r.score}</td>`};
+  const avg=a=>{const f=studs.map(s=>asgStatus(a,s.id)).filter(r=>r.complete);return f.length?Math.round(f.reduce((t,r)=>t+r.score,0)/f.length):null};
+  const leg=[["sunk","Not started"],["bad-soft","Below 50%"],["warn-soft","50 to 79%"],["good-soft","80% or more"]];
+  return `<section class="panel" style="margin-top:16px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><h3>Exam question assignments</h3>
+   <div class="legend">${leg.map(([v,n])=>`<span><i style="background:var(--${v})"></i>${n}</span>`).join("")}</div></div>
+   <div class="tscroll"><table class="theat theatx"><thead><tr><th></th>${ex.map(a=>`<th title="${esc(a.title)} · due ${fmtDay(a.due)}"><button class="thx" data-tc="goasg" data-v="${a.id}">${esc(a.title)}</button><small>due ${short(a.due)}</small></th>`).join("")}</tr></thead><tbody>
+   ${studs.map(s=>`<tr><th>${esc(s.name)}</th>${ex.map(a=>cell(a,s)).join("")}</tr>`).join("")}
+   <tr class="tavg"><th>Class average</th>${ex.map(a=>{const v=avg(a);return `<td title="Average of students who have handed in">${v==null?"–":v}</td>`}).join("")}</tr></tbody></table></div>
+   <span class="sub">One column per exam question assignment, oldest first. Each cell is the student's score as a percentage; a faded cell isn't handed in yet and <b class="tlate">!</b> means overdue. Click a title to open that assignment.</span></section>`}

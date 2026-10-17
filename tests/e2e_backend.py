@@ -169,6 +169,22 @@ with sync_playwright() as p:
     ok('profile name updated', sql("select full_name from profiles where email='kim@student.org'") == 'Kim Park-Lee')
     S2.evaluate('S.user.role="teacher"'); S2.evaluate("BOB.store.api.db.update('profiles',{role:'teacher'},{eq:{id:S.user.id}})"); S2.wait_for_timeout(300)
     ok('student cannot make themselves a teacher', sql("select role from profiles where email='kim@student.org'") == 'student')
+
+    # ---- progress tab shows exam assignments; teacher releases lessons one at a time
+    go(T, 'class-' + cid); T.click('[data-tc="tab"][data-v="progress"]'); T.wait_for_timeout(500)
+    ok('exam assignments heatmap on progress tab', 'Exam question assignments' in T.inner_text('#app') and T.locator('.theatx .thx').count() == 1)
+    T.click('[data-tc="tab"][data-v="lessons"]'); T.wait_for_timeout(200)
+    T.check('[data-tacc="mode"][value="released"]'); T.wait_for_timeout(500)
+    T.evaluate('document.querySelector("[data-topen=la1]").open=true;document.querySelector("[data-topen=la3-1]").open=true'); T.wait_for_timeout(100)
+    T.check('[data-tacc="l"][value="3-1-buses"]'); T.wait_for_timeout(700)
+    ok('lesson access saved', sql("select restrict_lessons||'|'||array_to_string(released_lessons,',') from classes") == 'true|3-1-buses', sql("select restrict_lessons, released_lessons from classes"))
+    S1.reload(); S1.wait_for_function('window.BOB && !document.getElementById("boot")')
+    go(S1, 'l-3-1-cpu'); ok('unreleased lesson is locked for the student', S1.locator('.lockpage').count() == 1)
+    go(S1, 'l-3-1-buses'); ok('released lesson opens', S1.locator('.lockpage').count() == 0 and S1.locator('#lcheck').count() == 1)
+    go(S1, 'l-1-1-hex'); ok('lesson in an assignment stays open', S1.locator('.lockpage').count() == 0)
+    go(S1, 't-3-1'); ok('locked lessons marked on the section page', S1.locator('a.lklock').count() > 0)
+    ok('exam practice leaves out locked lessons', S1.evaluate('exPool(["3-1-cpu"]).length') == 0 and S1.evaluate('exPool(["3-1-buses"]).length') > 0)
+    ok('teacher still sees every lesson', T.evaluate('lessonOpen("3-1-cpu")'))
     br.close()
 
 print('page errors:', errs[:5] if errs else 'none')

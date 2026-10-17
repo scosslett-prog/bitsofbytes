@@ -6,6 +6,7 @@ function render(){
   if(r==="home")app.innerHTML=home();
   else if(r==="paper-1"||r==="paper-2")app.innerHTML=paper(+r.slice(-1));
   else if(r.startsWith("t-")&&(t=TOPICS.find(x=>"t-"+x.id===r))){if(Q&&Q.id!==t.id)Q=null;app.innerHTML=topic(t);vocab(t)}
+  else if(r.startsWith("l-")&&(t=ALL_LESSONS.find(x=>"l-"+x.id===r))&&!lessonOpen(t))app.innerHTML=lockedPage(t);
   else if(r.startsWith("l-")&&(t=ALL_LESSONS.find(x=>"l-"+x.id===r))){
     if(!LQ||LQ.id!==t.id){LQ=null;TAB="theory"}
     if(AQ&&!AQ.key.startsWith(t.id+"-"))AQ=null;if(AQ)AQ.focus=false;
@@ -27,7 +28,7 @@ function render(){
   else if(r==="todo"){app.innerHTML=todoPage();tPost(app)}
   else{app.innerHTML=home();r="home"}
   {const nb=schoolNotice(r);if(nb)app.insertAdjacentHTML("afterbegin",nb)}document.body.classList.toggle("wide",r.startsWith("l-"));setFocus(null);
-  nav(r);window.scrollTo(0,0);
+  markLocked(app);nav(r);window.scrollTo(0,0);
 }
 document.addEventListener("click",e=>{
   const r=location.hash.slice(1);

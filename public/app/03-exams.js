@@ -5,7 +5,8 @@ S.ex=S.ex||{};S.exh=S.exh||[];
 const exPap=id=>+String(id)[3]||1;
 const EX={paper:S.exPaper||1,sel:{},xs:new Set(EXAMS.map(x=>x.id)),n:"10",order:"rand",fresh:false,big:false,mode:"setup"};
 const exL=id=>ALL_LESSONS.find(l=>l.id===id);
-const exPool=(lids,xs,o={})=>EXQ.filter(q=>q.l.some(l=>lids.includes(l))&&(!xs||xs.has(q.x))&&(o.big!==false||!q.big));
+/* lessons a teacher hasn't opened yet are left out of practice (lessonOpen: 04-school.js) */
+const exPool=(lids,xs,o={})=>EXQ.filter(q=>q.l.some(l=>lids.includes(l)&&lessonOpen(l))&&(!xs||xs.has(q.x))&&(o.big!==false||!q.big));
 const exX=id=>EXAMS.find(x=>x.id===id);
 const exPLessons=p=>ALL_LESSONS.filter(l=>l.topic.ch.paper===p&&exPool([l.id]).length);
 const exSel=()=>{const p=EX.paper;if(!EX.sel[p])EX.sel[p]=new Set(exPLessons(p).map(l=>l.id));return EX.sel[p]};

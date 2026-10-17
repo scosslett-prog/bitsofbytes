@@ -53,3 +53,17 @@ body.tbusy [data-tc],body.tbusy [data-adm],body.tbusy form button[type=submit]{p
 .tnew>.trow h3{margin:0}
 @keyframes tspring{0%{opacity:0;transform:translateY(-14px) scale(.94)}55%{opacity:1;transform:translateY(4px) scale(1.015)}75%{transform:translateY(-2px) scale(.995)}90%{transform:translateY(1px) scale(1.002)}100%{transform:none}}
 @media (prefers-reduced-motion:no-preference){.tnew.spring{animation:tspring .55s cubic-bezier(.2,.9,.3,1.2) both;transform-origin:top center}}
+/* lesson access */
+a.lklock{opacity:.6}
+a.lklock::after{content:" 🔒";font-size:.85em}
+.lockpage{text-align:left}
+.lockicon{font-size:2.6rem;line-height:1}
+/* exam assignments heatmap */
+.theatx thead th{min-width:70px;max-width:130px;white-space:normal;vertical-align:bottom;font-family:inherit}
+.theatx td{min-width:70px}
+.thx{background:none;border:0;padding:0;font:inherit;font-weight:700;color:var(--ink);cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px;display:block;width:100%;line-height:1.25}
+.theatx small{display:block;color:var(--muted);font-weight:400;margin-top:2px}
+.theatx .tinprog{opacity:.55}
+.tlate{color:var(--bad);font-weight:700}
+.theatx .tavg td{font-weight:700;background:var(--surface);border:1px solid var(--line)}
+.theatx .tavg th{color:var(--muted)}

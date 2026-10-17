@@ -35,7 +35,8 @@ export function createSchool(api, getUser) {
       const ids = [...new Set([...mem.map((m) => m.class_id), ...inv.map((i) => i.class_id)])];
       cls = ids.length ? await selIn('classes', 'id', ids) : [];
     }
-    for (const c of cls) classes[c.id] = { id: c.id, name: c.name, teacher: c.teacher_id, code: c.join_code, students: [], invites: [], created: ms(c.created_at) };
+    for (const c of cls) classes[c.id] = { id: c.id, name: c.name, teacher: c.teacher_id, code: c.join_code, students: [], invites: [], created: ms(c.created_at),
+      restrict: !!c.restrict_lessons, released: c.released_lessons || [] };
     for (const m of mem) { const c = classes[m.class_id]; if (c && !c.students.includes(m.student_id)) c.students.push(m.student_id); }
     for (const i of inv) { const c = classes[i.class_id]; if (c && !c.invites.includes(i.email)) c.invites.push(i.email); }
     if (!teach) { const m = mem[0]; if (m && classes[m.class_id]) users[u.id].cls = m.class_id; }
@@ -99,6 +100,7 @@ export function createSchool(api, getUser) {
     createClass: async (name) => (await db.insert('classes', [{ teacher_id: me(), name }]))[0].id,
     renameClass: (c, name) => db.update('classes', { name }, { eq: { id: c } }),
     deleteClass: (c) => db.delete('classes', { eq: { id: c } }),
+    setAccess: (c, restrict, released) => db.update('classes', { restrict_lessons: restrict, released_lessons: released }, { eq: { id: c } }),
     invite: (c, emails) => (emails.length ? db.insert('class_invites', emails.map((email) => ({ class_id: c, email }))) : null),
     uninvite: (c, email) => db.delete('class_invites', { eq: { class_id: c, email } }),
     removeStudent: (c, s) => db.delete('class_members', { eq: { class_id: c, student_id: s } }),
