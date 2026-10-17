@@ -163,7 +163,10 @@ function classAssign(c){
       ${st.map(({s,r})=>`<tr><td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?r.score+"%":"–"}</td>${r.per.map(x=>`<td class="tck" title="${esc(x.l.title)}: ${x.ok?"complete":x.started?x.pct+"%":"not started"}">${x.ok?`<span class="tick">✓</span>`:x.started?`<span class="sub">${x.pct}%</span>`:`<span class="sub">·</span>`}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
       <p class="sub" style="margin:0">Class average score ${sc}%. Score is ${a.mode==="qc"?"the best quick check result":"completion across all the lesson's tasks"}, averaged over the lessons.</p>`:`<p class="sub">No students in this class yet.</p>`}
      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></div></details>`}).join(""):`<p class="sub">No assignments yet.</p>`;
-  return `<div class="tasgrid"><section class="panel tnew"><h3>New assignment</h3>
+  const anim=TV.spring;TV.spring=false;
+  if(!TV.newOpen)return `<div class="tasgrid"><div class="tnewbar"><button class="btn primary tcreate" data-tc="newasg"><span aria-hidden="true">＋</span> Create an assignment</button></div>
+   <section class="tasl"><div class="trow" style="margin:0 0 10px"><h3 style="margin:0">Set assignments</h3>${as.length?`<button class="btn small" data-tc="reprog">Refresh</button>`:""}</div>${list}</section></div>`;
+  return `<div class="tasgrid"><section class="panel tnew${anim?" spring":""}"><div class="trow"><h3>New assignment</h3><button class="iconbtn" data-tc="closeasg" aria-label="Close without setting an assignment" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div>
    <form id="asgForm" class="tform">
     <label for="atitle">Title<input type="text" id="atitle" maxlength="80" value="${esc(F.title)}" placeholder="e.g. Buses and the fetch–decode–execute cycle"></label>
     <div class="tkind" role="radiogroup" aria-label="Assignment type">${[["lessons","Lessons","Work through lessons and their tasks"],["exam","Exam questions","A fixed set of past paper questions"]].map(([k,n,d])=>`<label class="${F.kind===k?"on":""}"><input type="radio" name="akind" value="${k}" data-ta="kind"${F.kind===k?" checked":""}><span><b>${n}</b><small>${d}</small></span></label>`).join("")}</div>
@@ -221,6 +224,8 @@ function tRender(){const y=scrollY;render();scrollTo(0,y)}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-tc]");if(!b)return;const a=b.dataset.tc,v=b.dataset.v,r=location.hash.slice(1),u=me();
   const c=r.startsWith("class-")?SC.classes[r.slice(6)]:null;
   if(a==="tab"){TV.tab=v;tRender();return}
+  if(a==="newasg"){TV.newOpen=true;TV.spring=true;tRender();const t=$("#atitle");if(t)t.focus({preventScroll:true});return}
+  if(a==="closeasg"){TV.newOpen=false;tRender();return}
   if(a==="copy"){try{navigator.clipboard.writeText(v);b.textContent="Copied"}catch(x){}return}
   if(a==="seen"){markSeen();tRender();return}
   if(a==="accept"){if(!u)return;tDo(()=>SCH.A.acceptInvite(v),{ok:()=>{location.hash="todo"}});return}
@@ -275,7 +280,7 @@ document.addEventListener("submit",e=>{const f=e.target,u=me();const err=(id,m)=
       row={kind:"exam",cls:c.id,title:F.title,note:F.note,qids,due:F.due,spec:{papers:F.papers,topics:F.topics,years:F.years,big:F.big,n:F.n}}}
     else{if(!F.lessons.length)return err("asgerr","Choose at least one lesson.");
       row={kind:"lessons",cls:c.id,title:F.title,note:F.note,lessons:F.lessons.slice(),mode:F.mode,due:F.due}}
-    let id=null;tDo(async()=>{id=await SCH.A.createAssignment(row)},{err:"asgerr",ok:()=>{TV.lastKind=F.kind;TV.form=null}});return}
+    let id=null;tDo(async()=>{id=await SCH.A.createAssignment(row)},{err:"asgerr",ok:()=>{TV.lastKind=F.kind;TV.form=null;TV.newOpen=false}});return}
 });
 document.addEventListener("change",e=>{if(e.target.name==="role"){const l=$("#rcodel");if(l)l.hidden=e.target.value!=="student"}});
 
