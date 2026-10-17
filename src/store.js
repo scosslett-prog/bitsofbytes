@@ -194,6 +194,7 @@ export function createStore(api) {
     if (/invalid login credentials/i.test(m)) return "That email and password don't match an account.";
     if (/already registered|already been registered|already exists/i.test(m)) return "There's already an account with that email. Sign in instead.";
     if (/email not confirmed/i.test(m)) return 'Confirm your email address first, using the link we sent you.';
+    if (/email address .* is invalid/i.test(m)) return "We couldn't use that email address. Check it's typed correctly, or try another address.";
     if (/rate limit/i.test(m)) return 'Too many attempts. Wait a few minutes and try again.';
     if (/password should be|weak password/i.test(m)) return 'Choose a longer password (at least 8 characters).';
     return m;
