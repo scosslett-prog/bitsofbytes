@@ -26,7 +26,10 @@ body.tbusy [data-tc],body.tbusy [data-adm],body.tbusy form button[type=submit]{p
 .rins .rrow a{text-decoration:none}
 .rins .sub{font-size:.8rem}
 .rbar{display:block;height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
-.rbar i{display:block;height:100%;background:var(--ex,var(--accent));border-radius:99px}
+.rbar i{display:block;height:100%;background:var(--rbar);border-radius:99px}
+:root{--rbar:#8CC4EC}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--rbar:#6FB3E6}}
+:root[data-theme="dark"]{--rbar:#6FB3E6}
 .rmine{font-family:"JetBrains Mono",monospace;font-size:.8rem;white-space:nowrap}
 .rtip{margin:4px 0 0;padding:10px 12px;border-radius:10px;background:var(--sunk);font-size:.88rem}
 @media (max-width:820px){.rdone{grid-template-columns:1fr}}
