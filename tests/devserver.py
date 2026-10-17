@@ -48,9 +48,13 @@ RPC = {  # name: (kind, [(arg, type)])
     'claim_teacher': ('scalar', []),
     'my_access': ('scalar', []),
     'course_content': ('scalar', [('have', 'text')]),
+    'admin_site': ('scalar', []), 'admin_set_payments': ('void', [('on_', 'boolean')]),
+    'admin_put_content': ('scalar', [('kind', 'text'), ('rows', 'jsonb')]),
+    'admin_finish_content': ('void', [('theory_ids', 'text[]'), ('paper_ids', 'text[]'), ('question_ids', 'text[]')]),
     'reassign': ('scalar', [('a', 'uuid'), ('students', 'uuid[]'), ('due', 'date'), ('note', 'text'), ('prev', 'jsonb')]),
 }
 def argsql(a, ty):
+    if ty == 'text[]': return f"array(select jsonb_array_elements_text((select j from P)->'args'->'{a}'))"
     if ty == 'uuid[]': return f"array(select jsonb_array_elements_text((select j from P)->'args'->'{a}'))::uuid[]"
     if ty == 'jsonb': return f"((select j from P)->'args'->'{a}')"
     return f"((select j from P)->'args'->>'{a}')::{ty}"
@@ -139,6 +143,7 @@ class H(SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
     def translate_path(self, path):
         p = path.split('?', 1)[0].split('#', 1)[0]
+        if p.startswith('/__content/'): return os.path.join(ROOT, 'content', os.path.basename(p))
         if p.startswith('/app/'): return os.path.join(ROOT, 'public', p.lstrip('/'))
         return super().translate_path(path)
     def end_headers(self):

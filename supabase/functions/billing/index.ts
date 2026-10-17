@@ -28,7 +28,7 @@ const reply = (status: number, body: unknown) => new Response(JSON.stringify(bod
 function returnBase(req: Request) {
   const o = req.headers.get("origin") ?? "";
   try {
-    if (o && (o === SITE || /^http:\/\/localhost(:\d+)?$/.test(o) || /\.vercel\.app$/.test(new URL(o).hostname))) return o;
+    if (o && (o === SITE || /^http:\/\/localhost(:\d+)?$/.test(o) || /\.(vercel|netlify)\.app$/.test(new URL(o).hostname))) return o;
   } catch { /* not a URL */ }
   return SITE;
 }

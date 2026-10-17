@@ -67,8 +67,8 @@ python3 tests/smoke.py                                      # every page renders
 
 ## Deploying
 
-1. **Vercel:** Add New → Project → import this repository. Vercel detects Vite.
-2. **Environment variables:** in the Vercel project, open Settings → Environment Variables. Add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with the values in `.env.example`, then redeploy.
+1. **Vercel or Netlify:** import this repository as a new project. Both detect the settings (`vercel.json`, `netlify.toml`): build command `npm run build`, output folder `dist`.
+2. **Environment variables:** in the project's settings, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with the values in `.env.example`, then redeploy.
 3. **Supabase → Authentication → URL Configuration:**
    - Set **Site URL** to the Vercel address (later, your own domain).
    - Under **Redirect URLs**, add `https://<your-domain>/**` and `http://localhost:5173/**`.
@@ -83,13 +83,11 @@ python3 tests/smoke.py                                      # every page renders
 
 ## Changing lesson content
 
-Edit `content/theory.html` or `content/exams.json`, then upload them:
+Edit `content/theory.html` or `content/exams.json`, then upload them from the **Admin** page: **Course content and paywall → Upload again**. Running `npm run dev`, it reads the two files from this folder. On the live site it asks you to choose them. Browsers fetch the new content on their next visit.
 
-```bash
-npm run upload-content
-```
+The same panel turns the paywall on and off.
 
-The first time, add the project's secret key to `.env.local` (Supabase → Project Settings → API Keys → Secret keys): `SUPABASE_SECRET_KEY=sb_secret_…`. It stays on your computer; never add it to Vercel or commit it. Browsers fetch the new content on their next visit.
+(`npm run upload-content` does the same from the command line. It needs the project's secret key in `.env.local` as `SUPABASE_SECRET_KEY=sb_secret_…`; never add that key to Vercel or Netlify, or commit it.)
 
 ## Database changes
 
@@ -125,10 +123,7 @@ Two ways to pay, both yearly or monthly subscriptions handled by Stripe:
 
 Without a licensed class or a subscription, only the first lesson of each section is open, with the past paper questions for those lessons. The rest isn't hidden in the page: the database doesn't send it.
 
-The paywall switch is in the database, so it applies to every copy of the site at once:
-```sql
-update site_settings set payments = true;   -- false opens everything to everyone
-```
+The paywall switch is on the Admin page (stored in `site_settings.payments`), so it applies to every copy of the site at once. While it's off, everything is open to everyone.
 
 How it works: the site calls the `billing` edge function to open Stripe Checkout or the Stripe customer portal. Stripe then calls the `stripe-webhook` edge function, which copies each subscription into `public.subscriptions`. Licence totals (`_licence_total`), access (`my_access()`, `has_full_access()`) and the content each person is sent (`course_content()`) are worked out from that table, so only Stripe can grant paid access.
 
@@ -142,7 +137,7 @@ Set-up:
 4. **Stripe → Developers → Webhooks → Add endpoint:** URL `https://cvijqlbtakistuikogoz.supabase.co/functions/v1/stripe-webhook`, events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`. Copy the signing secret (`whsec_…`).
 5. **Stripe → Settings → Billing → Customer portal:** turn on cancelling subscriptions, updating payment methods, viewing invoices, changing quantity, and switching between the monthly and yearly student prices.
 6. **Supabase → Edge Functions → Secrets:** add `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_LICENCE`, `STRIPE_PRICE_STUDENT_MONTHLY`, `STRIPE_PRICE_STUDENT_YEARLY` and `SITE_URL` (your site address, e.g. `https://bitsofbytes.co`).
-7. Turn the paywall on with the SQL above. Test with Stripe's card `4242 4242 4242 4242`, any future date and any CVC.
+7. Turn the paywall on from the Admin page. Test with Stripe's card `4242 4242 4242 4242`, any future date and any CVC.
 8. When it all works, repeat steps 2–4 and 6 in Stripe's live mode with the live keys and prices.
 
 The functions are in `supabase/functions/` and are deployed with JWT checking turned off (`supabase/config.toml`): `billing` checks the signed-in user itself, and the webhook checks Stripe's signature.

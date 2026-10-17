@@ -129,12 +129,17 @@ export function createSchool(api, getUser) {
         db.select('profiles', { in: { role: ['teacher', 'admin'] }, order: [['created_at']] }),
       ]);
       const counts = await Promise.all(teachers.map((t) => db.rpc('licence_counts', { t: t.id }).then((r) => (Array.isArray(r) ? r[0] : r))));
+      const site = await db.rpc('admin_site', {}).catch((e) => ({ error: e.message }));
       SC.admin = {
+        site,
         req: rq.map((r) => ({ id: r.id, teacher: r.teacher_id, n: r.quantity, msg: r.message, status: r.status, date: ms(r.created_at), decided: ms(r.decided_at) })),
         teachers: teachers.map((t, i) => Object.assign(person(t), { total: counts[i] ? counts[i].total : 0, used: counts[i] ? counts[i].used : 0 })),
       };
     },
     decide: (r, approve) => db.rpc('decide_licence_request', { r, approve }),
+    setPayments: (on) => db.rpc('admin_set_payments', { on_: on }),
+    putContent: (kind, rows) => db.rpc('admin_put_content', { kind, rows }),
+    finishContent: (ids) => db.rpc('admin_finish_content', ids),
     async grant(email, n, note) {
       const t = (await db.select('profiles', { eq: { email: email.toLowerCase() } }))[0];
       if (!t) throw new Error('No account has that email address.');

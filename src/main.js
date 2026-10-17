@@ -97,5 +97,7 @@ function afterCheckout(pay, school) {
 boot().catch((e) => {
   console.error(e);
   const b = document.getElementById('boot');
-  if (b) b.innerHTML = '<span>Bits of Bytes could not start. Check your connection and refresh the page.</span>';
+  if (b) b.innerHTML = /could not reach its database/.test(e && e.message)
+    ? '<span>Bits of Bytes could not connect to its database. If you are running it on your own computer, check that <b>.env.local</b> is in the project folder, then restart <b>npm run dev</b>.</span>'
+    : '<span>Bits of Bytes could not start. Check your connection and refresh the page.</span>';
 });

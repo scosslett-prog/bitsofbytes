@@ -190,3 +190,12 @@ footer .flink{color:var(--muted)}
 .treqd[open]>summary{margin-bottom:10px}
 .tsubs li{align-items:baseline}
 .lockpage .btn{white-space:nowrap}
+
+/* Admin: course content and paywall */
+.admsite{margin-bottom:22px}
+.admsite .admrow{display:flex;gap:16px;align-items:center;justify-content:space-between;padding:14px 0;border-top:1px solid var(--line,#e3e6e8)}
+.admsite .admrow:first-of-type{border-top:0;padding-top:8px}
+.admsite .admrow p.sub{margin:4px 0 0}
+.admsite .admprog{margin:8px 0 0;font-weight:600}
+.admh{margin:6px 0 4px}
+@media (max-width:640px){.admsite .admrow{flex-direction:column;align-items:flex-start}}

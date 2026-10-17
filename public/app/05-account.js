@@ -118,7 +118,9 @@ function adminPage(){
   if(!D)return `<div class="phead"><div class="eyebrow">Admin</div><h1>Licences</h1></div>${msg}<div class="panel"><p class="sub" style="margin:0">Loading…</p></div>`;
   const T={};D.teachers.forEach(t=>T[t.id]=t);const who=id=>T[id]||{name:"Unknown teacher",email:"",school:""};
   const pend=D.req.filter(r=>r.status==="pending"),past=D.req.filter(r=>r.status!=="pending").slice(0,20);
-  return `<div style="${accent(2)}"><div class="phead" style="padding-bottom:18px"><div class="eyebrow">Admin</div><h1>Licences</h1><p>Approve teachers' licence requests, or give licences directly. Approving adds the licences to the teacher's account straight away.</p></div>${msg}
+  return `<div style="${accent(2)}"><div class="phead" style="padding-bottom:18px"><div class="eyebrow">Admin</div><h1>Admin</h1><p>Course content, the paywall, and teachers' licences.</p></div>${msg}
+  ${admSite(D.site)}
+  <h2 class="admh">Licences</h2><p class="sub">Approve teachers' licence requests, or give licences directly. Approving adds the licences to the teacher's account straight away.</p>
   <section class="panel"><div class="trow"><h3>Requests waiting (${pend.length})</h3><button class="btn small" data-adm="reload">Refresh</button></div>
    ${pend.length?`<div class="tscroll"><table class="table"><thead><tr><th>Teacher</th><th>Licences</th><th>Message</th><th>Requested</th><th></th></tr></thead><tbody>
     ${pend.map(r=>{const t=who(r.teacher);return `<tr><td><b>${esc(t.name)}</b><br><span class="sub mono">${esc(t.email)}</span>${t.school?`<br><span class="sub">${esc(t.school)}</span>`:""}</td><td class="mono">${r.n}</td><td>${r.msg?esc(r.msg):`<span class="sub">–</span>`}</td><td class="sub">${dshort(r.date)}</td>
@@ -132,10 +134,53 @@ function adminPage(){
    <section class="panel"><h3>Teachers (${D.teachers.length})</h3>${D.teachers.length?`<div class="tscroll"><table class="table"><thead><tr><th>Teacher</th><th>In use</th><th>Total</th></tr></thead><tbody>
     ${D.teachers.map(t=>`<tr><td><b>${esc(t.name)}</b><br><span class="sub mono">${esc(t.email)}</span>${t.school?` <span class="sub">· ${esc(t.school)}</span>`:""}</td><td class="mono">${t.used}</td><td class="mono">${t.total}</td></tr>`).join("")}</tbody></table></div>`:`<p class="sub" style="margin:0">No teacher accounts yet.</p>`}</section></div>
   ${past.length?`<section class="panel" style="margin-top:16px"><h3>Recent decisions</h3><ul class="tlist">${past.map(r=>{const t=who(r.teacher);return `<li><span>${esc(t.name)} · ${plural(r.n,"licence")}</span><span class="chip ${r.status==="approved"?"sec":"start"}">${r.status==="approved"?"Approved":"Declined"} ${r.decided?dshort(r.decided):""}</span></li>`}).join("")}</ul></section>`:""}</div>`}
+/* course content and the paywall */
+let ADMUP="";
+function admSite(s){
+  if(!s||s.error)return `<section class="panel admsite"><h3>Course content and paywall</h3><p class="msg bad" style="margin:0">This needs a database update: run <span class="mono">supabase/migrations/20261017070000_admin_content.sql</span> in the Supabase SQL Editor, then refresh.</p></section>`;
+  const none=!s.lessons;
+  return `<section class="panel admsite"><h3>Course content and paywall</h3>
+   <div class="admrow"><div><b>Lessons and past paper questions</b><p class="sub">${none?"Nothing uploaded yet, so lessons are empty. Upload the content to fill them.":`${s.lessons} lessons (${s.free_lessons} free) and ${s.questions.toLocaleString()} questions (${s.free_questions} free)${s.updated?` · uploaded ${new Date(s.updated).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"})}`:""}.`}</p>
+     ${ADMUP?`<p class="admprog" role="status">${esc(ADMUP)}</p>`:""}</div>
+    <div class="tbb"><button class="btn ${none?"primary":""}" data-adm="upload">${none?"Upload content":"Upload again"}</button>
+     <input type="file" id="admfiles" accept=".html,.json" multiple hidden></div></div>
+   <div class="admrow"><div><b>Paywall: ${s.payments?"on":"off"}</b><p class="sub">${s.payments?"Without a subscription or a licensed class, people can open only the first lesson of each section and its past paper questions.":"Everyone can open every lesson. Turn it on when payments are ready."}</p></div>
+    <div class="tbb"><button class="btn ${s.payments?"":"primary"}" data-adm="paywall" data-v="${s.payments?"off":"on"}">${s.payments?"Turn paywall off":"Turn paywall on"}</button></div></div></section>`}
+/* the two content files: from the local dev server (npm run dev), or chosen from this computer */
+async function admFiles(){
+  const get=async n=>{try{const r=await fetch("/__content/"+n,{cache:"no-store"});return r.ok?await r.text():null}catch(e){return null}};
+  const [th,ex]=await Promise.all([get("theory.html"),get("exams.json")]);
+  if(th&&ex)return {th,ex};
+  return new Promise(ok=>{const f=$("#admfiles");f.value="";f.onchange=async()=>{const fs=[...f.files],pick=x=>fs.find(y=>y.name.endsWith(x));
+    if(!pick(".html")||!pick(".json")){alert("Choose both files from the content folder: theory.html and exams.json.");ok(null);return}
+    ok({th:await pick(".html").text(),ex:await pick(".json").text()})};
+    alert("Choose theory.html and exams.json from the content folder of the site (hold Cmd to pick both).");f.click()})}
+async function admUpload(){
+  const F=await admFiles();if(!F)return;
+  const step=t=>{ADMUP=t;tRender()};
+  ADM={err:"",ok:""};document.body.classList.add("tbusy");
+  try{
+    const order=new Map(ALL_LESSONS.map((l,i)=>[l.id,{i,free:l.n===1}]));
+    const theory=[...F.th.matchAll(/<template id="th-([^"]+)">([\s\S]*?)<\/template>/g)].map(([,id,html])=>{const o=order.get(id);if(!o)throw new Error("theory.html has a lesson the site doesn't know: "+id);return {id,ord:o.i,free:o.free,html}});
+    if(!theory.length)throw new Error("No lessons found in theory.html.");
+    let X;try{X=JSON.parse(F.ex)}catch(e){throw new Error("exams.json isn't valid JSON.")}
+    const papers=X.EXAMS.map((data,ord)=>({id:data.id,ord,data}));
+    const qs=X.Q.map((data,ord)=>({id:data.id,ord,free:(data.l||[]).some(l=>order.get(l)&&order.get(l).free),data}));
+    const send=async(kind,rows,size,label)=>{for(let i=0;i<rows.length;i+=size){step(`Uploading ${label}: ${Math.min(i+size,rows.length)} of ${rows.length}…`);await BOB.school.admin.putContent(kind,rows.slice(i,i+size))}};
+    await send("theory",theory,10,"lessons");await send("papers",papers,100,"papers");await send("questions",qs,150,"questions");
+    step("Finishing…");
+    await BOB.school.admin.finishContent({theory_ids:theory.map(r=>r.id),paper_ids:papers.map(r=>r.id),question_ids:qs.map(r=>r.id)});
+    await BOB.refreshContent();await BOB.school.admin.load();
+    ADM.ok=`Uploaded ${theory.length} lessons and ${qs.length.toLocaleString()} questions.`}
+  catch(e){ADM.err="Upload stopped: "+e.message}
+  finally{ADMUP="";document.body.classList.remove("tbusy");tRender()}}
 async function admDo(fn,ok){ADM={err:"",ok:""};document.body.classList.add("tbusy");
   try{await fn();await BOB.school.admin.load();ADM.ok=ok||"Done."}catch(e){ADM.err=e.message}finally{document.body.classList.remove("tbusy")}tRender()}
 document.addEventListener("click",e=>{const b=e.target.closest("[data-adm]");if(!b||!isAdmin())return;const a=b.dataset.adm,v=b.dataset.v;
   if(a==="reload"){SC.admin=null;ADM={err:"",ok:""};tRender();adminLoad();return}
+  if(a==="upload"){admUpload();return}
+  if(a==="paywall"){const on=v==="on";if(confirm(on?"Turn the paywall on? People without a subscription or a licensed class will only see the first lesson of each section.":"Turn the paywall off? Everyone will be able to open every lesson."))
+    admDo(async()=>{await BOB.school.admin.setPayments(on);await BOB.refreshContent()},on?"The paywall is on.":"The paywall is off.");return}
   const r=SC.admin&&SC.admin.req.find(x=>x.id===v);if(!r)return;
   const t=(SC.admin.teachers.find(x=>x.id===r.teacher)||{name:"this teacher"}).name;
   if(a==="approve"&&confirm(`Give ${plural(r.n,"licence")} to ${t}?`))admDo(()=>BOB.school.admin.decide(v,true),`${plural(r.n,"licence")} given to ${t}.`);
