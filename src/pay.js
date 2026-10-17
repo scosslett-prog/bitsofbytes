@@ -1,16 +1,14 @@
 /* Payments and access.
    Full access comes from being a teacher or admin, being in a class whose teacher has licences,
    or having your own student subscription. Without one of those, only the first lesson of each
-   section is open. All of this is switched off until VITE_PAYMENTS=on, so nothing locks before
-   Stripe is set up. The database (my_access) is the source of truth; Stripe updates it through
-   the stripe-webhook function. */
-export function createPay(api, store, env) {
-  const local = (() => { try { return localStorage.getItem('bob-paytest') === '1'; } catch (e) { return false; } })();
-  const enabled = !!api && ((api.name === 'supabase' && env.VITE_PAYMENTS === 'on') || (api.name === 'dev' && local));
-  const pay = { enabled, access: { staff: false, class: false, sub: null }, licenceSubs: [], prices: null, broken: false };
+   section is open. The switch is in the database (site_settings.payments); while it's off,
+   everything is open to everyone. The database is the source of truth: it sends only the content
+   each person can open (course_content), and Stripe updates it through the stripe-webhook function. */
+export function createPay(api, store, content) {
+  const pay = { get enabled() { return !!api && content.payments; }, access: { staff: false, class: false, sub: null }, licenceSubs: [], prices: null, broken: false };
 
   pay.load = async () => {
-    if (!enabled || !store.user) return;
+    if (!pay.enabled || !store.user) return;
     try {
       pay.access = (await api.db.rpc('my_access', {})) || pay.access;
       pay.licenceSubs = store.user.role === 'student' ? [] :
@@ -20,7 +18,7 @@ export function createPay(api, store, env) {
       console.warn('Payments not ready', e); pay.broken = true;
     }
   };
-  pay.full = () => !enabled || pay.broken || !!(store.user && (pay.access.staff || pay.access.class || pay.access.sub));
+  pay.full = () => !pay.enabled || content.full;
   pay.loadPrices = async () => {
     if (pay.prices) return pay.prices;
     try { pay.prices = (await api.fn('billing', { action: 'prices' })) || {}; } catch (e) { console.warn(e); pay.prices = {}; }

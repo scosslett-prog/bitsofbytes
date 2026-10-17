@@ -30,6 +30,13 @@ if ARGS.reset:
     psql(f'drop database if exists {ARGS.db};\ncreate database {ARGS.db};', db='postgres')
     psql(open(os.path.join(ROOT, 'tests/supabase_stub.sql')).read())
     for f in sorted(glob.glob(os.path.join(ROOT, 'supabase/migrations/*.sql'))): psql(open(f).read())
+    # the lesson content and questions, as scripts/upload-content.mjs would upload them
+    rows = subprocess.run(['node', os.path.join(ROOT, 'scripts/upload-content.mjs'), '--json'], capture_output=True, text=True, check=True).stdout
+    psql(setvar('c', rows) + """with C as (select :'c'::jsonb j),
+      a as (insert into public.lesson_theory (id, ord, free, html) select id, ord, free, html from jsonb_populate_recordset(null::public.lesson_theory, (select j->'theory' from C)) returning 1),
+      b as (insert into public.exam_papers (id, ord, data) select id, ord, data from jsonb_populate_recordset(null::public.exam_papers, (select j->'papers' from C)) returning 1),
+      q as (insert into public.exam_questions (id, ord, free, data) select id, ord, free, data from jsonb_populate_recordset(null::public.exam_questions, (select j->'questions' from C)) returning 1)
+      update public.site_settings set content_version = (select count(*) from a) || '-' || (select count(*) from b) || '-' || (select count(*) from q) || '-' || now();""")
 psql('create table if not exists auth.dev_pw (id uuid primary key, pw text not null);')
 
 TABLES = set(psql("select string_agg(tablename, ',') from pg_tables where schemaname = 'public'").split(','))
@@ -40,6 +47,7 @@ RPC = {  # name: (kind, [(arg, type)])
     'licence_counts': ('set', [('t', 'uuid')]),
     'claim_teacher': ('scalar', []),
     'my_access': ('scalar', []),
+    'course_content': ('scalar', [('have', 'text')]),
     'reassign': ('scalar', [('a', 'uuid'), ('students', 'uuid[]'), ('due', 'date'), ('note', 'text'), ('prev', 'jsonb')]),
 }
 def argsql(a, ty):
@@ -131,7 +139,7 @@ class H(SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
     def translate_path(self, path):
         p = path.split('?', 1)[0].split('#', 1)[0]
-        if p.startswith('/app/') or p.startswith('/content/'): return os.path.join(ROOT, 'public', p.lstrip('/'))
+        if p.startswith('/app/'): return os.path.join(ROOT, 'public', p.lstrip('/'))
         return super().translate_path(path)
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store'); super().end_headers()

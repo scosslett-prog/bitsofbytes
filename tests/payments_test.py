@@ -1,4 +1,4 @@
-"""Payments switched on in local test mode (localStorage bob-paytest=1): free tier, class access,
+"""Payments switched on (site_settings.payments): free tier, locked content not sent, class access,
 subscription access and licence totals. Stripe itself isn't called; subscriptions are inserted as
 the webhook would. Run after tests/e2e_backend.py on a fresh dev server."""
 import subprocess, sys
@@ -11,18 +11,22 @@ with sync_playwright() as p:
     br=p.chromium.launch(); errs=[]
     def page(email=None):
         pg=br.new_context().new_page(); pg.on('pageerror',lambda e:errs.append(str(e))); pg.on('dialog',lambda d:d.accept())
-        pg.goto(B+'#home'); pg.evaluate('localStorage.setItem("bob-paytest","1")'); pg.reload(); pg.wait_for_function('window.BOB && !document.getElementById("boot")')
+        pg.goto(B+'#home'); pg.wait_for_function('window.BOB && !document.getElementById("boot")')
         if email:
             pg.evaluate('location.hash="login"'); pg.fill('#lemail',email); pg.fill('#lpass','password123')
             with pg.expect_navigation(): pg.click('#logForm button[type=submit]')
             pg.wait_for_function('window.BOB && !document.getElementById("boot")')
         return pg
     go=lambda pg,r:(pg.evaluate(f'location.hash="{r}"'),pg.wait_for_timeout(250))
+    sql("update site_settings set payments = true")
     G=page()
     ok('payments on in test mode', G.evaluate('BOB.pay.enabled'))
     go(G,'l-1-1-binary'); ok('guest: first lesson of a section is free', G.locator('.lockpage').count()==0 and G.locator('#lcheck').count()==1)
     go(G,'l-1-1-hex'); ok('guest: second lesson shows the subscribe page', 'part of the full course' in G.inner_text('#app'))
     go(G,'t-1-1'); ok('guest: locked lessons marked in the section list', G.locator('a.lklock').count()>0)
+    ok('guest: locked lesson text never reaches the browser', G.evaluate('!document.getElementById("th-1-1-hex") && !!document.getElementById("th-1-1-binary")'))
+    ok('guest: locked questions never reach the browser', G.evaluate('EXQ.length')==int(sql("select count(*) from exam_questions where free")) and G.evaluate('EXQ.length')<int(sql("select count(*) from exam_questions")))
+    ok('guest: tables cannot be read directly', 'permission denied' in subprocess.run(['psql','-h','/tmp','-p','54329','-U','postgres','-d','bobe2e','-qtAX','-c','set role anon; select html from lesson_theory limit 1'],capture_output=True,text=True).stderr)
     ok('guest: exam practice only from free lessons', G.evaluate('exPool(["1-1-hex"]).length')==0 and G.evaluate('exPool(["1-1-binary"]).length')>0)
     go(G,'pricing'); ok('guest: pricing asks them to create an account', 'Create an account to subscribe' in G.inner_text('#app'))
     A=page('ana@student.org')
@@ -34,7 +38,8 @@ with sync_playwright() as p:
     sql(f"insert into subscriptions(id,user_id,plan,status,interval,current_period_end) values('sub_ana','{aid}','student','active','month',now()+interval '30 days')")
     A.reload(); A.wait_for_function('window.BOB && !document.getElementById("boot")')
     ok('active subscription: full access', A.evaluate('BOB.pay.full()'))
-    go(A,'l-1-1-hex'); ok('subscriber opens any lesson', A.locator('.lockpage').count()==0)
+    go(A,'l-1-1-hex'); ok('subscriber opens any lesson', A.locator('.lockpage').count()==0 and 'Theory goes here' not in A.inner_text('#app'))
+    ok('subscriber gets every question', A.evaluate('EXQ.length')==int(sql("select count(*) from exam_questions")))
     go(A,'account'); ok('account shows the subscription', 'Student subscription' in A.inner_text('#app') and 'Manage subscription' in A.inner_text('#app'))
     sql("update subscriptions set status='canceled' where id='sub_ana'")
     A.reload(); A.wait_for_function('window.BOB && !document.getElementById("boot")')
@@ -50,5 +55,6 @@ with sync_playwright() as p:
     ok('invoice route still there', T.locator('details.treqd #reqForm').count()==1)
     sql("update subscriptions set status='canceled' where id='sub_t'")
     ok('cancelled licence subscription leaves the total', sql(f"select public._licence_total('{tid}')") == str(before))
+    sql("update site_settings set payments = false")
     print('page errors:', errs or 'none'); br.close()
 print(f'{fails} failure(s)'); sys.exit(1 if fails or errs else 0)

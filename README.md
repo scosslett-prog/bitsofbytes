@@ -10,15 +10,17 @@ Course site for Cambridge IGCSE Computer Science (0478): lessons, activities, fl
 | Path | What it is |
 |---|---|
 | `index.html` | Page shell (header, `#app`, footer) |
-| `src/main.js` | Start-up: connects to Supabase, loads the signed-in account, fetches the lesson content, then runs the site scripts in order |
+| `src/main.js` | Start-up: connects to Supabase, loads the signed-in account, fetches the lesson content this person may use, then runs the site scripts in order |
+| `src/content.js` | Fetches lessons and past paper questions from the database (`course_content`), keeping a copy in the browser until the content changes |
 | `src/store.js` | Accounts and progress. Guests keep progress in the browser. Signed-in progress is saved to the account a moment after each change. |
 | `src/school.js` | Classes, licences, invitations, assignments and marks |
 | `src/backend/supabase.js` | The only file that talks to Supabase |
 | `src/backend/dev.js` | The same interface, talking to the local test server (`tests/devserver.py`) |
 | `src/styles.css`, `src/app.css` | Styles |
 | `public/app/*.js` | The site itself: syllabus and lessons, widgets and activities, exam questions, school pages, account pages, router. Plain browser scripts, run in order, that share globals. |
-| `public/content/theory.html` | Every lesson's theory, as `<template id="th-…">` blocks |
-| `public/content/exams.json` | Past paper questions and mark schemes |
+| `content/theory.html` | Every lesson's theory, as `<template id="th-…">` blocks. Not published with the site: it's uploaded to the database |
+| `content/exams.json` | Past paper questions and mark schemes. Also uploaded, not published |
+| `scripts/upload-content.mjs` | Uploads those two files to the database (`npm run upload-content`) |
 | `supabase/migrations/*.sql` | Database schema, permission rules (row level security) and functions |
 | `tests/` | Permission tests and browser tests against a local Postgres |
 
@@ -32,6 +34,8 @@ Course site for Cambridge IGCSE Computer Science (0478): lessons, activities, fl
 | `classes`, `class_members`, `class_invites` | Classes, who is in them, and pending email invitations |
 | `licence_grants`, `licence_requests` | Licences given to teachers, and teachers' requests for more |
 | `assignments`, `assignment_submissions`, `teacher_marks`, `assignment_seen` | Assignments, students' exam answers, marks changed by teachers, and which assignments a student has seen |
+| `lesson_theory`, `exam_papers`, `exam_questions` | The course content. Nobody can read these tables directly; `course_content()` sends each person what they may use |
+| `site_settings` | One row: `payments` (the paywall switch) and the content version |
 
 The permission rules decide who can see and change each row:
 - Students see only their own data.
@@ -47,7 +51,7 @@ cp .env.example .env.local     # points at the live Supabase project
 npm run dev                    # http://localhost:5173
 ```
 
-Without `.env.local` the site runs in guest-only mode, and accounts are switched off.
+The site needs its database to start, because the lessons are stored there. Without `.env.local` it looks for the local test server below.
 
 ### Tests (no Supabase needed)
 
@@ -76,6 +80,16 @@ python3 tests/smoke.py                                      # every page renders
    update profiles set role = 'admin' where email = 'you@example.com';
    ```
    Sign out and back in, and an **Admin** link appears. From there you approve teachers' licence requests, or give licences directly.
+
+## Changing lesson content
+
+Edit `content/theory.html` or `content/exams.json`, then upload them:
+
+```bash
+npm run upload-content
+```
+
+The first time, add the project's secret key to `.env.local` (Supabase → Project Settings → API Keys → Secret keys): `SUPABASE_SECRET_KEY=sb_secret_…`. It stays on your computer; never add it to Vercel or commit it. Browsers fetch the new content on their next visit.
 
 ## Database changes
 
@@ -109,9 +123,14 @@ Two ways to pay, both yearly or monthly subscriptions handled by Stripe:
 - **Class licences** (teachers): a yearly subscription; the quantity is the number of licences. Teachers can still request licences and pay by invoice; you approve those on the Admin page.
 - **Student subscription** (students on their own): monthly or yearly.
 
-Without a licensed class or a subscription, only the first lesson of each section is open. Nothing is locked until `VITE_PAYMENTS=on`.
+Without a licensed class or a subscription, only the first lesson of each section is open, with the past paper questions for those lessons. The rest isn't hidden in the page: the database doesn't send it.
 
-How it works: the site calls the `billing` edge function to open Stripe Checkout or the Stripe customer portal. Stripe then calls the `stripe-webhook` edge function, which copies each subscription into `public.subscriptions`. Licence totals (`_licence_total`) and access (`my_access()`) are worked out from that table, so only Stripe can grant paid access.
+The paywall switch is in the database, so it applies to every copy of the site at once:
+```sql
+update site_settings set payments = true;   -- false opens everything to everyone
+```
+
+How it works: the site calls the `billing` edge function to open Stripe Checkout or the Stripe customer portal. Stripe then calls the `stripe-webhook` edge function, which copies each subscription into `public.subscriptions`. Licence totals (`_licence_total`), access (`my_access()`, `has_full_access()`) and the content each person is sent (`course_content()`) are worked out from that table, so only Stripe can grant paid access.
 
 Set-up:
 1. Run `supabase/migrations/20261017050000_payments.sql` in the SQL Editor.
@@ -123,7 +142,7 @@ Set-up:
 4. **Stripe → Developers → Webhooks → Add endpoint:** URL `https://cvijqlbtakistuikogoz.supabase.co/functions/v1/stripe-webhook`, events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`. Copy the signing secret (`whsec_…`).
 5. **Stripe → Settings → Billing → Customer portal:** turn on cancelling subscriptions, updating payment methods, viewing invoices, changing quantity, and switching between the monthly and yearly student prices.
 6. **Supabase → Edge Functions → Secrets:** add `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_LICENCE`, `STRIPE_PRICE_STUDENT_MONTHLY`, `STRIPE_PRICE_STUDENT_YEARLY` and `SITE_URL` (your site address, e.g. `https://bitsofbytes.co`).
-7. Set `VITE_PAYMENTS=on` in `.env.local` and in Vercel. Test with Stripe's card `4242 4242 4242 4242`, any future date and any CVC.
+7. Turn the paywall on with the SQL above. Test with Stripe's card `4242 4242 4242 4242`, any future date and any CVC.
 8. When it all works, repeat steps 2–4 and 6 in Stripe's live mode with the live keys and prices.
 
 The functions are in `supabase/functions/` and are deployed with JWT checking turned off (`supabase/config.toml`): `billing` checks the signed-in user itself, and the webhook checks Stripe's signature.

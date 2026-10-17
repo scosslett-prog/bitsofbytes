@@ -7,6 +7,7 @@ import { createStore } from './store.js';
 import { createSchool } from './school.js';
 import { applyDisplay, DEFAULTS as DISPLAY_DEFAULTS } from './display.js';
 import { createPay } from './pay.js';
+import { createContent, forgetContent } from './content.js';
 
 const ENV = import.meta.env || {};
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : String(Date.now());
@@ -16,7 +17,6 @@ async function backend() {
   if (ENV.VITE_SUPABASE_URL && ENV.VITE_SUPABASE_ANON_KEY) return supabaseBackend(ENV.VITE_SUPABASE_URL, ENV.VITE_SUPABASE_ANON_KEY);
   return devBackend();
 }
-const get = (path, as) => fetch(`${path}?v=${BUILD}`).then((r) => { if (!r.ok) throw new Error(`${path}: ${r.status}`); return r[as](); });
 const script = (src) => new Promise((ok, fail) => {
   const s = document.createElement('script');
   s.src = `${src}?v=${BUILD}`; s.onload = ok; s.onerror = () => fail(new Error('Could not load ' + src));
@@ -34,18 +34,13 @@ function saveStatus(s) {
 }
 
 async function boot() {
-  const [api, theory, exams] = await Promise.all([
-    backend().catch((e) => { console.error(e); return null; }),
-    get('/content/theory.html', 'text'),
-    get('/content/exams.json', 'json'),
-  ]);
-  document.getElementById('content').innerHTML = theory;
-  window.__EXDATA = exams;
+  const api = await backend().catch((e) => { console.error(e); return null; });
+  const content = createContent(api);
 
   const store = createStore(api);
   const school = createSchool(api, () => store.user);
   store.onStatus = saveStatus;
-  const pay = createPay(api, store, ENV);
+  const pay = createPay(api, store, content);
   window.BOB = {
     mode: api ? api.name : 'offline',
     store, school, SC: school.SC,
@@ -56,6 +51,9 @@ async function boot() {
     notice: () => { const n = store.notice; store.notice = ''; return n; },
     display: { apply: applyDisplay, defaults: DISPLAY_DEFAULTS },
     pay,
+    content,
+    /* after joining a class or paying: fetch what this person can now open, then redraw */
+    refreshContent: async () => { await content.load(); content.apply(); await pay.load(); },
     google: api && api.name === 'supabase' && ENV.VITE_GOOGLE_SIGN_IN === 'on',
   };
   await store.init(school);
@@ -71,6 +69,8 @@ async function boot() {
     try { await school.load(); } catch (e) { console.error(e); store.notice = "Your class details couldn't be loaded. Refresh the page to try again."; }
   }
   const land = await store.afterLoad();
+  await content.load();
+  content.apply();
   await pay.load();
   if (land) history.replaceState(null, '', location.pathname + location.search + '#' + land);
   for (const f of APP) await script('/app/' + f);
@@ -86,6 +86,7 @@ function afterCheckout(pay, school) {
     n++;
     await pay.load();
     if (JSON.stringify([pay.access, pay.licenceSubs]) !== before || n >= 12) {
+      try { await window.BOB.refreshContent(); } catch (e) { console.error(e); }
       clearInterval(t);
       try { await school.load(); } catch (e) {}
       if (typeof window.render === 'function') window.render();

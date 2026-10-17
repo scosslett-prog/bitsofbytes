@@ -243,7 +243,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-tc]");if(!
   if(a==="closeasg"){TV.newOpen=false;tRender();return}
   if(a==="copy"){try{navigator.clipboard.writeText(v);b.textContent="Copied"}catch(x){}return}
   if(a==="seen"){markSeen();tRender();return}
-  if(a==="accept"){if(!u)return;tDo(()=>SCH.A.acceptInvite(v),{ok:()=>{location.hash="todo"}});return}
+  if(a==="accept"){if(!u)return;tDo(()=>SCH.A.acceptInvite(v),{ok:()=>BOB.refreshContent().catch(()=>{}).then(()=>{location.hash="todo";render()})});return}
   if(a==="decline"){if(!u)return;tDo(()=>SCH.A.declineInvite(v));return}
   if(a==="asgstart"){const as=SC.asg[v];if(as)asgStartRun(as);return}
   if(a==="rev"){TV.rev={a:b.dataset.a,e:v};tRender();return}
@@ -274,7 +274,7 @@ document.addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.
 document.addEventListener("submit",e=>{const f=e.target,u=me();const err=(id,m)=>{const x=$("#"+id);if(x){x.textContent=m;x.hidden=!m}};
   if(f.id==="joinForm"){e.preventDefault();const code=$("#jcode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,"");
     if(!code)return err("joinerr","Enter the code your teacher gave you.");
-    tDo(()=>SCH.A.joinCode(code),{err:"joinerr",ok:()=>{location.hash="todo"}});return}
+    tDo(()=>SCH.A.joinCode(code),{err:"joinerr",ok:()=>BOB.refreshContent().catch(()=>{}).then(()=>{location.hash="todo";render()})});return}
   if(!isTeacher())return;
   if(f.id==="reqForm"){e.preventDefault();const n=Math.floor(+$("#reqn").value);if(!(n>=1&&n<=1000))return err("reqerr","Enter a number of licences from 1 to 1000.");
     TV.req=n;tDo(()=>SCH.A.requestLicences(n,$("#reqm").value.trim()),{err:"reqerr"});return}

@@ -45,6 +45,8 @@ function better(a, b) {
   return score(b) > score(a) ? b : a;
 }
 
+import { forgetContent } from './content.js';
+
 export function createStore(api) {
   const st = {
     api, user: null, S: null, notice: '',
@@ -250,6 +252,7 @@ export function createStore(api) {
   };
   st.signOut = async () => {
     try { await flush(); } catch (e) {}
+    await forgetContent();
     try { if (api) await api.auth.signOut(); } catch (e) {}
     history.replaceState(null, '', location.pathname + '#home');
     location.reload();
