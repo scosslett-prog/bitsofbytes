@@ -5,6 +5,7 @@ import { supabaseBackend } from './backend/supabase.js';
 import { devBackend } from './backend/dev.js';
 import { createStore } from './store.js';
 import { createSchool } from './school.js';
+import { applyDisplay, DEFAULTS as DISPLAY_DEFAULTS } from './display.js';
 
 const ENV = import.meta.env || {};
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : String(Date.now());
@@ -51,8 +52,10 @@ async function boot() {
     signOut: () => store.signOut(),
     auth: store.auth,
     notice: () => { const n = store.notice; store.notice = ''; return n; },
+    display: { apply: applyDisplay, defaults: DISPLAY_DEFAULTS },
   };
   await store.init(school);
+  applyDisplay(store.S.display);
   /* links from emails (confirm address, reset password) arrive with ?code=… or an error */
   const q = new URLSearchParams(location.search);
   if (q.has('error_description')) store.notice = q.get('error_description') + '. Try again, or ask for a new link.';

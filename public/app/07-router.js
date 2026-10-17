@@ -21,6 +21,7 @@ function render(){
   else if(r==="forgot")app.innerHTML=forgotPage();
   else if(r==="reset")app.innerHTML=resetPage();
   else if(r==="account")app.innerHTML=accountPage();
+  else if(r==="display")app.innerHTML=displayPage();
   else if(r==="admin"){app.innerHTML=adminPage();adminLoad()}
   else if(r==="pricing")app.innerHTML=pricing();
   else if(r==="teacher")app.innerHTML=teacherPage();
