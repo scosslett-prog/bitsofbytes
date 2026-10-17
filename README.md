@@ -47,11 +47,10 @@ The permission rules decide who can see and change each row:
 
 ```bash
 npm install
-cp .env.example .env.local     # points at the live Supabase project
 npm run dev                    # http://localhost:5173
 ```
 
-The site needs its database to start, because the lessons are stored there. Without `.env.local` it looks for the local test server below.
+The site connects to the live Supabase project by default; nothing needs setting up. (`.env.local` can point it somewhere else; see `.env.example`.) If the local test server below is running, it uses that instead.
 
 ### Tests (no Supabase needed)
 
@@ -68,7 +67,7 @@ python3 tests/smoke.py                                      # every page renders
 ## Deploying
 
 1. **Vercel or Netlify:** import this repository as a new project. Both detect the settings (`vercel.json`, `netlify.toml`): build command `npm run build`, output folder `dist`.
-2. **Environment variables:** in the project's settings, add `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` with the values in `.env.example`, then redeploy.
+2. **Environment variables:** none needed; the site has the live project's public address built in. Add `VITE_GOOGLE_SIGN_IN=on` once Google sign-in is set up.
 3. **Supabase → Authentication → URL Configuration:**
    - Set **Site URL** to the Vercel address (later, your own domain).
    - Under **Redirect URLs**, add `https://<your-domain>/**` and `http://localhost:5173/**`.

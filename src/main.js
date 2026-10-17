@@ -13,9 +13,15 @@ const ENV = import.meta.env || {};
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : String(Date.now());
 const APP = ['01-content.js', '02-core.js', '03-exams.js', '04-school.js', '05-account.js', '06-extra-activities.js', '07-router.js'];
 
+/* The live project's address and publishable key. Both are public (every visitor's browser has
+   them); what each account can do is enforced by the database. .env.local or the host's
+   environment variables can point the site somewhere else. */
+const LIVE = { url: 'https://cvijqlbtakistuikogoz.supabase.co', key: 'sb_publishable_yVwFuNNXXeM09nneiZZOig_MnaBvmDT' };
+
 async function backend() {
   if (ENV.VITE_SUPABASE_URL && ENV.VITE_SUPABASE_ANON_KEY) return supabaseBackend(ENV.VITE_SUPABASE_URL, ENV.VITE_SUPABASE_ANON_KEY);
-  return devBackend();
+  // the local test server (tests/devserver.py) when it's running, otherwise the live project
+  return (await devBackend()) || supabaseBackend(LIVE.url, LIVE.key);
 }
 const script = (src) => new Promise((ok, fail) => {
   const s = document.createElement('script');
