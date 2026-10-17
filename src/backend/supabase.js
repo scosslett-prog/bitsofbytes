@@ -30,6 +30,16 @@ export async function supabaseBackend(url, key) {
     async delete(table, o) { ok(await filter(sb.from(table).delete(), o)); },
     async rpc(fn, args = {}) { return ok(await sb.rpc(fn, args)); },
   };
+  /* call one of our edge functions (supabase/functions/*) */
+  async function fn(name, body) {
+    const { data, error } = await sb.functions.invoke(name, { body });
+    if (error) {
+      let m = error.message;
+      try { const j = await error.context.json(); if (j && j.error) m = j.error; } catch (e) {}
+      throw new Error(m);
+    }
+    return data;
+  }
 
   const who = (s) => (s && s.user ? { id: s.user.id, email: s.user.email } : null);
   const auth = {
@@ -45,5 +55,5 @@ export async function supabaseBackend(url, key) {
     async updatePassword(password) { ok(await sb.auth.updateUser({ password })); },
     onChange(cb) { sb.auth.onAuthStateChange((event, s) => cb(event, who(s))); },
   };
-  return { name: 'supabase', db, auth };
+  return { name: 'supabase', db, auth, fn };
 }

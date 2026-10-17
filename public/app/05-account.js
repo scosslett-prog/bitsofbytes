@@ -66,20 +66,47 @@ function accountPage(){const u=S.user;
    <button class="btn primary" type="submit">Save changes</button></form>
   ${!isTeacher()?`<div class="panel"><h3>Class</h3>${c?`<p style="margin:0">You're in <b>${esc(c.name)}</b> with ${esc(teacherOf(c).name)}.</p><button class="btn small" style="align-self:flex-start" data-acc="leave">Leave this class</button>`:`<p class="sub" style="margin:0">You're studying on your own. Join a class from your <a href="#dashboard">dashboard</a>.</p>`}</div>`:""}
   <div class="panel"><h3>Password</h3><form id="pwForm" class="tinline" novalidate><label for="pw1">New password<input type="password" id="pw1" autocomplete="new-password" minlength="8" required></label><button class="btn" type="submit">Change password</button></form><p class="err" id="pwerr" hidden></p><p class="msg ok" id="pwok" hidden></p></div>
+  ${planPanel()}
   <div class="panel"><h3>Display</h3><p class="sub" style="margin:0">Dyslexia-friendly reading, text size, light or dark theme and the site's colours.</p><a class="btn small" href="#display" style="align-self:flex-start">Display settings</a></div>
   <a class="btn" href="#signout" style="align-self:flex-start">Sign out</a></div>`;
 }
-function pricing(){
-  return `<div class="phead"><div class="eyebrow">Pricing</div><h1>Plans for students and schools</h1><p>Prices are still to be confirmed. This page sets out what each plan will include.</p></div>
+let PLAN="year";
+function pricing(){const P=BOB.pay,on=P.enabled;
+  if(on&&!P.prices)P.loadPrices().then(()=>{if(location.hash==="#pricing")$("#app").innerHTML=pricing()});
+  const pr=P.prices||{},m=P.money(pr.student_monthly),y=P.money(pr.student_yearly),lic=P.money(pr.licences);
+  const save=pr.student_monthly&&pr.student_yearly?Math.round((1-pr.student_yearly.amount/(pr.student_monthly.amount*12))*100):0;
+  const stu=S.user&&!isTeacher(),sub=P.access.sub,cls=P.access.class;
+  let act;
+  if(!on)act=`<button class="btn" disabled style="opacity:.6;cursor:not-allowed">Coming soon</button>`;
+  else if(!S.user)act=`<a class="btn primary" href="#register">Create an account to subscribe</a><p class="vfoot" style="margin:0">Already have one? <a href="#login">Sign in</a>, then come back here.</p>`;
+  else if(isTeacher())act=`<p class="vfoot" style="margin:0">Student subscriptions are for student accounts.</p>`;
+  else if(sub)act=`<p style="margin:0"><b>You're subscribed</b> (${sub.interval==="month"?"monthly":"yearly"}).</p><button class="btn" data-pay="portal">Manage subscription</button>`;
+  else if(cls)act=`<p style="margin:0"><b>You already have full access</b> through your school class.</p>`;
+  else act=`<div class="dseg plint" role="radiogroup" aria-label="Billing period">${[["month","Monthly",m],["year","Yearly",y]].map(([k,n,v])=>`<label class="dopt${PLAN===k?" on":""}"><input type="radio" name="plint" value="${k}"${PLAN===k?" checked":""}><span><b>${n}</b>${v?` · ${v}`:""}${k==="year"&&save>0?` <span class="chip sec">save ${save}%</span>`:""}</span></label>`).join("")}</div>
+    <button class="btn primary" data-pay="sub">Subscribe ${PLAN==="month"?"monthly":"yearly"}</button><p class="err" id="suberr" hidden></p>
+    <p class="vfoot" style="margin:0">Paid securely by card through Stripe. Cancel any time; you keep access until the end of the period you've paid for.</p>`;
+  return `<div class="phead"><div class="eyebrow">Pricing</div><h1>Plans for students and schools</h1><p>${on?"The first lesson in every section is free for everyone. Subscribe, or join a school class, to unlock the whole course.":"Prices are still to be confirmed. This page sets out what each plan will include."}</p></div>
   <div class="plans">
-   <div class="plan" style="${accent(1)}"><span class="eyebrow">For students</span><h2>Student subscription</h2><div class="price">Price TBC</div>
-    <ul><li>Every Paper 1 and Paper 2 topic page</li><li>Key vocabulary self-tests on every page</li><li>Personal progress dashboard</li></ul>
-    <button class="btn" disabled style="opacity:.6;cursor:not-allowed">Coming soon</button></div>
-   <div class="plan" style="${accent(2)}"><span class="eyebrow">For teachers</span><h2>Class licences</h2><div class="price">Price TBC</div>
+   <div class="plan" style="${accent(1)}"><span class="eyebrow">For students</span><h2>Student subscription</h2><div class="price">${on&&(m||y)?`${m?`${m}<small> / month</small>`:""}${m&&y?`<span class="sub" style="font-size:1rem"> or </span>`:""}${y?`${y}<small> / year</small>`:""}`:"Price TBC"}</div>
+    <ul><li>Every Paper 1 and Paper 2 lesson, with quick checks and activities</li><li>Hundreds of past paper questions, marked for you</li><li>Flash cards and key vocabulary tests</li><li>Personal progress dashboard</li></ul>
+    ${act}</div>
+   <div class="plan" style="${accent(2)}"><span class="eyebrow">For teachers</span><h2>Class licences</h2><div class="price">${on&&lic?`${lic}<small> per student / year</small>`:"Price TBC"}</div>
     <ul><li>Licences for each student in your classes</li><li>Add students with a join code or email invitation</li><li>Class progress by lesson and syllabus section</li><li>Set lesson and exam-question assignments with due dates</li><li>See scores and students' answers, and adjust marks</li></ul>
-    <a class="btn primary" href="${isTeacher()?"#teacher":"#register"}">${isTeacher()?"Go to the teacher area":"Create a teacher account"}</a></div>
+    <a class="btn primary" href="${isTeacher()?"#teacher":"#register"}">${isTeacher()?(on?"Buy licences in the teacher area":"Go to the teacher area"):"Create a teacher account"}</a>
+    ${on?`<p class="vfoot" style="margin:0">Schools can also pay by invoice or purchase order: request licences from the teacher area.</p>`:""}</div>
   </div>`;
 }
+document.addEventListener("change",e=>{if(e.target.name!=="plint")return;PLAN=e.target.value;$("#app").innerHTML=pricing()});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-pay="sub"]');if(!b)return;b.disabled=true;b.textContent="Opening checkout…";
+  BOB.pay.checkout(PLAN==="month"?"student_monthly":"student_yearly").catch(x=>{b.disabled=false;b.textContent="Subscribe";const m=$("#suberr");if(m){m.textContent=x.message;m.hidden=false}})});
+/* the account page's plan panel for students */
+function planPanel(){const P=BOB.pay;if(!P.enabled||!S.user||isTeacher())return "";const sub=P.access.sub;
+  const body=sub?`<p style="margin:0"><b>Student subscription</b> · ${sub.interval==="month"?"monthly":"yearly"}${sub.status==="past_due"?` · <span class="tdlate">payment overdue</span>`:""}</p>
+     <p class="sub" style="margin:0">${sub.cancel_at_period_end?"Ends":"Renews"} ${sub.current_period_end?new Date(sub.current_period_end).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}):""}</p>
+     <button class="btn small" data-pay="portal" style="align-self:flex-start">Manage subscription</button>`
+    :P.access.class?`<p style="margin:0">You have full access through your school class.</p>`
+    :`<p style="margin:0">You're on the free plan: the first lesson in each section.</p><a class="btn primary small" href="#pricing" style="align-self:flex-start">See plans</a>`;
+  return `<div class="panel"><h3>Your plan</h3>${body}</div>`}
 
 /* ---------- admin: approve licence requests, give licences ---------- */
 let ADM={err:"",ok:""};

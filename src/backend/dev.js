@@ -37,5 +37,6 @@ export async function devBackend() {
     async updatePassword(password) { await call('password', { password }); },
     onChange() {},
   };
-  return { name: 'dev', db, auth };
+  const fn = async () => { throw new Error('Payments only work on the live site.'); };
+  return { name: 'dev', db, auth, fn };
 }

@@ -6,6 +6,7 @@ import { devBackend } from './backend/dev.js';
 import { createStore } from './store.js';
 import { createSchool } from './school.js';
 import { applyDisplay, DEFAULTS as DISPLAY_DEFAULTS } from './display.js';
+import { createPay } from './pay.js';
 
 const ENV = import.meta.env || {};
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : String(Date.now());
@@ -44,6 +45,7 @@ async function boot() {
   const store = createStore(api);
   const school = createSchool(api, () => store.user);
   store.onStatus = saveStatus;
+  const pay = createPay(api, store, ENV);
   window.BOB = {
     mode: api ? api.name : 'offline',
     store, school, SC: school.SC,
@@ -53,6 +55,7 @@ async function boot() {
     auth: store.auth,
     notice: () => { const n = store.notice; store.notice = ''; return n; },
     display: { apply: applyDisplay, defaults: DISPLAY_DEFAULTS },
+    pay,
     google: api && api.name === 'supabase' && ENV.VITE_GOOGLE_SIGN_IN === 'on',
   };
   await store.init(school);
@@ -60,14 +63,34 @@ async function boot() {
   /* links from emails (confirm address, reset password) arrive with ?code=… or an error */
   const q = new URLSearchParams(location.search);
   if (q.has('error_description')) store.notice = q.get('error_description') + '. Try again, or ask for a new link.';
-  if (q.has('code') || q.has('error') || q.has('error_description')) history.replaceState(null, '', location.pathname + location.hash);
+  const checkout = q.get('checkout');
+  if (checkout === 'success') store.notice = 'Thank you! Your payment went through. It can take a few seconds to appear here.';
+  if (checkout === 'cancelled') store.notice = "Checkout was cancelled. You haven't been charged.";
+  if (q.has('code') || q.has('error') || q.has('error_description') || checkout) history.replaceState(null, '', location.pathname + location.hash);
   if (store.user) {
     try { await school.load(); } catch (e) { console.error(e); store.notice = "Your class details couldn't be loaded. Refresh the page to try again."; }
   }
   const land = await store.afterLoad();
+  await pay.load();
   if (land) history.replaceState(null, '', location.pathname + location.search + '#' + land);
   for (const f of APP) await script('/app/' + f);
   document.getElementById('boot')?.remove();
+  if (checkout === 'success') afterCheckout(pay, school);
+}
+
+/* Stripe tells the database about a new payment a moment after checkout; look again for a while */
+function afterCheckout(pay, school) {
+  const before = JSON.stringify([pay.access, pay.licenceSubs]);
+  let n = 0;
+  const t = setInterval(async () => {
+    n++;
+    await pay.load();
+    if (JSON.stringify([pay.access, pay.licenceSubs]) !== before || n >= 12) {
+      clearInterval(t);
+      try { await school.load(); } catch (e) {}
+      if (typeof window.render === 'function') window.render();
+    }
+  }, 2500);
 }
 
 boot().catch((e) => {

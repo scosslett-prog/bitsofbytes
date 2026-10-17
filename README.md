@@ -102,3 +102,28 @@ How it behaves:
 - People choose Student or Teacher (and can type a class code) before pressing Continue with Google; those choices are applied when they come back.
 - Signing in with Google using the same email as an existing account signs into that account.
 - School Google accounts (Google Workspace for Education) may need the school's IT admin to allow the app; for students under 18 the admin has to mark it as trusted.
+
+## Payments with Stripe
+
+Two ways to pay, both yearly or monthly subscriptions handled by Stripe:
+- **Class licences** (teachers): a yearly subscription; the quantity is the number of licences. Teachers can still request licences and pay by invoice; you approve those on the Admin page.
+- **Student subscription** (students on their own): monthly or yearly.
+
+Without a licensed class or a subscription, only the first lesson of each section is open. Nothing is locked until `VITE_PAYMENTS=on`.
+
+How it works: the site calls the `billing` edge function to open Stripe Checkout or the Stripe customer portal. Stripe then calls the `stripe-webhook` edge function, which copies each subscription into `public.subscriptions`. Licence totals (`_licence_total`) and access (`my_access()`) are worked out from that table, so only Stripe can grant paid access.
+
+Set-up:
+1. Run `supabase/migrations/20261017050000_payments.sql` in the SQL Editor.
+2. **Stripe → Product catalogue** (start in test mode): create
+   - "Class licence": recurring, yearly, per unit, in GBP;
+   - "Student subscription": two recurring prices in GBP, one monthly and one yearly.
+   Copy each price ID (`price_…`).
+3. **Stripe → Developers → API keys:** copy the secret key (`sk_test_…` in test mode).
+4. **Stripe → Developers → Webhooks → Add endpoint:** URL `https://cvijqlbtakistuikogoz.supabase.co/functions/v1/stripe-webhook`, events `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `customer.subscription.paused`, `customer.subscription.resumed`. Copy the signing secret (`whsec_…`).
+5. **Stripe → Settings → Billing → Customer portal:** turn on cancelling subscriptions, updating payment methods, viewing invoices, changing quantity, and switching between the monthly and yearly student prices.
+6. **Supabase → Edge Functions → Secrets:** add `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_LICENCE`, `STRIPE_PRICE_STUDENT_MONTHLY`, `STRIPE_PRICE_STUDENT_YEARLY` and `SITE_URL` (your site address, e.g. `https://bitsofbytes.co`).
+7. Set `VITE_PAYMENTS=on` in `.env.local` and in Vercel. Test with Stripe's card `4242 4242 4242 4242`, any future date and any CVC.
+8. When it all works, repeat steps 2–4 and 6 in Stripe's live mode with the live keys and prices.
+
+The functions are in `supabase/functions/` and are deployed with JWT checking turned off (`supabase/config.toml`): `billing` checks the signed-in user itself, and the webhook checks Stripe's signature.

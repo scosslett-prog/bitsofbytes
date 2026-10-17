@@ -39,6 +39,7 @@ RPC = {  # name: (kind, [(arg, type)])
     'new_join_code': ('scalar', [('c', 'uuid')]), 'decide_licence_request': ('void', [('r', 'uuid'), ('approve', 'boolean')]),
     'licence_counts': ('set', [('t', 'uuid')]),
     'claim_teacher': ('scalar', []),
+    'my_access': ('scalar', []),
     'reassign': ('scalar', [('a', 'uuid'), ('students', 'uuid[]'), ('due', 'date'), ('note', 'text'), ('prev', 'jsonb')]),
 }
 def argsql(a, ty):

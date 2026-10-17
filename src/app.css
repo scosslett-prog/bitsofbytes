@@ -181,3 +181,12 @@ footer .flink{color:var(--muted)}
 .gbtn:hover{background:var(--sunk)}
 .gor{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.85rem}
 .gor::before,.gor::after{content:"";flex:1;border-top:1px solid var(--line)}
+/* payments */
+.plint{margin-bottom:4px}
+.plint .dopt{flex:1 1 140px}
+.plan .dopt input{position:absolute;opacity:0;width:1px;height:1px}
+.treqd{border-top:1px solid var(--line);padding-top:10px}
+.treqd>summary{cursor:pointer;font-weight:700;color:var(--muted)}
+.treqd[open]>summary{margin-bottom:10px}
+.tsubs li{align-items:baseline}
+.lockpage .btn{white-space:nowrap}

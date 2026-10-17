@@ -1,0 +1,10 @@
+# Used by the Supabase CLI (supabase functions deploy). The project is cvijqlbtakistuikogoz.
+project_id = "cvijqlbtakistuikogoz"
+
+# billing checks the signed-in user itself (its "prices" action is public)
+[functions.billing]
+verify_jwt = false
+
+# Stripe can't sign in; requests are checked with the webhook signing secret
+[functions.stripe-webhook]
+verify_jwt = false

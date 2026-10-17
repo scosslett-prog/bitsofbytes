@@ -89,12 +89,13 @@ function teacherPage(){const u=me();
    <section class="panel tlic" style="${accent(2)}"><h3>Licences</h3>
     <div class="tlstats"><div><b>${L.bought}</b><span>total</span></div><div><b>${L.used}</b><span>in use</span></div><div><b>${L.free}</b><span>free</span></div></div>
     <div class="bar"><i style="width:${L.bought?Math.min(100,L.used/L.bought*100):0}%"></i></div>
+    ${licBilling()}
     ${pend.length?`<div class="treq"><span class="sub">Waiting for approval</span><ul class="tlist">${pend.map(r=>`<li><span>${plural(r.n,"licence")}</span><span class="sub">requested ${dshort(r.date)}</span></li>`).join("")}</ul></div>`:""}
-    <form id="reqForm" class="tbuy"><label for="reqn">Number of licences<input type="number" id="reqn" min="1" max="1000" value="${TV.req}" inputmode="numeric"></label>
+    ${BOB.pay.enabled?`<details class="treqd"><summary>Paying by invoice or purchase order?</summary>`:""}<form id="reqForm" class="tbuy"><label for="reqn">Number of licences<input type="number" id="reqn" min="1" max="1000" value="${TV.req}" inputmode="numeric"></label>
      <label for="reqm">Message <span class="sub">(optional)</span><textarea id="reqm" rows="2" maxlength="300" placeholder="e.g. School name, purchase order number"></textarea></label>
      <button class="btn primary" type="submit">Request licences</button>
-     <p class="vfoot" style="margin:0">One licence gives one student full access for the school year. Bits of Bytes adds the licences once your request is approved. Online payment is coming soon.</p></form>
-    <p class="err" id="reqerr" hidden></p>
+     <p class="vfoot" style="margin:0">${BOB.pay.enabled?"Request licences and we'll send you an invoice. They're added to your account once it's paid.":"One licence gives one student full access for the school year. Bits of Bytes adds the licences once your request is approved. Online payment is coming soon."}</p></form>
+    <p class="err" id="reqerr" hidden></p>${BOB.pay.enabled?"</details>":""}
     ${L.hist.length||L.req.some(r=>r.status!=="pending")?`<details class="thist"><summary>Licence history</summary><ul>${[
       ...L.hist.map(h=>({d:h.date,t:`${plural(h.n,"licence")} added`})),
       ...L.req.filter(r=>r.status==="declined").map(r=>({d:r.date,t:`Request for ${plural(r.n,"licence")} declined`}))].sort((a,b)=>b.d-a.d)
@@ -497,16 +498,26 @@ function examAsgInsights(a,st){const qs=a.qids.map(id=>EXQ.find(q=>q.id===id)).f
 
 /* ---------- lesson access: a teacher can choose which lessons their class may open ---------- */
 /* open unless the student's class restricts lessons; lessons in an assignment are always open */
-function lessonOpen(l){const id=typeof l==="string"?l:l.id;if(!S.user||isTeacher())return true;const c=myClass();if(!c||!c.restrict)return true;
+/* without full access (a licensed class, a subscription, or a staff account) only the first lesson of each section is open */
+const paidOpen=l=>BOB.pay.full()||l.n===1;
+function lessonOpen(l){const L=typeof l==="string"?ALL_LESSONS.find(x=>x.id===l):l;if(!L)return true;const id=L.id;
+  if(!paidOpen(L))return false;
+  if(!S.user||isTeacher())return true;const c=myClass();if(!c||!c.restrict)return true;
   return c.released.includes(id)||myAsg().some(a=>a.kind==="lessons"&&a.lessons.includes(id))}
-function lockedPage(l){const t=l.topic,c=myClass(),next=t.lessons.find(x=>x!==l&&lessonOpen(x));
+function paywallPage(l){const t=l.topic,first=t.lessons[0],stu=S.user&&!isTeacher();
+  return `<div class="crumbs"><a href="#paper-${t.ch.paper}">Paper ${t.ch.paper}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
+  <div class="formwrap lockpage"><div class="lockicon" aria-hidden="true">🔒</div><div><div class="eyebrow">${t.code} · Lesson ${l.n}</div><h1 style="margin-top:8px">${esc(l.title)}</h1></div>
+   <p>This lesson is part of the full course. The first lesson in every section is free; subscribe to unlock all ${ALL_LESSONS.length} lessons with their quick checks, activities and past paper questions.</p>
+   <div class="tbb"><a class="btn primary" href="#pricing">See plans</a><a class="btn" href="#l-${first.id}">Try the free lesson: ${esc(first.title)}</a></div>
+   <p class="sub" style="margin:0">${stu?`In a school class? Enter your teacher's join code on your <a href="#dashboard">dashboard</a> for full access.`:S.user?"":`Already subscribed or in a school class? <a href="#login">Sign in</a>.`}</p></div>`}
+function lockedPage(l){if(!paidOpen(l))return paywallPage(l);const t=l.topic,c=myClass(),next=t.lessons.find(x=>x!==l&&lessonOpen(x));
   return `<div class="crumbs"><a href="#paper-${t.ch.paper}">Paper ${t.ch.paper}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
   <div class="formwrap lockpage"><div class="lockicon" aria-hidden="true">🔒</div><div><div class="eyebrow">${t.code} · Lesson ${l.n}</div><h1 style="margin-top:8px">${esc(l.title)}</h1></div>
    <p>${esc(teacherOf(c).name)} hasn't opened this lesson for ${esc(c.name)} yet. It will unlock here when they do.</p>
    <div class="tbb">${next?`<a class="btn primary" href="#l-${next.id}">Go to ${esc(next.title)}</a>`:""}<a class="btn" href="#t-${t.id}">Back to ${t.code}</a>${myAsg().length?`<a class="btn" href="#todo">My to-do list</a>`:""}</div></div>`}
 /* mark links to locked lessons anywhere on the page */
-function markLocked(root){if(!S.user||isTeacher()||!myClass()||!myClass().restrict)return;
-  root.querySelectorAll('a[href^="#l-"]').forEach(a=>{const l=ALL_LESSONS.find(x=>"#l-"+x.id===a.getAttribute("href"));if(l&&!lessonOpen(l)){a.classList.add("lklock");a.title="Your teacher hasn't opened this lesson yet"}})}
+function markLocked(root){if(BOB.pay.full()&&(!S.user||isTeacher()||!myClass()||!myClass().restrict))return;
+  root.querySelectorAll('a[href^="#l-"]').forEach(a=>{const l=ALL_LESSONS.find(x=>"#l-"+x.id===a.getAttribute("href"));if(l&&!lessonOpen(l)){a.classList.add("lklock");a.title=paidOpen(l)?"Your teacher hasn't opened this lesson yet":"Part of the full course"}})}
 function classLessons(c){const R=new Set(c.released),AL=new Set(classAsg(c).filter(a=>a.kind==="lessons").flatMap(a=>a.lessons)),N=ALL_LESSONS.length;
   const isOpen=l=>R.has(l.id)||AL.has(l.id),open=ALL_LESSONS.filter(isOpen).length;
   const mode=`<div class="tkind" role="radiogroup" aria-label="Lesson access">${[["all","All lessons open","Students work through any lesson at their own pace"],["released","Only lessons I open","Students can open only the lessons you choose, plus any lesson in an assignment"]].map(([k,n,d])=>{const on=(k==="released")===c.restrict;
@@ -581,3 +592,21 @@ document.addEventListener("submit",e=>{if(e.target.id!=="reForm"||!TV.reas||!isT
   if(!due||due<todayISO()){x.textContent="Choose a due date from today onwards.";x.hidden=false;return}
   const prev={};ids.forEach(id=>{const r=asgStatus(a,id);if(r.started||r.complete)prev[id]=r.score});
   tDo(()=>SCH.A.reassign(a.id,ids,due,note,prev),{err:"reerr",ok:()=>{TV.reas=null;TV.sel[a.id]=[];TV.open[a.id]=true}})});
+
+/* ---------- paying for licences (teachers) ---------- */
+const fmtD=t=>new Date(t).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"});
+function licBilling(){const P=BOB.pay;if(!P.enabled)return "";
+  if(!P.prices){P.loadPrices().then(()=>{if(location.hash==="#teacher")tRender()});}
+  const pr=P.prices&&P.prices.licences,each=pr?P.money(pr):null;
+  const subs=P.licenceSubs.map(x=>`<li><span><b>${plural(x.quantity,"licence")}</b> · yearly subscription</span><span class="sub">${x.status==="past_due"?"payment overdue · ":""}${x.cancel_at_period_end?"ends":"renews"} ${x.current_period_end?fmtD(x.current_period_end):""}</span></li>`).join("");
+  return `${subs?`<ul class="tlist tsubs">${subs}</ul><button class="btn small" data-pay="portal" style="align-self:flex-start">Manage billing</button><p class="vfoot" style="margin:0">Change the number of licences, update your card, download invoices or cancel.</p>`:""}
+   <form id="buyForm" class="tbuy"><label for="buyn">${subs?"Buy more licences":"Number of licences"}<input type="number" id="buyn" min="1" max="1000" value="${TV.buy||10}" inputmode="numeric"></label>
+    <button class="btn primary" type="submit">Buy licences</button>
+    <p class="vfoot" style="margin:0">${each?`${each} per student per year. `:""}Paid by card through Stripe and renewed each year; you can change the number or cancel at any time. One licence gives one student full access.</p></form>
+   <p class="err" id="buyerr" hidden></p>`}
+document.addEventListener("submit",e=>{if(e.target.id!=="buyForm")return;e.preventDefault();const n=Math.floor(+$("#buyn").value),x=$("#buyerr");
+  if(!(n>=1&&n<=1000)){x.textContent="Enter a number of licences from 1 to 1000.";x.hidden=false;return}TV.buy=n;
+  const b=e.target.querySelector("button");b.disabled=true;b.textContent="Opening checkout…";
+  BOB.pay.checkout("licences",n).catch(err=>{b.disabled=false;b.textContent="Buy licences";x.textContent=err.message;x.hidden=false})});
+document.addEventListener("click",e=>{const b=e.target.closest('[data-pay="portal"]');if(!b)return;b.disabled=true;
+  BOB.pay.portal().catch(err=>{b.disabled=false;alert(err.message)})});
