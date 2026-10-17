@@ -155,13 +155,13 @@ function classAssign(c){
   const list=as.length?as.map(a=>{if(a.kind==="exam")return examAsgCard(a,studs);const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),nd=st.filter(x=>x.r.complete).length,
       sc=st.length?Math.round(st.reduce((t,x)=>t+x.r.score,0)/st.length):0,ls=a.lessons.map(id=>ALL_LESSONS.find(l=>l.id===id)).filter(Boolean);
     return `<details class="panel tasg"${TV.open[a.id]?" open":""} data-topen="${a.id}"><summary><div><b>${esc(a.title)}</b><span class="sub">${dueText(a.due)} · ${plural(ls.length,"lesson")} · ${a.mode==="qc"?"quick checks only":"complete each lesson"}</span></div>
-      <div class="tasum"><span class="mono">${nd}/${st.length}</span><span class="sub">completed</span></div></summary>
+      <div class="tasum"><span class="mono">${nd}/${st.length}</span><span class="sub">completed</span></div></summary><div class="tasgb">
      ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
      <div class="tchips">${ls.map(l=>`<a class="chip none" href="#l-${l.id}">${l.topic.code} · ${esc(l.title)}</a>`).join("")}</div>
      ${st.length?`<div class="tscroll"><table class="table ttab"><thead><tr><th>Student</th><th>Status</th><th>Score</th>${ls.map((l,i)=>`<th title="${esc(l.title)}">L${i+1}</th>`).join("")}</tr></thead><tbody>
       ${st.map(({s,r})=>`<tr><td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?r.score+"%":"–"}</td>${r.per.map(x=>`<td class="tck" title="${esc(x.l.title)}: ${x.ok?"complete":x.started?x.pct+"%":"not started"}">${x.ok?`<span class="tick">✓</span>`:x.started?`<span class="sub">${x.pct}%</span>`:`<span class="sub">·</span>`}</td>`).join("")}</tr>`).join("")}</tbody></table></div>
       <p class="sub" style="margin:0">Class average score ${sc}%. Score is ${a.mode==="qc"?"the best quick check result":"completion across all the lesson's tasks"}, averaged over the lessons.</p>`:`<p class="sub">No students in this class yet.</p>`}
-     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></details>`}).join(""):`<p class="sub">No assignments yet.</p>`;
+     <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></div></details>`}).join(""):`<p class="sub">No assignments yet.</p>`;
   return `<div class="tasgrid"><section class="panel tnew"><h3>New assignment</h3>
    <form id="asgForm" class="tform">
     <label for="atitle">Title<input type="text" id="atitle" maxlength="80" value="${esc(F.title)}" placeholder="e.g. Buses and the fetch–decode–execute cycle"></label>
@@ -274,7 +274,7 @@ document.addEventListener("submit",e=>{const f=e.target,u=me();const err=(id,m)=
       row={kind:"exam",cls:c.id,title:F.title,note:F.note,qids,due:F.due,spec:{papers:F.papers,topics:F.topics,years:F.years,big:F.big,n:F.n}}}
     else{if(!F.lessons.length)return err("asgerr","Choose at least one lesson.");
       row={kind:"lessons",cls:c.id,title:F.title,note:F.note,lessons:F.lessons.slice(),mode:F.mode,due:F.due}}
-    let id=null;tDo(async()=>{id=await SCH.A.createAssignment(row)},{err:"asgerr",ok:()=>{TV.lastKind=F.kind;TV.form=null;TV.open={[id]:true}}});return}
+    let id=null;tDo(async()=>{id=await SCH.A.createAssignment(row)},{err:"asgerr",ok:()=>{TV.lastKind=F.kind;TV.form=null}});return}
 });
 document.addEventListener("change",e=>{if(e.target.name==="role"){const l=$("#rcodel");if(l)l.hidden=e.target.value!=="student"}});
 
@@ -305,14 +305,14 @@ function asgExamStatus(a,id){const r=subOf(a.id,id),tot=a.qids.reduce((t,q)=>t+(
 function examAsgCard(a,studs){const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),nd=st.filter(x=>x.r.complete).length,qs=a.qids.map(id=>EXQ.find(q=>q.id===id)).filter(Boolean),tot=qs.reduce((t,q)=>t+q.m,0);
   const fin=st.filter(x=>x.r.complete),avg=fin.length?Math.round(fin.reduce((t,x)=>t+x.r.score,0)/fin.length):null,sp=a.spec||{};
   return `<details class="panel tasg"${TV.open[a.id]?" open":""} data-topen="${a.id}"><summary><div><b>${esc(a.title)}</b><span class="sub">${dueText(a.due)} · ${plural(qs.length,"exam question")} · ${tot} marks</span></div>
-    <div class="tasum"><span class="mono">${nd}/${st.length}</span><span class="sub">completed</span></div></summary>
+    <div class="tasum"><span class="mono">${nd}/${st.length}</span><span class="sub">completed</span></div></summary><div class="tasgb">
    ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
    <p class="sub" style="margin:0">Paper ${(sp.papers||[]).join(" and ")} · ${(sp.years||[]).join(", ")}${sp.big?" · includes 15-mark questions":""} · sections ${(sp.topics||[]).map(id=>(TOPICS.find(t=>t.id===id)||{code:id}).code).join(", ")}</p>
    ${st.length?`<div class="tscroll"><table class="table ttab"><thead><tr><th>Student</th><th>Status</th><th>Score</th>${qs.map((q,i)=>`<th title="${esc(exX(q.x).s)} ${exX(q.x).code} Q${q.n} · ${q.m} marks">Q${i+1}</th>`).join("")}<th></th></tr></thead><tbody>
     ${st.map(({s,r})=>`<tr><td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?`${r.marks}/${r.total} <span class="sub">${r.score}%</span>`:"–"}</td>${r.per.map(x=>`<td class="tck"><span class="${x.m==null?"sub":x.m===x.q.m?"tgood":x.m?"tpart":"tbad"}"${x.t?' title="Mark changed by you"':""}>${x.m==null?"·":x.m}${x.t?"<sup>*</sup>":""}</span></td>`).join("")}<td>${r.started||r.complete?`<button class="btn small" data-tc="rev" data-a="${a.id}" data-v="${s.id}">View answers</button>`:""}</td></tr>`).join("")}
     <tr class="tqm"><td colspan="3" class="sub">Marks available</td>${qs.map(q=>`<td class="tck sub">${q.m}</td>`).join("")}<td></td></tr></tbody></table></div>
     <p class="sub" style="margin:0">${avg==null?"No one has finished yet.":`Average for students who have finished: ${avg}%.`} Answers that the computer can't mark are self-marked by the student against the mark scheme, so check them under View answers, where you can change any mark. * shows a mark you've changed.</p>`:`<p class="sub">No students in this class yet.</p>`}
-   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></details>`}
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></div></details>`}
 function examTodoCard(a,r,c){const u=me();
   return `<article class="panel todo ts-${r.key}"><div class="trow"><div><h3>${esc(a.title)}</h3><span class="sub">${esc(teacherOf(c).name)} · set ${new Date(a.set).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span></div>${stChip(r)}</div>
    <p class="tdue ${r.late?"late":""}">${r.complete?`Handed in ${r.date?new Date(r.date).toLocaleDateString("en-GB",{day:"numeric",month:"short"}):""}`:dueText(a.due)}</p>
@@ -359,7 +359,6 @@ const _exRecord0=exRecord;exRecord=function(q,mark){_exRecord0(q,mark);
 let EXQUIT=false;document.addEventListener("click",e=>{if(e.target.closest('#exw [data-ex="quit"]'))EXQUIT=true},true);
 const _exDraw0=exDraw;exDraw=function(){_exDraw0();const el=$("#exw");if(!el||!EX.asg)return;const a=SC.asg[EX.asg];if(!a){EX.asg=null;return}
   const r=S.asgAns[a.id];
-  if(EX.mode==="run")el.insertAdjacentHTML("afterbegin",`<div class="tbanner tasgbar"><span>📌 Assignment: <b>${esc(a.title)}</b> · ${dueText(a.due)}</span><span class="sub">Answers save as you go</span></div>`);
   if(EX.mode==="done"){if(!EXQUIT&&!r.done){r.done=true;r.date=Date.now();save()}EXQUIT=false;const st=asgStatus(a,me().id);
     el.innerHTML=`<div class="panel" style="${accent(1)}"><span class="eyebrow">Assignment · ${esc(a.title)}</span><h2 style="margin:0">${st.complete?"Handed in":"Progress saved"}</h2>
      ${st.complete?`<div class="tscore"><b>${st.marks}/${st.total}</b><span>${st.score}%</span></div><p style="margin:0">Your answers and marks have been sent to your teacher.</p>`:`<p style="margin:0">You've answered ${st.nOk} of ${st.per.length} questions. Carry on from your to-do list when you're ready; it's handed in when you finish the last question.</p>`}
@@ -376,3 +375,12 @@ function setTMark(aid,id,qid,v){const A=SC.tmarks[aid]=SC.tmarks[aid]||{},M=A[id
 document.addEventListener("change",e=>{const t=e.target;if(!t.matches("[data-tm]")||!TV.rev||!isTeacher())return;const a=SC.asg[TV.rev.a],q=EXQ.find(x=>x.id===t.dataset.tm);
   const A=subOf(a.id,TV.rev.e),orig=A&&A.ans&&A.ans[q.id]?A.ans[q.id].m:0,v=+t.value;setTMark(a.id,TV.rev.e,q.id,v===orig?null:v)});
 document.addEventListener("click",e=>{const b=e.target.closest('[data-tc="tmreset"]');if(!b||!TV.rev||!isTeacher())return;setTMark(TV.rev.a,TV.rev.e,b.dataset.v,null)});
+
+/* while doing an exam assignment the page shows only the assignment's questions:
+   no paper choice, practise/insights tabs, stats or topic picker to lead away from it */
+const _exPage0=exPage;exPage=function(){const a=EX.asg&&SC.asg[EX.asg];if(!a)return _exPage0();
+  return `<div class="crumbs"><a href="#todo" data-tc="asgleave">To-do</a><span>/</span><span>${esc(a.title)}</span></div>
+  <div class="lhead"><div class="eyebrow">Assignment · ${dueText(a.due)} · answers save as you go</div><h1>${esc(a.title)}</h1>${a.note?`<p class="tnote" style="max-width:64ch">${esc(a.note)}</p>`:""}</div>
+  <div class="fcpage exfull"><div class="fcpanel"><h2 id="exh2"></h2><div class="exrun" id="exw"></div></div></div>`};
+/* leaving the exam page mid-assignment ends the assignment view; Continue on the to-do list picks it up again */
+addEventListener("hashchange",()=>{if(EX.asg&&location.hash!=="#exams"){EX.asg=null;EX.mode="setup"}});

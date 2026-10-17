@@ -11,3 +11,8 @@ body.tbusy [data-tc],body.tbusy [data-adm],body.tbusy form button[type=submit]{p
 .formwrap .panel h3{margin:0}
 .formwrap input:disabled{opacity:.7}
 [hidden]{display:none!important}
+.tasgb{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+.tasg>summary .tasum{margin-left:auto}
+.tasg>summary::after{content:"";flex:none;width:9px;height:9px;margin:0 4px 4px 6px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);transition:transform .15s}
+.tasg[open]>summary::after{transform:rotate(-135deg);margin-bottom:-4px}
+.tasg>summary:hover b{text-decoration:underline}
