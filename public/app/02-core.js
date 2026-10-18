@@ -44,6 +44,7 @@ function home(){
    <div>
     <div class="eyebrow">Cambridge IGCSE Computer Science · 0478</div>
     <h1 style="margin-top:10px">Every syllabus point, one byte at a time.</h1>
+    <p class="hcover"><span class="hcbadge" aria-hidden="true">✓</span><span><b>Full coverage of the Cambridge IGCSE Computer Science (0478) syllabus</b> for exams in 2026, 2027 and 2028: every section of Paper 1 and Paper 2.</span></p>
     <p class="lead">Notes, key vocabulary and self-tests for every topic in Paper 1 and Paper 2, with a dashboard that shows students and teachers exactly what is secure and what needs work.</p>
     <div class="ctas">${homeCtas()}</div>
    </div>
@@ -53,6 +54,7 @@ function home(){
     <p class="cap">64 + 32 + 2 = 98 in denary, <span class="mono">62</span> in hex. That's topic 1.1 and 1.2 in one register.</p>
    </div>
   </section>
+  ${homeCoverage()}
   <section class="papers">${[1,2].map(p=>{const P=PAPERS[p],cs=CH.filter(c=>c.paper===p);return `<a class="paper p${p}" href="#paper-${p}">
     <span class="tag">${P.code}</span><h2>${P.title}</h2><p style="color:var(--muted)">${P.blurb}</p>
     <ol start="${cs[0].n}">${cs.map(c=>`<li>${c.title}</li>`).join("")}</ol>
@@ -63,10 +65,7 @@ function home(){
     <div class="feat"><span class="k">Test</span><h3>Key vocabulary self-tests</h3><p>Every page has an interactive vocabulary box. Read the terms, then test yourself and get a score.</p></div>
     <div class="feat"><span class="k">Track</span><h3>A dashboard that is your home screen</h3><p>Scores feed straight into your dashboard so you can see which topics are secure and which to revisit.</p></div>
    </div></section>
-  <section class="section"><div class="band">
-   <div><div class="eyebrow">For teachers</div><h2 style="margin-top:8px">Licences for your whole class</h2><p style="color:var(--muted);margin-top:8px">Buy licences, hand them out to a class, and see every student's progress across the 0478 syllabus in one place.</p></div>
-   <div><ul><li>Assign licences to students in your class</li><li>Class overview of vocabulary scores by topic</li><li>Spot the syllabus points the class finds hardest</li></ul><div style="margin-top:14px"><a class="btn" href="#pricing">See pricing</a></div></div>
-  </div></section>`;
+  ${homeAudience()}`;
 }
 
 function paper(p){
@@ -3932,5 +3931,37 @@ function dashboard(){
    <div class="panel" style="grid-column:span 2"><h3>Revisit</h3>${review.length?review.map(t=>`<div class="pbar"><div class="row"><a href="#t-${t.id}" style="text-decoration:none;font-weight:700">${t.code} ${t.title}</a><span class="mono">${secStatus(t).pct}%</span></div><div class="bar" style="${accent(t.ch.paper)}"><i style="width:${secStatus(t).pct}%"></i></div></div>`).join(""):`<p class="sub">Sections you've started that are under 80% will appear here.</p>`}</div>
   </div>`;
 }
+
+/* home page: what the course covers, and what students and teachers get */
+function homeCoverage(){const years=typeof EXAMS!=="undefined"&&EXAMS.length?[...new Set(EXAMS.map(x=>2000+ +String(x.id).slice(0,2)))].sort():[];
+  const acts=ALL_LESSONS.reduce((a,l)=>a+(l.acts||[]).length,0),units=CH.length,secs=TOPICS.length;
+  const stat=(n,l)=>`<div><b>${n}</b><span>${l}</span></div>`;
+  return `<section class="hcov" aria-label="Syllabus coverage"><div class="hcovh"><div class="eyebrow">Complete 0478 coverage</div><h2>The whole syllabus, nothing left out</h2>
+    <p>Every one of the ${secs} syllabus sections across the ${units} units has its own lessons, vocabulary and practice, written for the current Cambridge IGCSE Computer Science (0478) specification, with past paper questions mapped to the lessons they test.</p></div>
+   <div class="hcovs">${stat(units,"units")}${stat(secs,"syllabus sections")}${stat(ALL_LESSONS.length,"lessons")}${stat(acts,"interactive activities")}${stat((typeof EXQ!=="undefined"&&BOB.content&&BOB.content.full?EXQ.length:1275).toLocaleString(),"past paper questions")}${years.length?stat(EXAMS.length,`past papers, ${years.length>1?years[0]+"–"+years[years.length-1]:years[0]}`):""}</div>
+   <div class="hcovu">${CH.map(c=>`<a href="#paper-${c.paper}" class="p${c.paper}" title="Unit ${c.n}: ${esc(c.title)}"><span>✓</span>${c.n}. ${esc(c.title)}</a>`).join("")}</div></section>`}
+function homeAudience(){const guest=!S.user;
+  const box=(cls,eye,h,lead,items,ctas)=>`<div class="haud ${cls}"><div class="eyebrow">${eye}</div><h2>${h}</h2><p class="sub">${lead}</p>
+    <ul>${items.map(([b,t])=>`<li><b>${b}</b><span>${t}</span></li>`).join("")}</ul><div class="tbb">${ctas}</div></div>`;
+  return `<section class="section haudw">
+   ${box("stu","For students","Learn it, practise it, prove it","Everything you need for both papers, at your own pace or set by your teacher.",[
+     ["Short lessons for every syllabus point","Clear explanations, worked examples and hands-on tools, with a focus mode that takes one part at a time."],
+     ["Quick checks and activities","A quick check and key vocabulary test for every lesson, plus interactive activities: conversions, logic gates, SQL, tracing and more."],
+     ["Real past paper questions","Practise by topic with mark schemes. Most answers are marked for you, and you can see how often each topic comes up."],
+     ["Flash cards","A deck for every lesson that you can add your own cards to, with spaced practice."],
+     ["A dashboard that shows what's secure","A syllabus map, scores for every task, confidence ratings and the topics to revisit next."],
+     ["Your teacher's homework in one place","A to-do list with due dates, progress and feedback."],
+     ["Comfortable to read","Dyslexia-friendly mode, text size, light or dark theme and your own colours."]],
+     guest?`<a class="btn primary small" href="#register">Create a free account</a><a class="btn small" href="#dashboard" data-pv="student">See the student view</a>`:`<a class="btn small" href="#dashboard">Go to my dashboard</a>`)}
+   ${box("tch","For teachers","Set it, track it, act on it","Licences for your class, homework that marks itself, and a clear view of what each student knows.",[
+     ["Class licences","Students join with a class code or an email invitation. Buy licences by card or ask for an invoice."],
+     ["Two kinds of homework","Set lessons to complete, or real past paper questions chosen by paper, year and syllabus section."],
+     ["Track every student","Progress for each student and a heatmap by syllabus section, so you can see who needs help and where."],
+     ["See every answer","Quick check answers, activity mistakes and exam answers for each student. Change any mark."],
+     ["Insights for each assignment","Average scores, the best and worst answered questions, and the most common wrong answers."],
+     ["Reassign in a click","Send work back with a comment and a new due date; tracking shows what was reassigned."],
+     ["Release lessons as you teach","Choose which lessons your class can open, or leave them all open."]],
+     guest?`<a class="btn small" href="#dashboard" data-pv="teacher">See the teacher view</a><a class="btn small" href="#pricing">Licences and pricing</a>`:isTeacher()?`<a class="btn small" href="#teacher">Go to my classes</a>`:`<a class="btn small" href="#pricing">Licences and pricing</a>`)}
+  </section>`}
 
 /* register, sign in, password reset and pricing: see 05-account.js */
