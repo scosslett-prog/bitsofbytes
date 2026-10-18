@@ -390,3 +390,17 @@ footer .flink{color:var(--muted)}
 .logo:hover .logomark{transform:rotate(-6deg) scale(1.05)}
 @media (max-width:560px){.logo .logomark{height:30px}}
 @media (prefers-reduced-motion:reduce){.logo .logomark{transition:none}}
+
+/* ---------- home: the logo, large, with its bits gently tumbling ---------- */
+.herologo{justify-self:center;align-self:center;width:min(330px,72vw);aspect-ratio:176/200;display:grid;place-items:center}
+.herologo svg,.herologo img{width:100%;height:auto;display:block;overflow:visible;filter:drop-shadow(0 18px 30px color-mix(in srgb,var(--p1) 22%,transparent))}
+@media (prefers-reduced-motion:no-preference){
+  .herologo .lbit{animation:lbit 3.2s ease-in-out infinite alternate;transform-box:fill-box;transform-origin:center}
+  .herologo .lbit:nth-of-type(2){animation-delay:-.8s;animation-duration:3.6s}
+  .herologo .lbit:nth-of-type(3){animation-delay:-1.6s;animation-duration:2.9s}
+  .herologo .lbit:nth-of-type(4){animation-delay:-2.4s;animation-duration:3.9s}
+  .herologo svg{animation:lpop .7s cubic-bezier(.2,.9,.3,1.25) both}
+}
+@keyframes lbit{from{transform:translate(0,-3px) rotate(-6deg)}to{transform:translate(3px,5px) rotate(8deg)}}
+@keyframes lpop{from{opacity:0;transform:scale(.9) rotate(-3deg)}to{opacity:1;transform:none}}
+@media (max-width:760px){.herologo{width:min(220px,60vw);margin-top:8px}}

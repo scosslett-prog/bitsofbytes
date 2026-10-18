@@ -37,6 +37,9 @@ function nav(route){
 }
 
 /* views */
+/* the logo, drawn inline on the home page so its falling bits can move (public/logo.svg, from scripts/logo.py) */
+let LOGO_SVG=null;
+fetch("/logo.svg").then(r=>r.ok?r.text():null).then(t=>{if(t&&t.includes("<svg")){LOGO_SVG=t;document.querySelectorAll(".herologo img").forEach(i=>i.outerHTML=t)}}).catch(()=>{});
 function home(){
   const b="01100010";
   const rows=[["'b'",b],["0x62","01100010"],["98",b]];
@@ -48,11 +51,7 @@ function home(){
     <p class="lead">Notes, key vocabulary and self-tests for every topic in Paper 1 and Paper 2, with a dashboard that shows students and teachers exactly what is secure and what needs work.</p>
     <div class="ctas">${homeCtas()}</div>
    </div>
-   <div class="register" aria-label="The letter b stored in an 8-bit register">
-    <div class="row"><span></span>${[128,64,32,16,8,4,2,1].map(n=>`<span class="lbl" style="text-align:center">${n}</span>`).join("")}</div>
-    <div class="row"><span class="lbl">ASCII 'b'</span>${b.split("").map(x=>`<span class="cell ${x==="1"?"one":""}">${x}</span>`).join("")}</div>
-    <p class="cap">64 + 32 + 2 = 98 in denary, <span class="mono">62</span> in hex. That's topic 1.1 and 1.2 in one register.</p>
-   </div>
+   <div class="herologo">${LOGO_SVG||'<img src="/logo.svg" alt="Bits of Bytes logo">'}</div>
   </section>
   ${homeCoverage()}
   <section class="papers">${[1,2].map(p=>{const P=PAPERS[p],cs=CH.filter(c=>c.paper===p);return `<a class="paper p${p}" href="#paper-${p}">

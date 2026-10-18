@@ -28,7 +28,7 @@ def mark(full=True, rows=("10110110","00101101","11011010","11000011","00101011"
     s.append(f'</g><rect x="{px+pw/2-12}" y="{py+ph-23}" width="24" height="7" rx="3.5" fill="#fff"/></g>')
     if full:
         for ch,x,y,rot,col,sz in [("1",142,90,-16,TEAL,16),("0",160,118,20,COP,14),("1",146,146,-30,TEAL,12.5),("0",163,170,12,COP,11)]:
-            s.append(f'<g transform="translate({x} {y}) rotate({rot})"><rect x="{-sz*.62:.1f}" y="{-sz*.76:.1f}" width="{sz*1.24:.1f}" height="{sz*1.52:.1f}" rx="{sz*.3:.1f}" fill="{col}"/><text x="0" y="{sz*.39:.1f}" text-anchor="middle" font-family="JetBrains Mono,Menlo,Consolas,monospace" font-weight="800" font-size="{sz*1.05:.1f}" fill="#fff">{ch}</text></g>')
+            s.append(f'<g class="lbit"><g transform="translate({x} {y}) rotate({rot})"><rect x="{-sz*.62:.1f}" y="{-sz*.76:.1f}" width="{sz*1.24:.1f}" height="{sz*1.52:.1f}" rx="{sz*.3:.1f}" fill="{col}"/><text x="0" y="{sz*.39:.1f}" text-anchor="middle" font-family="JetBrains Mono,Menlo,Consolas,monospace" font-weight="800" font-size="{sz*1.05:.1f}" fill="#fff">{ch}</text></g></g>')
     s.append('</svg>')
     return "".join(s)
 if __name__=="__main__":
