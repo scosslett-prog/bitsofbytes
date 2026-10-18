@@ -32,10 +32,10 @@ with sync_playwright() as p:
     ok('in-app navigation updates title and canonical', pg.title().startswith('8.1 ') and pg.evaluate('document.querySelector("link[rel=canonical]").href').endswith('/topic/8-1'))
     pg.evaluate('location.hash="login"'); pg.wait_for_timeout(200)
     ok('private pages are noindex, no canonical', pg.evaluate('!!document.querySelector(\'meta[name=robots][content=noindex]\') && !document.querySelector("link[rel=canonical]")'))
-    ok('no analytics without an ID', pg.evaluate('!window.gtag && !document.getElementById("gabar")'))
+    ok('analytics not loaded before consent', pg.evaluate('!window.gtag'))
     # with a measurement ID: nothing loads until the visitor agrees
     g=br.new_page(); g.on('pageerror',lambda e:errs.append(str(e))); gtm=[]
-    g.route('**/src/main.js',lambda r:(lambda body:r.fulfill(body=body.replace("ENV.VITE_GA_ID || ''","'G-TEST123'"),content_type='text/javascript'))(r.fetch().text()))
+    g.route('**/src/main.js',lambda r:(lambda body:r.fulfill(body=body.replace("ENV.VITE_GA_ID || 'G-TBRKMHE7BF'","'G-TEST123'"),content_type='text/javascript'))(r.fetch().text()))
     g.route(re.compile(r'.*googletagmanager\.com/.*'),lambda r:(gtm.append(r.request.url),r.fulfill(body='',content_type='text/javascript')))
     g.goto(B+'/#paper-1'); g.wait_for_function('window.BOB && !document.getElementById("boot")'); g.wait_for_timeout(1600)
     ok('consent banner shown, analytics not loaded yet', g.is_visible('#gabar') and not gtm and g.evaluate('!window.gtag'))

@@ -13,7 +13,7 @@ const ENV = import.meta.env || {};
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : String(Date.now());
 const APP = ['01-content.js', '02-core.js', '03-exams.js', '04-school.js', '05-account.js', '06-extra-activities.js', '07-router.js', '08-reading.js', '09-demo.js', '10-seo.js'];
 /* Google Analytics 4 measurement ID (it's public). Analytics only load after a visitor agrees. */
-const GA_ID = ENV.VITE_GA_ID || '';
+const GA_ID = ENV.VITE_GA_ID || 'G-TBRKMHE7BF';
 
 /* Pages have their own addresses for search engines (scripts/prerender.mjs), e.g. /lesson/1-1-binary.
    The app itself works from #routes, so an address like that opens the matching page. */
