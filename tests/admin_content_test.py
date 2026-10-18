@@ -13,7 +13,7 @@ with sync_playwright() as p:
         pg=br.new_context().new_page(); pg.on('pageerror',lambda e:errs.append(str(e))); pg.on('dialog',lambda d:d.accept())
         pg.goto(B+'#home'); pg.wait_for_function('window.BOB && !document.getElementById("boot")')
         if email:
-            pg.evaluate('location.hash="login"'); pg.fill('#lemail',email); pg.fill('#lpass','password123')
+            pg.evaluate('location.hash="login"'); pg.fill('#lemail',email); pg.fill('#lpass','Chalk-Harbour-42')
             with pg.expect_navigation(): pg.click('#logForm button[type=submit]')
             pg.wait_for_function('window.BOB && !document.getElementById("boot")')
         return pg

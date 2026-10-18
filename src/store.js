@@ -205,7 +205,8 @@ export function createStore(api) {
     if (/email not confirmed/i.test(m)) return 'Confirm your email address first, using the link we sent you.';
     if (/email address .* is invalid/i.test(m)) return "We couldn't use that email address. Check it's typed correctly, or try another address.";
     if (/rate limit/i.test(m)) return 'Too many attempts. Wait a few minutes and try again.';
-    if (/password should be|weak password/i.test(m)) return 'Choose a longer password (at least 8 characters).';
+    if (/password should be|weak password|password.*(contain|characters)/i.test(m)) return 'Choose a stronger password: at least 10 characters, with upper and lower case letters and a number.';
+    if (/same.*password|different from the old/i.test(m)) return 'Choose a password you haven\'t used before.';
     return m;
   };
   const landed = () => {

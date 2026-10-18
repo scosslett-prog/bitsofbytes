@@ -4,6 +4,45 @@ const formErr=(id,m)=>{const x=$("#"+id);if(x){x.textContent=m;x.hidden=!m}};
 async function formBusy(form,fn){const b=form.querySelector("button[type=submit]"),t=b&&b.textContent;if(b){b.disabled=true;b.textContent="Please wait…"}
   try{return await fn()}finally{if(b&&document.body.contains(b)){b.disabled=false;b.textContent=t}}}
 
+/* ---------- choosing a password: rules, live checklist, strength and a second entry to confirm ---------- */
+const PW_MIN=10;
+const PW_COMMON=["password","passw0rd","qwerty","qwertyuiop","asdfgh","zxcvbn","letmein","welcome","iloveyou","admin","login","monkey","dragon","football","baseball","sunshine","princess","starwars","whatever","trustno1","abc123","123abc","111111","000000","123123","654321","computer","student","teacher","school","bitsofbytes","igcse","cambridge"];
+/* ctx: the name and email typed on the form, so a password can't just be built from them */
+function pwCheck(p,ctx={}){p=p||"";const low=p.toLowerCase(),squash=low.replace(/[^a-z0-9]/g,"");
+  const parts=[...(ctx.name||"").toLowerCase().split(/\s+/),...String(ctx.email||"").toLowerCase().split("@")[0].split(/[^a-z0-9]+/)].filter(w=>w.length>=3);
+  const seq=s=>{let run=1;for(let i=1;i<s.length;i++){const d=s.charCodeAt(i)-s.charCodeAt(i-1);run=(d===1||d===-1||d===0)?run+1:1;if(run>=4)return true}return false};
+  const guessable=!p?false:PW_COMMON.some(w=>squash.includes(w))||parts.some(w=>low.includes(w))||/(.)\1{3,}/.test(p)||seq(low);
+  const rules=[
+    {k:"len",ok:p.length>=PW_MIN,t:`At least ${PW_MIN} characters`},
+    {k:"case",ok:/[a-z]/.test(p)&&/[A-Z]/.test(p),t:"Upper and lower case letters"},
+    {k:"num",ok:/\d/.test(p),t:"At least one number"},
+    {k:"guess",ok:!!p&&!guessable,t:"Not easy to guess (no common words, your name or email, or runs like 1234 or aaaa)"}];
+  const ok=rules.every(r=>r.ok);
+  let score=rules.filter(r=>r.ok).length+(p.length>=14?1:0)+(/[^A-Za-z0-9]/.test(p)?1:0);if(!ok)score=Math.min(score,3);
+  const level=!p?"":score<=2?"Weak":score<=3?"Fair":score<=4?"Good":"Strong";
+  return {ok,rules,score,level}}
+function pwMessage(p,p2,ctx){const c=pwCheck(p,ctx),bad=c.rules.find(r=>!r.ok);
+  if(bad)return bad.k==="guess"?"Choose a password that's harder to guess: avoid common words, your name or email, and runs like 1234.":`Your password needs: ${c.rules.filter(r=>!r.ok&&r.k!=="guess").map(r=>r.t.toLowerCase()).join(", ")}.`;
+  if(p!==p2)return "The two passwords don't match.";return ""}
+/* the two fields, a show/hide button, a strength bar, the checklist and a match line */
+function pwFields(id,label="Password"){return `<div class="pwbox" data-pwbox="${id}">
+   <label for="${id}">${label}<span class="pwwrap"><input type="password" id="${id}" autocomplete="new-password" required minlength="${PW_MIN}" data-pw="${id}" aria-describedby="${id}-rules"><button type="button" class="pwshow" data-pwshow="${id}" aria-label="Show password">Show</button></span></label>
+   <div class="pwmeter" aria-hidden="true"><i></i></div><p class="pwlevel" id="${id}-level" aria-live="polite"></p>
+   <ul class="pwrules" id="${id}-rules">${pwCheck("").rules.map(r=>`<li data-r="${r.k}">${r.t}</li>`).join("")}</ul>
+   <p class="pwtip">Tip: three random words with a number, like <span class="mono">Kettle-Planet-Robin7</span>, are long, strong and easy to remember. Don't reuse a password from another site.</p>
+   <label for="${id}2">Type it again<input type="password" id="${id}2" autocomplete="new-password" required data-pw2="${id}"></label>
+   <p class="pwmatch" id="${id}-match" aria-live="polite"></p></div>`}
+const pwCtx=id=>id==="rpass"?{name:($("#rname")||{}).value,email:($("#remail")||{}).value}:{name:S.user&&S.user.name,email:S.user&&S.user.email};
+function pwUpdate(id){const box=document.querySelector(`[data-pwbox="${id}"]`);if(!box)return;
+  const p=$("#"+id).value,p2=$("#"+id+"2").value,c=pwCheck(p,pwCtx(id));
+  c.rules.forEach(r=>{const li=box.querySelector(`[data-r="${r.k}"]`);li.classList.toggle("ok",r.ok);li.classList.toggle("no",!!p&&!r.ok)});
+  box.dataset.level=p?c.level.toLowerCase():"";box.querySelector(".pwmeter i").style.width=p?Math.max(12,Math.min(100,c.score/6*100))+"%":"0";
+  $("#"+id+"-level").textContent=p?`Strength: ${c.level}`:"";
+  const m=$("#"+id+"-match");m.className="pwmatch"+(p2?(p2===p?" ok":" no"):"");m.textContent=p2?(p2===p?"Passwords match":"Passwords don't match yet"):""}
+document.addEventListener("input",e=>{const t=e.target;if(t.dataset.pw)pwUpdate(t.dataset.pw);else if(t.dataset.pw2)pwUpdate(t.dataset.pw2);else if(t.id==="rname"||t.id==="remail")pwUpdate("rpass")});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-pwshow]");if(!b)return;const id=b.dataset.pwshow,show=$("#"+id).type==="password";
+  [$("#"+id),$("#"+id+"2")].forEach(i=>i.type=show?"text":"password");b.textContent=show?"Hide":"Show";b.setAttribute("aria-label",show?"Hide password":"Show password")});
+
 const GLOGO=`<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>`;
 const googleBtn=(where)=>BOB.google?`<button class="btn gbtn" type="button" data-google="${where}">${GLOGO}<span>Continue with Google</span></button><div class="gor"><span>or ${where==="reg"?"sign up":"sign in"} with email</span></div>`:"";
 function register(){
@@ -20,7 +59,7 @@ function register(){
    <label for="rname">Full name<input type="text" id="rname" autocomplete="name" maxlength="100" required></label>
    <label for="remail">Email<input type="email" id="remail" autocomplete="email" required></label>
    <label for="rschool">School <span style="font-weight:400;color:var(--muted)">(optional)</span><input type="text" id="rschool" autocomplete="organization" maxlength="120"></label>
-   <label for="rpass">Password <span style="font-weight:400;color:var(--muted)">(at least 8 characters)</span><input type="password" id="rpass" autocomplete="new-password" required minlength="8"></label>
+   ${pwFields("rpass","Choose a password")}
    <p class="err" id="rerr" hidden></p>
    <button class="btn primary" type="submit"${BOB.auth.available()?"":" disabled"}>Create account</button>
   </form><p class="alt">Already registered? <a href="#login">Sign in</a></p>
@@ -49,8 +88,7 @@ function forgotPage(){
 function resetPage(){
   if(!S.user)return `<div class="formwrap"><h1>Choose a new password</h1><p>Open the reset link from your email to choose a new password. Links only work once and expire after a while; you can <a href="#forgot">ask for a new one</a>.</p></div>`;
   return `<div class="formwrap"><div><div class="eyebrow">Password</div><h1 style="margin-top:8px">Choose a new password</h1></div>
-  <form id="resetForm" novalidate><label for="np1">New password <span style="font-weight:400;color:var(--muted)">(at least 8 characters)</span><input type="password" id="np1" autocomplete="new-password" required minlength="8"></label>
-   <label for="np2">Type it again<input type="password" id="np2" autocomplete="new-password" required minlength="8"></label>
+  <form id="resetForm" novalidate>${pwFields("np","New password")}
    <p class="err" id="nperr" hidden></p><p class="msg ok" id="npok" hidden></p>
    <button class="btn primary" type="submit">Save new password</button></form></div>`;
 }
@@ -65,7 +103,7 @@ function accountPage(){const u=S.user;
    <p class="err" id="perr" hidden></p><p class="msg ok" id="pok" hidden></p>
    <button class="btn primary" type="submit">Save changes</button></form>
   ${!isTeacher()?`<div class="panel"><h3>Class</h3>${c?`<p style="margin:0">You're in <b>${esc(c.name)}</b> with ${esc(teacherOf(c).name)}.</p><button class="btn small" style="align-self:flex-start" data-acc="leave">Leave this class</button>`:`<p class="sub" style="margin:0">You're studying on your own. Join a class from your <a href="#dashboard">dashboard</a>.</p>`}</div>`:""}
-  <div class="panel"><h3>Password</h3><form id="pwForm" class="tinline" novalidate><label for="pw1">New password<input type="password" id="pw1" autocomplete="new-password" minlength="8" required></label><button class="btn" type="submit">Change password</button></form><p class="err" id="pwerr" hidden></p><p class="msg ok" id="pwok" hidden></p></div>
+  <div class="panel"><h3>Password</h3><form id="pwForm" novalidate>${pwFields("pw","New password")}<button class="btn" type="submit" style="align-self:flex-start">Change password</button></form><p class="err" id="pwerr" hidden></p><p class="msg ok" id="pwok" hidden></p></div>
   ${planPanel()}
   <div class="panel"><h3>Display</h3><p class="sub" style="margin:0">Dyslexia-friendly reading, text size, light or dark theme and the site's colours.</p><a class="btn small" href="#display" style="align-self:flex-start">Display settings</a></div>
   <a class="btn" href="#signout" style="align-self:flex-start">Sign out</a></div>`;
@@ -192,7 +230,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-acc]");if(
 document.addEventListener("submit",async e=>{const f=e.target;
   if(f.id==="regForm"){e.preventDefault();
     const name=$("#rname").value.trim(),email=$("#remail").value.trim().toLowerCase(),pass=$("#rpass").value;
-    let m="";if(!name)m="Enter your name.";else if(!/^\S+@\S+\.\S+$/.test(email))m="Enter a valid email address.";else if(pass.length<8)m="Use a password of at least 8 characters.";
+    let m="";if(!name)m="Enter your name.";else if(!/^\S+@\S+\.\S+$/.test(email))m="Enter a valid email address.";else m=pwMessage(pass,$("#rpass2").value,{name,email});
     if(m)return formErr("rerr",m);formErr("rerr","");
     const role=document.querySelector("input[name=role]:checked").value,code=role==="student"?$("#rcode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,""):"";
     await formBusy(f,async()=>{try{const r=await BOB.auth.register({role,name,email,school:$("#rschool").value.trim(),code,password:pass});
@@ -204,9 +242,9 @@ document.addEventListener("submit",async e=>{const f=e.target;
   if(f.id==="forgotForm"){e.preventDefault();const email=$("#femail").value.trim().toLowerCase();
     if(!/^\S+@\S+\.\S+$/.test(email))return formErr("ferr","Enter a valid email address.");formErr("ferr","");
     await formBusy(f,async()=>{try{await BOB.auth.forgot(email);const ok=$("#fok");ok.textContent="If there's an account with that email, a reset link is on its way. Check your inbox (and spam folder).";ok.hidden=false}catch(x){formErr("ferr",x.message)}});return}
-  if(f.id==="resetForm"||f.id==="pwForm"){e.preventDefault();const reset=f.id==="resetForm",p1=$(reset?"#np1":"#pw1").value,p2=reset?$("#np2").value:p1,er=reset?"nperr":"pwerr",okid=reset?"npok":"pwok";
-    if(p1.length<8)return formErr(er,"Use a password of at least 8 characters.");if(p1!==p2)return formErr(er,"The two passwords don't match.");formErr(er,"");
-    await formBusy(f,async()=>{try{await BOB.auth.setPassword(p1);f.reset();const ok=$("#"+okid);ok.innerHTML=reset?`Password saved. <a href="#dashboard">Go to your dashboard</a>.`:"Password changed.";ok.hidden=false}catch(x){formErr(er,x.message)}});return}
+  if(f.id==="resetForm"||f.id==="pwForm"){e.preventDefault();const reset=f.id==="resetForm",id=reset?"np":"pw",p1=$("#"+id).value,p2=$("#"+id+"2").value,er=reset?"nperr":"pwerr",okid=reset?"npok":"pwok";
+    const pm=pwMessage(p1,p2,pwCtx(id));if(pm)return formErr(er,pm);formErr(er,"");
+    await formBusy(f,async()=>{try{await BOB.auth.setPassword(p1);f.reset();pwUpdate(id);const ok=$("#"+okid);ok.innerHTML=reset?`Password saved. <a href="#dashboard">Go to your dashboard</a>.`:"Password changed.";ok.hidden=false}catch(x){formErr(er,x.message)}});return}
   if(f.id==="profForm"){e.preventDefault();const name=$("#pname").value.trim();if(!name)return formErr("perr","Enter your name.");formErr("perr","");
     await formBusy(f,async()=>{try{await BOB.auth.updateProfile({name,school:$("#pschool").value.trim()});const ok=$("#pok");ok.textContent="Saved.";ok.hidden=false;nav("account")}catch(x){formErr("perr",x.message)}});return}
   if(f.id==="grantForm"&&isAdmin()){e.preventDefault();const email=$("#gemail").value.trim(),n=Math.floor(+$("#gn").value);

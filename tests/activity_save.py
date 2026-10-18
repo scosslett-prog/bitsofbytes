@@ -6,7 +6,7 @@ with sync_playwright() as p:
     br=p.chromium.launch(); pg=br.new_page(); errs=[]
     pg.on('pageerror',lambda e:errs.append(str(e)))
     pg.goto('http://localhost:8787/#login'); pg.wait_for_function('window.BOB && !document.getElementById("boot")')
-    pg.fill('#lemail','ana@student.org'); pg.fill('#lpass','password123')
+    pg.fill('#lemail','ana@student.org'); pg.fill('#lpass','Chalk-Harbour-42')
     with pg.expect_navigation(): pg.click('#logForm button[type=submit]')
     pg.wait_for_function('window.BOB && !document.getElementById("boot")')
     pg.evaluate('location.hash="l-3-1-buses"'); pg.wait_for_timeout(300)

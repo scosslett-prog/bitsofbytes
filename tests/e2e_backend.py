@@ -27,11 +27,11 @@ with sync_playwright() as p:
     def register(pg, role, name, email, code='', school='Test School'):
         go(pg, 'register'); pg.check(f'#role-{role}'); pg.fill('#rname', name); pg.fill('#remail', email); pg.fill('#rschool', school)
         if code: pg.fill('#rcode', code)
-        pg.fill('#rpass', 'password123')
+        pg.fill('#rpass', 'Chalk-Harbour-42'); pg.fill('#rpass2', 'Chalk-Harbour-42')
         with pg.expect_navigation(): pg.click('#regForm button[type=submit]')
         pg.wait_for_function('window.BOB && !document.getElementById("boot")')
     def login(pg, email):
-        go(pg, 'login'); pg.fill('#lemail', email); pg.fill('#lpass', 'password123')
+        go(pg, 'login'); pg.fill('#lemail', email); pg.fill('#lpass', 'Chalk-Harbour-42')
         with pg.expect_navigation(): pg.click('#logForm button[type=submit]')
         pg.wait_for_function('window.BOB && !document.getElementById("boot")')
     def signout(pg):

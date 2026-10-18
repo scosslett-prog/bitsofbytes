@@ -199,3 +199,28 @@ footer .flink{color:var(--muted)}
 .admsite .admprog{margin:8px 0 0;font-weight:600}
 .admh{margin:6px 0 4px}
 @media (max-width:640px){.admsite .admrow{flex-direction:column;align-items:flex-start}}
+
+/* choosing a password */
+.pwbox{display:flex;flex-direction:column;gap:8px}
+.pwwrap{position:relative;display:block}
+.pwwrap input{width:100%;padding-right:72px}
+.pwshow{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font:inherit;font-size:.85em;font-weight:600;color:var(--muted,#5b6770);padding:6px 10px;cursor:pointer;border-radius:6px}
+.pwshow:hover,.pwshow:focus-visible{color:var(--ink,#16232b);background:rgba(0,0,0,.05)}
+.pwmeter{height:6px;border-radius:99px;background:rgba(0,0,0,.08);overflow:hidden}
+.pwmeter i{display:block;height:100%;width:0;border-radius:inherit;background:#c0392b;transition:width .25s ease,background .25s ease}
+.pwbox[data-level="fair"] .pwmeter i{background:#d68910}
+.pwbox[data-level="good"] .pwmeter i{background:#5d9cec}
+.pwbox[data-level="strong"] .pwmeter i{background:#2e7d5b}
+.pwlevel{margin:-2px 0 0;font-size:.85em;font-weight:600;color:var(--muted,#5b6770);min-height:1.2em}
+.pwrules{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:.9em;color:var(--muted,#5b6770)}
+.pwrules li{position:relative;padding-left:24px}
+.pwrules li::before{content:"○";position:absolute;left:4px;top:0}
+.pwrules li.ok{color:#2e7d5b}
+.pwrules li.ok::before{content:"✓";font-weight:700}
+.pwrules li.no{color:#a5402d}
+.pwtip{margin:2px 0 4px;font-size:.85em;color:var(--muted,#5b6770);background:rgba(93,156,236,.08);border-radius:8px;padding:8px 10px}
+.pwmatch{margin:-2px 0 0;font-size:.85em;font-weight:600;min-height:1.2em}
+.pwmatch.ok{color:#2e7d5b}
+.pwmatch.ok::before{content:"✓ "}
+.pwmatch.no{color:#a5402d}
+@media (prefers-reduced-motion:reduce){.pwmeter i{transition:none}}
