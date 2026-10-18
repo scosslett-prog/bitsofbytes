@@ -102,6 +102,7 @@ export function createStore(api) {
       try {
         const session = await api.auth.session();
         if (session) {
+          st.signupMeta = session.meta || {};
           S = await loadAccount(session);
           synced = snapshot(S);
           if (ls.get(MERGE_KEY)) st.merged = mergeGuest(S);
@@ -131,7 +132,12 @@ export function createStore(api) {
       }
     }
     if (st.merged) { st.merged = false; await flush(); }
-    const code = ls.get(JOIN_KEY);
+    let code = ls.get(JOIN_KEY);
+    // confirming an email on another device: the class code typed at sign-up travels with the account
+    if (!code && st.user && ls.get(AFTER_KEY) && st.signupMeta && st.signupMeta.join_code) {
+      const mine = school.SC.users[st.user.id];
+      if (!(mine && mine.cls)) code = st.signupMeta.join_code;
+    }
     if (code && st.user) {
       ls.del(JOIN_KEY);
       if (st.user.role === 'student') {
@@ -205,6 +211,7 @@ export function createStore(api) {
     if (/email not confirmed/i.test(m)) return 'Confirm your email address first, using the link we sent you.';
     if (/email address .* is invalid/i.test(m)) return "We couldn't use that email address. Check it's typed correctly, or try another address.";
     if (/rate limit/i.test(m)) return 'Too many attempts. Wait a few minutes and try again.';
+    if (/only request this after|security purposes/i.test(m)) return 'Please wait a minute before asking for another email.';
     if (/password should be|weak password|password.*(contain|characters)/i.test(m)) return 'Choose a stronger password: at least 10 characters, with upper and lower case letters and a number.';
     if (/same.*password|different from the old/i.test(m)) return 'Choose a password you haven\'t used before.';
     return m;
@@ -220,7 +227,7 @@ export function createStore(api) {
     async register({ role, name, email, school: sch, code, password }) {
       need();
       try {
-        const r = await api.auth.signUp(email, password, { role, full_name: name, school: sch });
+        const r = await api.auth.signUp(email, password, { role, full_name: name, school: sch, ...(code ? { join_code: code } : {}) });
         if (code) ls.set(JOIN_KEY, code);
         if (r.confirm) return { confirm: true };
         landed();
@@ -242,6 +249,7 @@ export function createStore(api) {
       if (code) ls.set(JOIN_KEY, code);
       try { await api.auth.signInWithGoogle(location.origin + '/'); } catch (e) { throw new Error(friendly(e)); }
     },
+    async resendConfirm(email) { need(); try { await api.auth.resendConfirm(email); } catch (e) { throw new Error(friendly(e)); } },
     async forgot(email) { need(); try { await api.auth.resetPassword(email); } catch (e) { throw new Error(friendly(e)); } },
     async setPassword(password) { need(); try { await api.auth.updatePassword(password); } catch (e) { throw new Error(friendly(e)); } },
     async updateProfile({ name, school: sch }) {

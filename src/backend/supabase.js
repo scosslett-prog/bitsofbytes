@@ -41,7 +41,7 @@ export async function supabaseBackend(url, key) {
     return data;
   }
 
-  const who = (s) => (s && s.user ? { id: s.user.id, email: s.user.email } : null);
+  const who = (s) => (s && s.user ? { id: s.user.id, email: s.user.email, meta: s.user.user_metadata || {} } : null);
   const auth = {
     async session() { return who(ok(await sb.auth.getSession()).session); },
     async signUp(email, password, meta) {
@@ -51,7 +51,10 @@ export async function supabaseBackend(url, key) {
     async signIn(email, password) { return who(ok(await sb.auth.signInWithPassword({ email, password })).session); },
     async signOut() { await sb.auth.signOut(); },
     async signInWithGoogle(redirectTo) { ok(await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo } })); },
-    async resetPassword(email) { ok(await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/#reset' })); },
+    async resetPassword(email) { ok(await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + '/' })); },
+    async resendConfirm(email) { ok(await sb.auth.resend({ type: 'signup', email, options: { emailRedirectTo: location.origin + '/' } })); },
+    /* links in our emails carry ?token_hash=…&type=email|recovery, so they work on any device or browser */
+    async verifyLink(tokenHash, type) { ok(await sb.auth.verifyOtp({ token_hash: tokenHash, type })); },
     async updatePassword(password) { ok(await sb.auth.updateUser({ password })); },
     onChange(cb) { sb.auth.onAuthStateChange((event, s) => cb(event, who(s))); },
     /* sign-in methods switched on in Supabase (Authentication → Sign In / Providers) */

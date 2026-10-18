@@ -34,6 +34,8 @@ export async function devBackend() {
     async signOut() { set(null); },
     async signInWithGoogle() { throw new Error('Google sign-in only works on the live site.'); },
     async resetPassword() {},
+    async resendConfirm() {},
+    async verifyLink(tokenHash) { if (tokenHash !== 'dev-good') throw new Error('Email link is invalid or has expired'); },
     async updatePassword(password) { await call('password', { password }); },
     onChange() {},
   };

@@ -43,6 +43,12 @@ document.addEventListener("input",e=>{const t=e.target;if(t.dataset.pw)pwUpdate(
 document.addEventListener("click",e=>{const b=e.target.closest("[data-pwshow]");if(!b)return;const id=b.dataset.pwshow,show=$("#"+id).type==="password";
   [$("#"+id),$("#"+id+"2")].forEach(i=>i.type=show?"text":"password");b.textContent=show?"Hide":"Show";b.setAttribute("aria-label",show?"Hide password":"Show password")});
 
+/* "didn't get the email?": send the confirmation link again (at most once a minute) */
+const resendBox=email=>`<div class="resend"><p class="sub">Didn't get it? Check your spam folder, or <button type="button" class="linkbtn" data-resend="${esc(email)}">send it again</button>.</p><p class="msg ok" data-resent hidden></p></div>`;
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-resend]");if(!b||b.disabled)return;const box=b.closest(".resend"),m=box.querySelector("[data-resent]");
+  b.disabled=true;try{await BOB.auth.resendConfirm(b.dataset.resend);m.className="msg ok";m.textContent="Sent. The new link replaces the old one."}
+  catch(x){m.className="msg bad";m.textContent=x.message}m.hidden=false;setTimeout(()=>{b.disabled=false},60000)});
+
 const GLOGO=`<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>`;
 const googleBtn=(where)=>BOB.google?`<button class="btn gbtn" type="button" data-google="${where}">${GLOGO}<span>Continue with Google</span></button><div class="gor"><span>or ${where==="reg"?"sign up":"sign in"} with email</span></div>`:"";
 function register(){
@@ -73,7 +79,7 @@ function login(){
   <form id="logForm" novalidate>
    <label for="lemail">Email<input type="email" id="lemail" autocomplete="email" required></label>
    <label for="lpass">Password<input type="password" id="lpass" autocomplete="current-password" required></label>
-   <p class="err" id="lerr" hidden></p>
+   <p class="err" id="lerr" hidden></p><div id="lresend" hidden></div>
    <button class="btn primary" type="submit"${BOB.auth.available()?"":" disabled"}>Sign in</button>
   </form><p class="alt"><a href="#forgot">Forgotten your password?</a> · New here? <a href="#register">Create an account</a></p></div>`;
 }
@@ -234,11 +240,12 @@ document.addEventListener("submit",async e=>{const f=e.target;
     if(m)return formErr("rerr",m);formErr("rerr","");
     const role=document.querySelector("input[name=role]:checked").value,code=role==="student"?$("#rcode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,""):"";
     await formBusy(f,async()=>{try{const r=await BOB.auth.register({role,name,email,school:$("#rschool").value.trim(),code,password:pass});
-      if(r.confirm)$("#app").innerHTML=`<div class="formwrap"><div class="eyebrow">Nearly there</div><h1>Check your email</h1><p>We've sent a link to <b>${esc(email)}</b>. Open it to confirm your address, then sign in.${code?" You'll join your class the first time you sign in.":""}</p><a class="btn" href="#login">Sign in</a></div>`}
+      if(r.confirm)$("#app").innerHTML=`<div class="formwrap"><div class="eyebrow">Nearly there</div><h1>Check your email</h1><p>We've sent a link to <b>${esc(email)}</b>. Open it on any device to confirm your address; you'll be signed in straight away.${code?" You'll join your class at the same time.":""}</p>${resendBox(email)}<a class="btn" href="#login">Sign in</a></div>`}
       catch(x){formErr("rerr",x.message)}});return}
   if(f.id==="logForm"){e.preventDefault();const email=$("#lemail").value.trim().toLowerCase(),pass=$("#lpass").value;
     if(!email||!pass)return formErr("lerr","Enter your email and password.");formErr("lerr","");
-    await formBusy(f,async()=>{try{await BOB.auth.login(email,pass)}catch(x){formErr("lerr",x.message)}});return}
+    await formBusy(f,async()=>{try{await BOB.auth.login(email,pass)}catch(x){formErr("lerr",x.message);
+      const box=$("#lresend");if(box&&/confirm your email/i.test(x.message)){box.innerHTML=resendBox(email);box.hidden=false}}});return}
   if(f.id==="forgotForm"){e.preventDefault();const email=$("#femail").value.trim().toLowerCase();
     if(!/^\S+@\S+\.\S+$/.test(email))return formErr("ferr","Enter a valid email address.");formErr("ferr","");
     await formBusy(f,async()=>{try{await BOB.auth.forgot(email);const ok=$("#fok");ok.textContent="If there's an account with that email, a reset link is on its way. Check your inbox (and spam folder).";ok.hidden=false}catch(x){formErr("ferr",x.message)}});return}

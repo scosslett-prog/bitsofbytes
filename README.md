@@ -92,6 +92,21 @@ The same panel turns the paywall on and off.
 
 Add a new file to `supabase/migrations/`, named with a timestamp and a short description. Never edit a migration that has already been applied. Run the file in the Supabase SQL Editor (or with `supabase db push`), and add tests to `tests/rls_test.py` for any new permission rules.
 
+## Emails: confirming addresses and resetting passwords
+
+Supabase sends the emails; Resend delivers them (Supabase's built-in sender only reaches your own team's addresses, a few an hour).
+
+1. **Resend** (resend.com): add and verify a domain you own (Domains → Add domain, then add the DNS records it shows), and create an API key (API Keys → Create, permission "Sending access").
+2. **Supabase → Authentication → Emails → SMTP Settings:** turn on **Enable custom SMTP**. Host `smtp.resend.com`, port `465`, username `resend`, password = the Resend API key, sender email e.g. `noreply@<your domain>`, sender name `Bits of Bytes`.
+3. **Supabase → Authentication → Emails → Templates:** paste the templates from `supabase/templates/` (each file's first line is its subject):
+   - Confirm signup → `confirm-signup.html`
+   - Reset password → `reset-password.html`
+   - Change email address → `change-email.html`
+   Their links carry `?token_hash=…&type=…`, which the site verifies itself (`emailLink` in `src/main.js`), so they work on any device or browser, not only the one that asked.
+4. **Supabase → Authentication → Sign In / Providers → Email:** turn on **Confirm email**.
+5. **Supabase → Authentication → Rate Limits:** raise **emails per hour** (e.g. 100).
+6. **Supabase → Authentication → URL Configuration:** the Redirect URLs must include the site (`https://<domain>/**`) and `http://localhost:5173/**`.
+
 ## Sign in with Google
 
 The code is in place. The **Continue with Google** button appears by itself once the Google provider is switched on in Supabase (step 3):

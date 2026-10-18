@@ -224,3 +224,9 @@ footer .flink{color:var(--muted)}
 .pwmatch.ok::before{content:"✓ "}
 .pwmatch.no{color:#a5402d}
 @media (prefers-reduced-motion:reduce){.pwmeter i{transition:none}}
+
+/* resend confirmation email */
+.linkbtn{border:0;background:none;padding:0;font:inherit;color:var(--accent,#2e7d5b);text-decoration:underline;cursor:pointer}
+.linkbtn:disabled{color:var(--muted,#5b6770);cursor:default;text-decoration:none}
+.resend{display:flex;flex-direction:column;gap:6px;margin:4px 0 8px}
+.resend p{margin:0}

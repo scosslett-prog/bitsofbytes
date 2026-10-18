@@ -64,8 +64,10 @@ async function boot() {
     refreshContent: async () => { await content.load(); content.apply(); await pay.load(); },
     google: false,
   };
+  const link = await emailLink(api);
   await store.init(school);
   applyDisplay(store.S.display);
+  if (link.notice) store.notice = link.notice;
   /* links from emails (confirm address, reset password) arrive with ?code=… or an error */
   const q = new URLSearchParams(location.search);
   if (q.has('error_description')) store.notice = q.get('error_description') + '. Try again, or ask for a new link.';
@@ -85,6 +87,29 @@ async function boot() {
   for (const f of APP) await script('/app/' + f);
   document.getElementById('boot')?.remove();
   if (checkout === 'success') afterCheckout(pay, school);
+}
+
+/* A link from one of our emails: confirm an address (type=email) or reset a password (type=recovery).
+   Verified here, before the account loads, so the person arrives signed in. */
+async function emailLink(api) {
+  const q = new URLSearchParams(location.search), th = q.get('token_hash');
+  if (!th || !api || !api.auth.verifyLink) return {};
+  const type = ['recovery', 'email_change'].includes(q.get('type')) ? q.get('type') : 'email';
+  let notice = '', hash = location.hash.replace(/^#/, '');
+  try {
+    await api.auth.verifyLink(th, type);
+    if (type === 'recovery') hash = 'reset';
+    else if (type === 'email_change') notice = 'Your new email address is confirmed.';
+    else { notice = 'Your email address is confirmed. Welcome to Bits of Bytes!'; try { localStorage.setItem('bob-after-login', '1'); } catch (e) {} }
+  } catch (e) {
+    notice = type === 'recovery'
+      ? 'That password reset link has expired or has already been used. Ask for a new one below.'
+      : 'That confirmation link has expired or has already been used. Sign in below and we can send you a new one.';
+    hash = type === 'recovery' ? 'forgot' : 'login';
+  }
+  q.delete('token_hash'); q.delete('type');
+  history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + (hash ? '#' + hash : ''));
+  return { notice };
 }
 
 /* Stripe tells the database about a new payment a moment after checkout; look again for a while */
