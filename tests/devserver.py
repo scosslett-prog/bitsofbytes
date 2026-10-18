@@ -52,6 +52,7 @@ RPC = {  # name: (kind, [(arg, type)])
     'admin_put_content': ('scalar', [('kind', 'text'), ('rows', 'jsonb')]),
     'admin_finish_content': ('void', [('theory_ids', 'text[]'), ('paper_ids', 'text[]'), ('question_ids', 'text[]')]),
     'class_leaderboard': ('set', [('c', 'uuid')]),
+    'admin_course': ('scalar', [('c', 'text')]), 'admin_put_course_file': ('void', [('c', 'text'), ('n', 'text'), ('body', 'text')]),
     'reassign': ('scalar', [('a', 'uuid'), ('students', 'uuid[]'), ('due', 'date'), ('note', 'text'), ('prev', 'jsonb')]),
 }
 def argsql(a, ty):
@@ -144,6 +145,7 @@ class H(SimpleHTTPRequestHandler):
     def log_message(self, *a): pass
     def translate_path(self, path):
         p = path.split('?', 1)[0].split('#', 1)[0]
+        if p.startswith('/__content/al/'): return os.path.join(ROOT, 'content', 'al', os.path.basename(p))
         if p.startswith('/__content/'): return os.path.join(ROOT, 'content', os.path.basename(p))
         if p.startswith('/app/'): return os.path.join(ROOT, 'public', p.lstrip('/'))
         # like Vite and Netlify: files in public/ are served from the site root
@@ -159,6 +161,7 @@ class H(SimpleHTTPRequestHandler):
         if self.path.startswith('/__dev/ping'): return self.reply(200, {'ok': True})
         return super().do_GET()
     def do_POST(self):
+        if self.path.startswith('/__py'): return self.python()
         if not self.path.startswith('/__dev/'): return self.reply(404, {'error': 'not found'})
         path = self.path[len('/__dev/'):].split('?')[0]
         b = json.loads(self.rfile.read(int(self.headers.get('content-length') or 0)) or b'{}')
@@ -169,6 +172,28 @@ class H(SimpleHTTPRequestHandler):
             self.reply(200, {'data': data})
         except Exception as e:
             self.reply(400, {'error': str(e)})
+
+def _py_run(harness, payload):
+    """Run a student's Python with the site's own harness (public/app/06s-python.js), in a scratch folder."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        prog = harness + '\nimport sys\nprint(_bob_run(sys.stdin.read()))\n'
+        try:
+            p = subprocess.run(['python3', '-I', '-c', prog], input=payload, capture_output=True, text=True, timeout=6, cwd=d)
+        except subprocess.TimeoutExpired:
+            raise RuntimeError('Your program ran for too long and was stopped. Is there a loop that never ends, or an input() waiting for more lines?')
+        if p.returncode != 0: raise RuntimeError(p.stderr.strip()[-400:] or 'python failed')
+        return p.stdout.strip().splitlines()[-1]
+
+H.python = lambda self: _py_reply(self)
+def _py_reply(self):
+    b = json.loads(self.rfile.read(int(self.headers.get('content-length') or 0)) or b'{}')
+    try:
+        out = _py_run(b['harness'], b['payload']).encode()
+        self.send_response(200); self.send_header('content-type', 'application/json'); self.send_header('content-length', str(len(out))); self.end_headers(); self.wfile.write(out)
+    except Exception as e:
+        msg = str(e).encode()
+        self.send_response(400); self.send_header('content-type', 'text/plain'); self.send_header('content-length', str(len(msg))); self.end_headers(); self.wfile.write(msg)
 
 print(f'dev server on http://localhost:{ARGS.port} using database {ARGS.db}', flush=True)
 ThreadingHTTPServer(('127.0.0.1', ARGS.port), H).serve_forever()

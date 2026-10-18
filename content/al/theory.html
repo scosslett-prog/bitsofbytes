@@ -1,0 +1,290 @@
+<template id="th-a1-1-stored">
+<div class="theory airy">
+ <div class="toc" aria-label="On this page"><button data-jump="sp-idea">Stored programs</button><button data-jump="sp-vn">von Neumann</button><button data-jump="sp-good">Benefits and drawbacks</button></div>
+ <section id="sp-idea">
+  <h2>The stored-program concept</h2>
+  <p class="lede">The earliest electronic computers, such as ENIAC in 1945, were programmed by <b>rewiring</b> them: changing the task meant days of moving cables and setting switches. The <b>stored-program concept</b> changed everything.</p>
+  <div class="callout"><span class="k">Key idea</span><h3>What is the stored-program concept?</h3>
+   <p>A program's <b>instructions</b> are stored in <b>main memory</b>, as binary machine code, <b>alongside the data</b> they work on. The CPU fetches the instructions from memory and executes them <b>one at a time</b>.</p></div>
+  <p>Because the program is just data in memory, loading a different program turns the same hardware into a different machine: a word processor one minute, a game the next. That is what makes a computer <b>general purpose</b>.</p>
+  <h3>How it works</h3>
+  <p class="stepline"><b>1</b><span>The program is copied into main memory (RAM), for example from secondary storage.</span></p>
+  <p class="stepline"><b>2</b><span>The CPU fetches the next instruction from memory, using the address held in the program counter.</span></p>
+  <p class="stepline"><b>3</b><span>The CPU decodes the instruction, then executes it. Executing it might read or write data, which lives in the same memory.</span></p>
+  <p class="stepline"><b>4</b><span>The cycle repeats with the next instruction until the program ends.</span></p>
+  <p>Each instruction is made of an <b>opcode</b> (what to do, such as ADD) and usually an <b>operand</b> (what to do it to, such as a value or an address).</p>
+ </section>
+ <section id="sp-vn">
+  <h2>von Neumann architecture</h2>
+  <p>In 1945 John von Neumann described a design that puts the stored-program concept into practice. Most general-purpose computers still follow it.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 300" role="img" aria-label="von Neumann architecture: a CPU with control unit, ALU and registers, connected by one set of buses to a single main memory holding both instructions and data, and to input and output">
+   <defs><marker id="vnA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="20" y="40" width="230" height="200" rx="14" class="b2"/><text x="135" y="70" class="h c">CPU</text>
+   <rect x="40" y="88" width="190" height="40" rx="8" class="b"/><text x="135" y="113" class="c">Control unit</text>
+   <rect x="40" y="138" width="190" height="40" rx="8" class="b"/><text x="135" y="163" class="c">ALU</text>
+   <rect x="40" y="188" width="190" height="40" rx="8" class="b"/><text x="135" y="213" class="c">Registers</text>
+   <rect x="400" y="40" width="220" height="200" rx="14" class="b"/><text x="510" y="70" class="h c">Main memory</text>
+   <rect x="420" y="90" width="180" height="60" rx="8" class="bi"/><text x="510" y="125" class="c">Instructions</text>
+   <rect x="420" y="160" width="180" height="60" rx="8" class="bw"/><text x="510" y="195" class="c">Data</text>
+   <line x1="252" y1="140" x2="398" y2="140" class="l" stroke-width="10" stroke-linecap="round" opacity=".25"/>
+   <line x1="258" y1="140" x2="392" y2="140" class="l" marker-start="url(#vnA)" marker-end="url(#vnA)"/>
+   <text x="325" y="128" class="s c">one set of buses</text>
+   <rect x="250" y="262" width="150" height="30" rx="6" class="b3"/><text x="325" y="282" class="s c">input / output</text>
+   <line x1="325" y1="146" x2="325" y2="258" class="ld"/>
+  </svg><figcaption>One memory holds both the instructions and the data, and they travel on the same buses.</figcaption></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Characteristic</th><th>What it means</th></tr>
+   <tr><td class="lbl">Single memory</td><td>Instructions and data are stored together, in the same format, in one main memory.</td></tr>
+   <tr><td class="lbl">Single set of buses</td><td>The same address and data buses carry both instructions and data.</td></tr>
+   <tr><td class="lbl">One CPU</td><td>A control unit, ALU and registers work through the program one instruction at a time.</td></tr>
+   <tr><td class="lbl">Sequential execution</td><td>Instructions run in order, unless an instruction (such as a jump) changes the program counter.</td></tr></table></div>
+ </section>
+ <section id="sp-good">
+  <h2>Benefits and drawbacks</h2>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li><b>Flexible:</b> any program can be loaded and run without rewiring.</li><li><b>Simpler and cheaper:</b> one memory and one set of buses.</li><li>Memory is shared, so space is used efficiently between code and data.</li><li>Programs can even load or produce other programs, e.g. compilers.</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li><b>The von Neumann bottleneck:</b> an instruction and its data can't be fetched at the same time, because they share one bus. The CPU often waits.</li><li>Data and instructions look the same, so a bug (or an attack) can <b>overwrite instructions</b> with data.</li></ul></div>
+  </div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>"Explain one drawback" wants a reason as well as a point: <i>instructions and data share the same bus <b>so</b> they can't be fetched at the same time, <b>which</b> limits the speed of the CPU.</i></p></div>
+  <p>Unit 3 introduces the <b>Harvard architecture</b>, which fixes the bottleneck by giving instructions and data separate memories and buses.</p>
+  <pre class="pc py" data-run data-t="Try it: a program is just data">program = ["LOAD 5", "ADD 3", "STORE total"]   # instructions held in a list, like memory
+data = {"total": 0}
+for instruction in program:                         # fetch each one in turn
+    print("Fetched:", instruction)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-1-components">
+<div class="theory airy">
+ <section>
+  <h2>Inside a computer system</h2>
+  <p class="lede">Every von Neumann computer has the same core parts: a <b>CPU</b>, <b>memory</b>, <b>input/output</b> and the <b>buses</b> that connect them.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 700 330" role="img" aria-label="The CPU connects to RAM, ROM and the I/O controller through the address bus, data bus and control bus">
+   <defs><marker id="cbA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="20" y="90" width="170" height="150" rx="14" class="b2"/><text x="105" y="125" class="h c">CPU</text><text x="105" y="152" class="s c">control unit · ALU</text><text x="105" y="172" class="s c">registers · cache</text><text x="105" y="192" class="s c">clock</text>
+   <rect x="470" y="20" width="200" height="70" rx="10" class="b"/><text x="570" y="52" class="t c">RAM</text><text x="570" y="73" class="s c">programs and data in use</text>
+   <rect x="470" y="130" width="200" height="70" rx="10" class="b"/><text x="570" y="162" class="t c">ROM</text><text x="570" y="183" class="s c">bootstrap / BIOS</text>
+   <rect x="470" y="240" width="200" height="70" rx="10" class="b"/><text x="570" y="272" class="t c">I/O controller</text><text x="570" y="293" class="s c">keyboard, screen, drives</text>
+   <line x1="190" y1="120" x2="420" y2="120" class="la" marker-end="url(#cbA)"/><text x="300" y="112" class="ta c t">address bus →</text>
+   <line x1="196" y1="165" x2="414" y2="165" class="li" marker-start="url(#cbA)" marker-end="url(#cbA)"/><text x="300" y="157" class="ti c t">data bus ↔</text>
+   <line x1="196" y1="210" x2="414" y2="210" class="lw" marker-start="url(#cbA)" marker-end="url(#cbA)"/><text x="300" y="202" class="tw c t">control bus ↔</text>
+   <line x1="425" y1="55" x2="425" y2="275" class="l"/><line x1="425" y1="55" x2="468" y2="55" class="l"/><line x1="425" y1="165" x2="468" y2="165" class="l"/><line x1="425" y1="275" x2="468" y2="275" class="l"/>
+  </svg><figcaption>Each bus is a set of parallel wires shared by every component.</figcaption></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Component</th><th>Function</th><th>Why it's needed</th></tr>
+   <tr><td class="lbl">CPU</td><td>Fetches, decodes and executes instructions</td><td>Something has to process the program</td></tr>
+   <tr><td class="lbl">RAM</td><td>Holds the programs and data in use. Read and write. <b>Volatile</b></td><td>The CPU can only run programs held in main memory</td></tr>
+   <tr><td class="lbl">ROM</td><td>Holds the start-up (bootstrap) instructions. Read only. <b>Non-volatile</b></td><td>RAM is empty at power-on, so something must start the computer</td></tr>
+   <tr><td class="lbl">Cache</td><td>Very fast memory in the CPU holding copies of frequently used instructions and data</td><td>RAM is much slower than the CPU</td></tr>
+   <tr><td class="lbl">I/O</td><td>Controllers and ports that connect devices to the buses</td><td>Data must get in and results must get out</td></tr></table></div>
+ </section>
+ <section>
+  <h2>The three buses</h2>
+  <div class="ccards">
+   <div class="keypts"><h3>Address bus</h3><p>Carries the <b>address</b> of the memory location (or I/O port) to be used. <b>Unidirectional:</b> only the CPU puts addresses on it.</p></div>
+   <div class="keypts"><h3>Data bus</h3><p>Carries the <b>data and instructions</b> themselves. <b>Bidirectional:</b> data goes to and from the CPU.</p></div>
+   <div class="keypts"><h3>Control bus</h3><p>Carries <b>control and timing signals</b>: memory read, memory write, the clock, interrupt requests, bus requests. <b>Bidirectional</b>.</p></div>
+  </div>
+  <p>The <b>width</b> of a bus is its number of wires. A wider <b>data bus</b> moves more bits per transfer. A wider <b>address bus</b> can reach more memory.</p>
+ </section>
+ <section>
+  <h2>How much memory can be addressed?</h2>
+  <p>Each wire on the address bus carries one bit of the address. With <b>n</b> wires there are <b>2<sup>n</sup></b> different patterns, so the CPU can address <b>2<sup>n</sup> memory locations</b>.</p>
+  <div class="facts3"><div><b>8-bit</b><span>2<sup>8</sup> = 256 locations</span></div><div><b>16-bit</b><span>2<sup>16</sup> = 65,536 locations</span></div><div><b>32-bit</b><span>2<sup>32</sup> ≈ 4.3 billion locations</span></div></div>
+  <h3>Worked example</h3>
+  <p>A computer has a 20-bit address bus and each memory location holds 1 byte. How much memory can it address?</p>
+  <p class="stepline"><b>Step 1</b><span>Number of locations = 2<sup>20</sup> = 1,048,576.</span></p>
+  <p class="stepline"><b>Step 2</b><span>Each holds 1 byte, so the addressable memory is 2<sup>20</sup> bytes = <b>1 MiB</b>.</span></p>
+  <p>If each location held a 4-byte word, multiply by 4: 2<sup>20</sup> × 4 = 4 MiB.</p>
+  <div class="callout tip"><span class="k">Expression</span><p>Addressable memory = <b>2<sup>address bus width</sup> × size of each location</b>. Adding one wire <b>doubles</b> the addressable memory.</p></div>
+  <pre class="pc py" data-run data-t="Try it: change the bus width">bus_width = 20          # bits on the address bus
+locations = 2 ** bus_width
+print(locations, "locations")
+print(locations // 1024, "KiB if each location is 1 byte")</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-1-cpu">
+<div class="theory airy">
+ <section>
+  <h2>Inside the CPU</h2>
+  <p class="lede">The CPU is made of a <b>control unit</b>, an <b>arithmetic logic unit</b>, a set of <b>registers</b> and a <b>clock</b>. Registers are tiny, extremely fast stores, each just one word wide.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 700 360" role="img" aria-label="CPU diagram: control unit, clock, ALU and registers PC, MAR, MBR, CIR, ACC, SP and SR, with MAR linked to the address bus and MBR to the data bus">
+   <rect x="10" y="10" width="520" height="340" rx="16" class="b3"/><text x="270" y="38" class="h c">CPU</text>
+   <rect x="30" y="56" width="200" height="56" rx="8" class="b2"/><text x="130" y="90" class="t c">Control unit</text>
+   <rect x="250" y="56" width="120" height="56" rx="8" class="b"/><text x="310" y="82" class="t c">Clock</text><path d="M268 98 h12 v-10 h12 v10 h12 v-10 h12 v10 h12 v-10 h12 v10" class="l" stroke-width="1.6"/>
+   <path d="M390 60 L510 60 L480 112 L420 112 Z" class="bw"/><text x="450" y="91" class="t c">ALU</text>
+   <g><rect x="30" y="140" width="110" height="44" rx="6" class="b"/><text x="85" y="168" class="m c">PC</text>
+   <rect x="150" y="140" width="110" height="44" rx="6" class="b"/><text x="205" y="168" class="m c">MAR</text>
+   <rect x="270" y="140" width="110" height="44" rx="6" class="b"/><text x="325" y="168" class="m c">MBR</text>
+   <rect x="390" y="140" width="110" height="44" rx="6" class="b"/><text x="445" y="168" class="m c">CIR</text>
+   <rect x="30" y="200" width="110" height="44" rx="6" class="b"/><text x="85" y="228" class="m c">ACC</text>
+   <rect x="150" y="200" width="110" height="44" rx="6" class="b"/><text x="205" y="228" class="m c">SP</text>
+   <rect x="270" y="200" width="110" height="44" rx="6" class="b"/><text x="325" y="228" class="m c">SR</text>
+   <rect x="30" y="268" width="470" height="56" rx="8" class="b"/><text x="265" y="292" class="t c">General-purpose registers</text><text x="265" y="312" class="m c">R0  R1  R2  …  R12</text></g>
+   <line x1="205" y1="140" x2="205" y2="128" class="l"/><line x1="205" y1="128" x2="600" y2="128" class="la"/><text x="615" y="132" class="ta t">address bus</text>
+   <line x1="325" y1="184" x2="325" y2="194" class="l"/><line x1="380" y1="194" x2="600" y2="194" class="li"/><line x1="325" y1="194" x2="380" y2="194" class="li"/><text x="615" y="198" class="ti t">data bus</text>
+  </svg><figcaption>The MAR is the CPU's link to the address bus; the MBR is its link to the data bus.</figcaption></figure>
+ </section>
+ <section>
+  <h2>The main components</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Component</th><th>Function</th></tr>
+   <tr><td class="lbl">Control unit (CU)</td><td>Decodes each instruction and sends <b>control signals</b> (on the control bus and inside the CPU) so every part does the right thing at the right time.</td></tr>
+   <tr><td class="lbl">Arithmetic logic unit (ALU)</td><td>Does arithmetic (add, subtract, shifts) and logic (AND, OR, XOR, NOT, comparisons). It takes two operands, A and B, and an opcode, and outputs a result and status flags.</td></tr>
+   <tr><td class="lbl">General-purpose registers</td><td>Hold data being worked on, so it doesn't have to go back to memory. ARM processors have R0 to R12.</td></tr>
+   <tr><td class="lbl">Clock</td><td>Produces regular pulses. Each pulse moves the CPU on one step. Clock speed is measured in hertz (GHz = billions of cycles a second).</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Special-purpose registers</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Register</th><th>Holds</th></tr>
+   <tr><td class="lbl">Program counter (PC)</td><td>The <b>address of the next instruction</b> to fetch. Incremented every fetch; changed by jumps.</td></tr>
+   <tr><td class="lbl">Memory address register (MAR)</td><td>The <b>address</b> of the memory location about to be read or written. Connected to the address bus.</td></tr>
+   <tr><td class="lbl">Memory buffer register (MBR)</td><td>The <b>data or instruction</b> just read from memory, or about to be written. Connected to the data bus. (Some books call it the memory data register, MDR.)</td></tr>
+   <tr><td class="lbl">Current instruction register (CIR)</td><td>The <b>instruction</b> being decoded and executed.</td></tr>
+   <tr><td class="lbl">Accumulator (ACC)</td><td>The <b>result</b> of ALU calculations.</td></tr>
+   <tr><td class="lbl">Stack pointer (SP)</td><td>The address of the <b>top of the stack</b> in memory, used for subroutine calls and returns.</td></tr>
+   <tr><td class="lbl">Status register (SR)</td><td><b>Flags</b> about the last result: zero (Z), negative (N), carry (C), overflow (V). Conditional jumps test these flags.</td></tr></table></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>The <b>PC</b> holds an <b>address</b>, not an instruction. The instruction itself ends up in the <b>CIR</b>.</p></div>
+  <div class="callout tip"><span class="k">Why so many registers?</span><p>Registers are the fastest storage there is. Keeping addresses, instructions and results in registers means the CPU touches slow main memory as little as possible.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-1-fde">
+<div class="theory airy">
+ <section>
+  <h2>The fetch-decode-execute cycle</h2>
+  <p class="lede">The CPU runs a program by repeating three stages for every instruction, billions of times a second: <b>fetch</b>, <b>decode</b>, <b>execute</b>.</p>
+  <h3>Register transfer notation</h3>
+  <p>Exam questions describe the cycle with <b>register transfer notation</b>:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Notation</th><th>Meaning</th></tr>
+   <tr><td class="mono">MAR ← [PC]</td><td>The <b>contents</b> of the PC (square brackets) are copied into the MAR (the arrow points to where they go)</td></tr>
+   <tr><td class="mono">PC ← [PC] + 1</td><td>The PC is incremented</td></tr>
+   <tr><td class="mono">[CIR]</td><td>The contents of the CIR are decoded and executed</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Fetch</h2>
+  <div class="rtn">
+   1. <b>MAR ← [PC]</b> &nbsp;the address of the next instruction goes to the MAR, and onto the address bus<br>
+   2. A <b>memory read</b> signal is sent on the control bus<br>
+   3. <b>MBR ← [Memory]<sub>[MAR]</sub></b> &nbsp;the instruction travels along the data bus into the MBR<br>
+   4. <b>PC ← [PC] + 1</b> &nbsp;the PC now points to the next instruction<br>
+   5. <b>CIR ← [MBR]</b> &nbsp;the instruction is copied into the CIR</div>
+  <p>Steps 3 and 4 can happen at the same time, because they use different parts of the CPU.</p>
+ </section>
+ <section>
+  <h2>Decode</h2>
+  <p>The <b>control unit</b> decodes <span class="mono">[CIR]</span>: it splits the instruction into its <b>opcode</b> (the operation) and <b>operand</b> (the data or address), and works out which control signals to send.</p>
+ </section>
+ <section>
+  <h2>Execute</h2>
+  <p>What happens depends on the instruction:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Instruction type</th><th>Execute stage</th></tr>
+   <tr><td class="lbl">Load from memory</td><td>MAR ← address from the operand; <b>memory read</b>; MBR ← [Memory]; ACC ← [MBR]</td></tr>
+   <tr><td class="lbl">Store to memory</td><td>MAR ← address; MBR ← [ACC]; <b>memory write</b> signal</td></tr>
+   <tr><td class="lbl">Arithmetic / logic</td><td>The ALU works on the values; ACC ← result; the status register flags are updated</td></tr>
+   <tr><td class="lbl">Jump (branch)</td><td>PC ← address from the operand (if a condition holds, for a conditional jump)</td></tr></table></div>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 230" role="img" aria-label="Fetch: PC to MAR, address bus to memory, memory read, instruction on data bus to MBR, MBR to CIR, PC incremented">
+   <defs><marker id="fdA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="20" y="30" width="90" height="44" rx="6" class="b"/><text x="65" y="58" class="m c">PC</text>
+   <rect x="180" y="30" width="90" height="44" rx="6" class="b"/><text x="225" y="58" class="m c">MAR</text>
+   <rect x="180" y="150" width="90" height="44" rx="6" class="b"/><text x="225" y="178" class="m c">MBR</text>
+   <rect x="20" y="150" width="90" height="44" rx="6" class="b"/><text x="65" y="178" class="m c">CIR</text>
+   <rect x="440" y="30" width="180" height="164" rx="12" class="b3"/><text x="530" y="60" class="t c">Memory</text><text x="530" y="110" class="m c">0101 0011</text><text x="530" y="132" class="s c">instruction</text>
+   <line x1="110" y1="52" x2="174" y2="52" class="l" marker-end="url(#fdA)"/><text x="142" y="44" class="s c">1</text>
+   <line x1="270" y1="52" x2="434" y2="52" class="la" marker-end="url(#fdA)"/><text x="352" y="44" class="ta s c">2 address bus · read</text>
+   <line x1="434" y1="172" x2="276" y2="172" class="li" marker-end="url(#fdA)"/><text x="352" y="164" class="ti s c">3 data bus</text>
+   <line x1="180" y1="172" x2="116" y2="172" class="l" marker-end="url(#fdA)"/><text x="148" y="164" class="s c">5</text>
+   <path d="M40 74 C10 110, 10 110, 40 120" class="ld"/><text x="65" y="118" class="s c">4 PC+1</text>
+  </svg><figcaption>The fetch stage, numbered as in the steps above.</figcaption></figure>
+  <div class="callout tip"><span class="k">Exam tip</span><p>"Describe the fetch stage" usually carries 4 or 5 marks. Name the <b>registers</b>, the <b>buses</b> and the <b>read signal</b>, in order. Register transfer notation is a quick, precise way to do it.</p></div>
+  <pre class="pc py" data-run data-t="Try it: a tiny fetch-decode-execute loop">memory = ["LOAD 7", "ADD 5", "PRINT", "HALT"]
+pc, acc = 0, 0
+while True:
+    mar = pc                 # MAR ← [PC]
+    mbr = memory[mar]        # memory read: MBR ← [Memory]
+    pc = pc + 1              # PC ← [PC] + 1
+    cir = mbr                # CIR ← [MBR]
+    opcode, *operand = cir.split()     # decode
+    if opcode == "LOAD": acc = int(operand[0])
+    elif opcode == "ADD": acc = acc + int(operand[0])
+    elif opcode == "PRINT": print("ACC =", acc)
+    elif opcode == "HALT": break</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-1-hierarchy">
+<div class="theory airy">
+ <section>
+  <h2>The memory hierarchy</h2>
+  <p class="lede">No single type of memory is fast, huge, cheap and permanent all at once. So computers use a <b>hierarchy</b>: a little very fast memory near the CPU, and more, slower, cheaper storage further away.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 330" role="img" aria-label="Memory hierarchy pyramid: registers at the top, then L1, L2, L3 cache, main memory, and secondary storage at the base. Up is faster, smaller and dearer; down is bigger, slower and cheaper">
+   <path d="M260 20 L300 20 L330 70 L230 70 Z" class="bb"/><text x="280" y="55" class="t c">Registers</text>
+   <path d="M230 74 L330 74 L355 118 L205 118 Z" class="bw"/><text x="280" y="101" class="c">L1 cache</text>
+   <path d="M205 122 L355 122 L380 166 L180 166 Z" class="bw"/><text x="280" y="149" class="c">L2 cache</text>
+   <path d="M180 170 L380 170 L405 214 L155 214 Z" class="bw"/><text x="280" y="197" class="c">L3 cache</text>
+   <path d="M155 218 L405 218 L430 262 L130 262 Z" class="bi"/><text x="280" y="245" class="c">Main memory (RAM)</text>
+   <path d="M130 266 L430 266 L460 316 L100 316 Z" class="bg"/><text x="280" y="296" class="c">Secondary storage</text>
+   <line x1="500" y1="300" x2="500" y2="40" class="l" stroke-width="3"/><path d="M492 50 L500 34 L508 50Z" class="fk"/><text x="515" y="45" class="s">faster</text><text x="515" y="62" class="s">smaller</text><text x="515" y="79" class="s">dearer per byte</text>
+   <text x="515" y="270" class="s">slower</text><text x="515" y="287" class="s">bigger</text><text x="515" y="304" class="s">cheaper per byte</text>
+  </svg></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Level</th><th>Typical size</th><th>Characteristics</th></tr>
+   <tr><td class="lbl">CPU registers</td><td>A few dozen words</td><td>Inside the CPU; accessed within a clock cycle; hold the values being worked on now</td></tr>
+   <tr><td class="lbl">L1 cache</td><td>32–128 KiB per core</td><td>Fastest cache; one per core, often split into instruction and data caches</td></tr>
+   <tr><td class="lbl">L2 cache</td><td>256 KiB–2 MiB per core</td><td>Slower and bigger than L1; usually one per core</td></tr>
+   <tr><td class="lbl">L3 cache</td><td>8–64 MiB</td><td>Shared between all the cores; still much faster than RAM</td></tr>
+   <tr><td class="lbl">Main memory</td><td>8–64 GiB</td><td>Volatile RAM holding running programs and data</td></tr>
+   <tr><td class="lbl">Secondary storage</td><td>Terabytes</td><td>Non-volatile SSDs and hard disks; thousands of times slower than RAM</td></tr></table></div>
+ </section>
+ <section>
+  <h2>How it works: hits and misses</h2>
+  <p>When the CPU needs some data, it checks the fastest level first. If the data is there, it's a <b>hit</b>. If not, it's a <b>miss</b>, and the next level down is checked. When the data is found, a copy is placed in the faster levels, ready for next time.</p>
+  <div class="callout"><span class="k">Key idea</span><h3>Locality of reference</h3><p>Programs tend to reuse the same data and instructions again soon (<b>temporal locality</b>, e.g. a loop) and to use addresses near ones they've just used (<b>spatial locality</b>, e.g. stepping through an array). So most requests are hits, and the CPU rarely waits for slow memory.</p></div>
+ </section>
+ <section>
+  <h2>Benefits and drawbacks</h2>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>The computer runs almost as fast as if all memory were cache, at a fraction of the cost.</li><li>Large, permanent storage is still available for everything else.</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>Fast memory is <b>expensive</b>, so the upper levels are small.</li><li>A miss costs time while slower levels are searched.</li><li>Keeping copies consistent between cores' caches adds complexity.</li></ul></div>
+  </div>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-1-transmission">
+<div class="theory airy">
+ <section>
+  <h2>Serial and parallel transmission</h2>
+  <p class="lede">Data moves between components as bits. They can travel <b>one at a time</b> down a single channel (<b>serial</b>) or <b>several at once</b> along several wires (<b>parallel</b>).</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 280" role="img" aria-label="Serial: the byte 01101001 travels bit by bit down one wire. Parallel: eight wires each carry one bit of the byte at the same time">
+   <text x="20" y="30" class="h">Serial</text>
+   <rect x="20" y="45" width="90" height="50" rx="8" class="b2"/><text x="65" y="76" class="c t">Sender</text>
+   <rect x="530" y="45" width="90" height="50" rx="8" class="b2"/><text x="575" y="76" class="c t">Receiver</text>
+   <line x1="110" y1="70" x2="530" y2="70" class="l"/>
+   <g class="m"><text x="160" y="62">0</text><text x="200" y="62">1</text><text x="240" y="62">1</text><text x="280" y="62">0</text><text x="320" y="62">1</text><text x="360" y="62">0</text><text x="400" y="62">0</text><text x="440" y="62">1</text></g>
+   <text x="300" y="112" class="s c">one wire · bits follow each other</text>
+   <text x="20" y="150" class="h">Parallel</text>
+   <rect x="20" y="160" width="90" height="110" rx="8" class="b2"/><text x="65" y="220" class="c t">Sender</text>
+   <rect x="530" y="160" width="90" height="110" rx="8" class="b2"/><text x="575" y="220" class="c t">Receiver</text>
+   <g>
+   <line x1="110" y1="170" x2="530" y2="170" class="l"/><line x1="110" y1="183" x2="530" y2="183" class="l"/><line x1="110" y1="196" x2="530" y2="196" class="l"/><line x1="110" y1="209" x2="530" y2="209" class="l"/>
+   <line x1="110" y1="222" x2="530" y2="222" class="l"/><line x1="110" y1="235" x2="530" y2="235" class="l"/><line x1="110" y1="248" x2="530" y2="248" class="l"/><line x1="110" y1="261" x2="530" y2="261" class="l"/></g>
+   <g class="m"><text x="330" y="168">0</text><text x="330" y="181">1</text><text x="330" y="194">1</text><text x="330" y="207">0</text><text x="330" y="220">1</text><text x="330" y="233">0</text><text x="330" y="246">0</text><text x="330" y="259">1</text></g>
+  </svg><figcaption>The same byte, 01101001, sent serially and in parallel.</figcaption></figure>
+ </section>
+ <section>
+  <h2>Comparing them</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Serial</th><th>Parallel</th></tr>
+   <tr><td class="lbl">Wires</td><td>One data channel (plus ground)</td><td>One wire per bit, e.g. 8, 32 or 64</td></tr>
+   <tr><td class="lbl">Bits per clock tick</td><td>One</td><td>Several</td></tr>
+   <tr><td class="lbl">Skew</td><td>None: bits can't overtake each other</td><td>Bits can arrive at slightly different times over longer distances, so they get out of step</td></tr>
+   <tr><td class="lbl">Crosstalk</td><td>Little</td><td>Signals in neighbouring wires interfere with each other</td></tr>
+   <tr><td class="lbl">Distance</td><td>Long distances</td><td>Short distances only</td></tr>
+   <tr><td class="lbl">Cost</td><td>Cheaper cables and connectors</td><td>More wires, so dearer and bulkier</td></tr>
+   <tr><td class="lbl">Used for</td><td>USB, networking, SATA, PCI Express lanes</td><td>Buses inside the CPU and on the motherboard</td></tr></table></div>
+  <div class="callout"><span class="k">Why serial has taken over</span><p>Parallel looks faster because it sends more bits per tick. But skew and crosstalk limit how fast its clock can run. A single serial line can be clocked so much faster that modern serial links beat old parallel ones, over longer cables, with fewer errors.</p></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>To justify a choice, link the method to the <b>scenario</b>: distance, speed needed, cost and the risk of errors.</p></div>
+ </section>
+</div>
+</template>

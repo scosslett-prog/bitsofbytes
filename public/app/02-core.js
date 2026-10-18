@@ -21,14 +21,20 @@ function chip(id){const t=TOPICS.find(x=>x.id===id),l=level(id);let pct=null;
   if(t){const st=secStatus(t);if(st.started)pct=st.pct}else if(S.scores[id])pct=S.scores[id].best;
   return `<span class="chip ${CLS[l]}"${t?` title="Completion across all tasks in this section"`:""}>${pct!=null?pct+"% · ":""}${LBL[l]}</span>`}
 function vchip(id){const s=S.scores[id],l=s?lvOf(s.best,true):0;return `<span class="chip ${CLS[l]}">${s?s.best+"%":"Not started"}</span>`}
-function accent(p){return p===1?"--accent:var(--p1);--accent-soft:var(--p1-soft)":"--accent:var(--p2);--accent-soft:var(--p2-soft)"}
+/* the course's papers (IGCSE) or units (A-Level), and what to call things */
+const PIDS=Object.keys(PAPERS).map(Number).sort((a,b)=>a-b);
+const CRS=typeof COURSE!=="undefined"?COURSE:{id:"igcse",name:"Cambridge IGCSE Computer Science",short:"IGCSE Computer Science",code:"0478",unit:"Paper"};
+const firstLesson=()=>ALL_LESSONS[0];
+function accent(p){return p%2===1?"--accent:var(--p1);--accent-soft:var(--p1-soft)":"--accent:var(--p2);--accent-soft:var(--p2-soft)"}
 
-function nav(route){
+/* the A-Level preview says so at the top of every page */
+function alBar(){if(!BOB.course||document.getElementById("albar"))return;{const f=document.querySelector("footer .wrap > span");if(f)f.textContent="Bits of Bytes · Pearson Edexcel IAL Computer Science (preview)"}const b=document.createElement("div");b.id="albar";b.setAttribute("role","note");
+  b.innerHTML=`<span><b>${esc(CRS.short)} · preview</b> Only admin accounts can see this site.</span><a href="/#home">Back to the IGCSE site</a>`;document.body.prepend(b)}
+function nav(route){alBar();
   const on=r=>route===r||route.startsWith(r)?' class="on"':'';
   const t=TOPICS.find(x=>"t-"+x.id===route)||ALL_LESSONS.find(x=>"l-"+x.id===route)?.topic;
-  const pp=route==="paper-1"?1:route==="paper-2"?2:t?t.ch.paper:0;
-  $("#links").innerHTML=`<a href="#paper-1"${pp===1?' class="on"':''}>Paper 1</a>
-  <a href="#paper-2"${pp===2?' class="on"':''}>Paper 2</a>
+  const pm=route.match(/^paper-(\d+)$/),pp=pm?+pm[1]:t?t.ch.paper:0;
+  $("#links").innerHTML=`${PIDS.map(p=>`<a href="#paper-${p}"${pp===p?' class="on"':''}>${PAPERS[p].code}</a>`).join("")}
   <a href="#flashcards"${on("flashcards")}>Flash cards</a>
   <a href="#exams"${on("exam")}>Exam questions</a>
   ${isTeacher()?`<a href="#teacher"${route==="teacher"||route.startsWith("class-")?' class="on"':""}>My classes</a>`:myClass()?`<a href="#todo"${on("todo")}>To-do${todoCount()?` <span class="tbadge" aria-label="${todoCount()} to do">${todoCount()}</span>`:""}</a>`:""}
@@ -45,16 +51,16 @@ function home(){
   const rows=[["'b'",b],["0x62","01100010"],["98",b]];
   return `<section class="hero">
    <div>
-    <div class="eyebrow">Cambridge IGCSE Computer Science · 0478</div>
+    ${CRS.hero?CRS.hero:`<div class="eyebrow">Cambridge IGCSE Computer Science · 0478</div>
     <h1 style="margin-top:10px">Every syllabus point, one byte at a time.</h1>
     <p class="hcover"><span class="hcbadge" aria-hidden="true">✓</span><span><b>Full coverage of the Cambridge IGCSE Computer Science (0478) syllabus</b> for exams in 2026, 2027 and 2028: every section of Paper 1 and Paper 2.</span></p>
-    <p class="lead">Notes, key vocabulary and self-tests for every topic in Paper 1 and Paper 2, with a dashboard that shows students and teachers exactly what is secure and what needs work.</p>
+    <p class="lead">Notes, key vocabulary and self-tests for every topic in Paper 1 and Paper 2, with a dashboard that shows students and teachers exactly what is secure and what needs work.</p>`}
     <div class="ctas">${homeCtas()}</div>
    </div>
    <div class="herologo">${LOGO_SVG||'<img src="/logo.svg" alt="Bits of Bytes logo">'}</div>
   </section>
   ${homeCoverage()}
-  <section class="papers">${[1,2].map(p=>{const P=PAPERS[p],cs=CH.filter(c=>c.paper===p);return `<a class="paper p${p}" href="#paper-${p}">
+  <section class="papers${PIDS.length>2?" papers4":""}">${PIDS.map(p=>{const P=PAPERS[p],cs=CH.filter(c=>c.paper===p);return `<a class="paper p${p%2===1?1:2}" style="${accent(p)}" href="#paper-${p}">
     <span class="tag">${P.code}</span><h2>${P.title}</h2><p style="color:var(--muted)">${P.blurb}</p>
     <ol start="${cs[0].n}">${cs.map(c=>`<li>${c.title}</li>`).join("")}</ol>
     <span class="meta">${P.facts.slice(0,3).join(" · ")}</span></a>`}).join("")}</section>
@@ -73,7 +79,7 @@ function paper(p){
   <div class="crumbs"><a href="#home">Home</a><span>/</span><span>${P.code}</span></div>
   <div class="phead"><div class="eyebrow">${P.code}</div><h1>${P.title}</h1><p>${P.blurb}</p><div class="facts">${P.facts.map(f=>`<span class="fact">${f}</span>`).join("")}</div></div>
   ${cs.map(c=>`<div class="chapter"><div><div class="n">${c.n}</div><h2>${c.title}</h2></div>
-   <div class="tlist">${c.topics.map(t=>`<a class="tcard" href="#t-${t.id}"><div class="top"><span class="code">${t.code}</span>${chip(t.id)}</div><h3>${t.title}</h3><small>${t.lessons?`${doneCount(t)} of ${t.lessons.length} lessons complete · `:""}${t.v.length} key terms</small></a>`).join("")}</div></div>`).join("")}
+   <div class="tlist">${c.topics.map(t=>`<a class="tcard" href="#t-${t.id}"><div class="top"><span class="code">${t.code}</span>${chip(t.id)}</div><h3>${t.title}</h3><small>${t.lessons?`${doneCount(t)} of ${t.lessons.length} lessons complete${t.v.length?" · ":""}`:t.v.length?"":"Lessons coming soon"}${t.v.length?`${t.v.length} key terms`:""}</small></a>`).join("")}</div></div>`).join("")}
   </div>`;
 }
 
@@ -92,7 +98,7 @@ function topic(t){
     :`<div class="block"><div class="eyebrow">Lessons</div><div class="placeholder"><h3>Lessons coming soon</h3><p>This section will be split into short lessons, each with theory, practice and a quick check.</p></div></div>`}
     <nav class="pager">${prev?`<a href="#t-${prev.id}"><small>← Previous · ${prev.code}</small><b>${prev.title}</b></a>`:""}${next?`<a class="next" href="#t-${next.id}"><small>Next · ${next.code} →</small><b>${next.title}</b></a>`:""}</nav>
    </div>
-   ${t.lessons?`<aside class="vocab secp" id="secp" aria-label="This section">${secPanel(t)}</aside>`:`<aside class="vocab" id="vocab"></aside>`}
+   ${t.lessons?`<aside class="vocab secp" id="secp" aria-label="This section">${secPanel(t)}</aside>`:t.v&&t.v.length?`<aside class="vocab" id="vocab"></aside>`:""}
   </div></div>`;
 }
 
@@ -2405,16 +2411,16 @@ const ACT_TYPES={
   wrong:q=>{if(q.kind!=="paint")return ACT_TYPES.typed.wrong(q);const n=AQ.paint.filter((v,i)=>v!==q.pix[i]).length;return `Not quite: ${n} pixel${n>1?"s don't":" doesn't"} match, outlined in red. Check those rows of binary against the key.`},
   review:w=>{if(w.kind!=="paint")return ACT_TYPES.typed.review(w);const g=w.given.split(",").map(Number),n=g.filter((v,i)=>v!==w.pix[i]).length;return `<span>Paint the ${w.d}-bit bitmap (${w.w} × ${w.h})</span><span>${n} of ${w.pix.length} pixels didn't match the binary data.</span>`}},
  typed:{
-  ask:(q,r)=>`<p class="eyebrow" style="text-align:center">${q.prompt}</p>
-    <div class="sumbox conv"><span>${q.show}</span><small>${q.sub}</small></div>
+  ask:(q,r)=>`${q.html||""}<p class="eyebrow" style="text-align:center">${q.prompt}</p>
+    ${q.show?`<div class="sumbox conv"><span>${q.show}</span><small>${q.sub}</small></div>`:""}
     <form class="actform" novalidate style="all:unset;display:flex;flex-direction:column;gap:8px">
      <label for="act-in" class="vfoot">${q.base==="char"?"Your answer (one character)":q.base==="text"?"Your answer":(q.base===10&&q.unit?`Your answer (${q.unit})`:`Your answer in ${q.base===2?(q.exact8?"binary (all 8 bits)":"binary"):"denary"}`)}</label>
-     <div class="actin"><input id="act-in" type="text" autocomplete="off" maxlength="${q.base==="char"?2:q.base==="text"?40:12}" ${q.base===2?'inputmode="numeric"':'inputmode="text"'} placeholder="${q.base===2?"00000000":q.base==="char"?"e.g. H":q.base==="text"?"e.g. 4A3B":q.neg?"e.g. −16":"e.g. 128"}"${r!==undefined?` value="${esc(AQ.typed)}" disabled`:""}>${r===undefined?`<button class="btn primary" type="submit">Check</button>`:""}</div></form>`,
+     <div class="actin"><input id="act-in" type="text" autocomplete="off" maxlength="${q.base==="char"?2:q.base==="text"?40:12}" ${q.base===2?'inputmode="numeric"':'inputmode="text"'} placeholder="${q.base===2?"00000000":q.base==="char"?"e.g. H":q.base==="text"?(q.ph||"e.g. 4A3B"):q.neg?"e.g. −16":"e.g. 128"}"${r!==undefined?` value="${esc(AQ.typed)}" disabled`:""}>${r===undefined?`<button class="btn primary" type="submit">Check</button>`:""}</div></form>`,
   valid:(q,g)=>{if(q.base==="char")return [...g].length===1?"":"Type a single character.";
     if(q.base==="text")return g?"":"Type your answer in the box first.";
     if(q.base===2){if(!/^[01]{1,8}$/.test(g))return "Type your answer using only 0s and 1s, up to 8 bits.";if(q.exact8&&g.length!==8)return /complement|sign/i.test((q.prompt||"")+(q.sub||""))?"Write all 8 bits. In two's complement the leftmost bit is the sign bit.":"Write all 8 bits, including any leading zeros.";return ""}
     return /^[-−–]?[\d,]{1,12}$/.test(g)?"":q.neg?"Type a whole number, with a minus sign if it's negative.":"Type a whole number using the digits 0 to 9."},
-  check:(q,g)=>q.base==="text"?[q.ansStr,q.alt].filter(Boolean).some(a=>a.toUpperCase()===g.toUpperCase()):q.base==="char"?g===q.ansStr:q.base===2?parseInt(g,2)===q.val:parseInt(g.replace(/[−–]/,"-").replace(/,/g,""),10)===q.val,
+  check:(q,g)=>q.base==="text"?[q.ansStr,q.alt].filter(Boolean).some(a=>a.toUpperCase().replace(/[\s,]+/g,"")===g.toUpperCase().replace(/[\s,]+/g,"").replace(/[−–]/g,"-")):q.base==="char"?g===q.ansStr:q.base===2?parseInt(g,2)===q.val:parseInt(g.replace(/[−–]/,"-").replace(/,/g,""),10)===q.val,
   right:q=>`Correct! The answer is <b class="mono">${q.ansStr}</b>.`,
   wrong:q=>`Not quite. The answer is <b class="mono">${q.ansStr}</b>.<br><span class="mono" style="font-size:.85em">${q.working}</span>`,
   review:w=>`<span class="mono">${w.show}</span><span>${w.prompt}. You wrote <b class="mono">${esc(w.given)}</b>. Answer: <b class="mono">${w.ansStr}</b> · ${w.working}</span>`},
@@ -2559,7 +2565,7 @@ document.addEventListener("keydown",e=>{if(e.target.matches("input,textarea,sele
 /* the Flash cards page */
 function fcPage(){if(!FCPAGE.sel){FCPAGE.sel=new Set(ALL_LESSONS.slice(0,3).map(l=>l.id))}
   const tops=TOPICS.filter(t=>t.lessons);
-  const tree=[1,2].map(p=>{const ts=tops.filter(t=>t.ch.paper===p);if(!ts.length)return"";return `<span class="eyebrow">${PAPERS[p].code} · ${PAPERS[p].title}</span>`+ts.map(t=>{const on=t.lessons.filter(l=>FCPAGE.sel.has(l.id)).length;
+  const tree=PIDS.map(p=>{const ts=tops.filter(t=>t.ch.paper===p);if(!ts.length)return"";return `<span class="eyebrow">${PAPERS[p].code} · ${PAPERS[p].title}</span>`+ts.map(t=>{const on=t.lessons.filter(l=>FCPAGE.sel.has(l.id)).length;
     return `<details${on?" open":""}><summary><input type="checkbox" data-fcsec="${t.id}"${on===t.lessons.length?" checked":""} aria-label="Select all of ${t.code} ${esc(t.title)}"> ${t.code} ${esc(t.title)}<small>${on}/${t.lessons.length}</small></summary><div class="fcls ls">${t.lessons.map(l=>`<label><input type="checkbox" data-fcl="${l.id}"${FCPAGE.sel.has(l.id)?" checked":""}> ${esc(l.title)}<small>${fcPool([l.id],"both").length}</small></label>`).join("")}</div></details>`}).join("")}).join("");
   const tot=S.fch.reduce((a,x)=>a+x.n,0),kn=S.fch.reduce((a,x)=>a+x.k,0),allc=fcPool(ALL_LESSONS.map(l=>l.id),"both"),mast=allc.filter(fcMastered).length;
   const studied=ALL_LESSONS.filter(l=>S.fcs[l.id]);
@@ -2700,7 +2706,7 @@ function initWidgets(root){
   const pp=root.querySelector("#pnpdemo");if(pp)pnpDemo(pp);
   const q=id=>root.querySelector(id);
   if(q("#parmaker"))parMaker(q("#parmaker"));if(q("#pbdemo"))pbDemo(q("#pbdemo"));if(q("#barcode"))barcode(q("#barcode"),"5060204123733");
-  if(q("#cdcalc"))cdCalc(q("#cdcalc"));if(q("#csdemo"))csDemo(q("#csdemo"));if(q("#caesar"))caesarDemo(q("#caesar"));if(q("#lmc"))lmcDemo(q("#lmc"));if(q("#isdemo"))isDemo(q("#isdemo"));if(q("#intdemo"))intDemo(q("#intdemo"));root.querySelectorAll(".devx").forEach(devx);if(q("#tsdemo"))tsDemo(q("#tsdemo"));if(q("#laserp"))laserP(q("#laserp"));if(q("#adcdemo"))adcDemo(q("#adcdemo"));if(q("#macdemo"))macDemo(q("#macdemo"));if(q("#ipdemo"))ipDemo(q("#ipdemo"));if(q("#ip4b"))ip4b(q("#ip4b"));if(q("#ip6s"))ip6s(q("#ip6s"));if(q("#rtdemo"))rtDemo(q("#rtdemo"));if(q("#urldemo"))urlDemo(q("#urldemo"));if(q("#brdemo"))brDemo(q("#brdemo"));if(q("#dnsdemo"))dnsDemo(q("#dnsdemo"));if(q("#ckdemo"))ckDemo(q("#ckdemo"));if(q("#bcdemo"))bcDemo(q("#bcdemo"));if(q("#bfdemo"))bfDemo(q("#bfdemo"));if(q("#phdemo"))phDemo(q("#phdemo"));if(q("#fwdemo"))fwDemo(q("#fwdemo"));if(q("#uidemo"))uiDemo(q("#uidemo"));if(q("#memdemo"))memDemo(q("#memdemo"));if(q("#mtdemo"))mtDemo(q("#mtdemo"));if(q("#autodemo"))autoDemo(q("#autodemo"));if(q("#autoxp"))xploreDemo(q("#autoxp"),AUTO_XP);if(q("#robxp"))xploreDemo(q("#robxp"),ROB_XP);if(q("#robdemo"))robDemo(q("#robdemo"));if(q("#facedemo"))faceDemo(q("#facedemo"));if(q("#esdemo"))esDemo(q("#esdemo"));if(q("#mldemo"))mlDemo(q("#mldemo"));if(q("#lggates"))lgGates(q("#lggates"));if(q("#lgsix"))lgSix(q("#lgsix"));if(q("#lgrows"))lgRows(q("#lgrows"));if(q("#lgtt"))lgTT(q("#lgtt"));if(q("#lgbuild"))lgBuild(q("#lgbuild"));if(q("#lguni"))lgUni(q("#lguni"));if(q("#lghow"))lgHow(q("#lghow"));if(q("#lgcmp"))lgCmp(q("#lgcmp"));if(q("#dbparts"))dbParts(q("#dbparts"));if(q("#dbkey"))dbKey(q("#dbkey"));if(q("#dbtypes"))dbTypes(q("#dbtypes"));if(q("#dbval"))dbVal(q("#dbval"));if(q("#sqlsteps"))sqlSteps(q("#sqlsteps"));document.querySelectorAll(".sqlplay").forEach(sqlPlay);document.querySelectorAll("pre.pc").forEach(pcDecorate);document.querySelectorAll(".psrun").forEach(psRun);document.querySelectorAll(".fltr").forEach(flTracer);document.querySelectorAll(".vfw").forEach(vfWidget);document.querySelectorAll(".tdw").forEach(tdWidget);document.querySelectorAll(".trfw").forEach(trFill);document.querySelectorAll(".lsw").forEach(lsWidget);document.querySelectorAll(".bsw").forEach(bsWidget);document.querySelectorAll(".flst").forEach(flStatic);document.querySelectorAll(".sdw").forEach(sdWidget);document.querySelectorAll(".iposw").forEach(iposWidget);if(q("#flsym"))flSymbols(q("#flsym"));if(q("#pdlc"))pdlcWidget(q("#pdlc"));if(q("#pstypes"))psTypes(q("#pstypes"));document.querySelectorAll(".arrstatic").forEach(x=>{x.innerHTML=arrBoxes(JSON.parse(x.dataset.arr),{name:x.dataset.name,q:x.dataset.q!=="0"})});if(q("#arr1d"))arr1d(q("#arr1d"));if(q("#arrloop"))arrLoop(q("#arrloop"));if(q("#arrloop2"))arrLoop(q("#arrloop2"));if(q("#arr2d"))arr2d(q("#arr2d"));if(q("#arrcinema"))arrCinema(q("#arrcinema"));document.querySelectorAll(".dbtbl").forEach(x=>{x.innerHTML=dbTableHTML(x.dataset.db)});document.querySelectorAll(".lgsim").forEach(lgSim);if(q("#swlayers"))swLayers(q("#swlayers"));if(q("#bootdemo"))bootDemo(q("#bootdemo"));if(q("#thdemo"))thDemo(q("#thdemo"));if(q("#cpucmp"))cpuCompare(q("#cpucmp"));if(q("#cachedemo"))cacheDemo(q("#cachedemo"));if(q("#vmdemo"))vmDemo(q("#vmdemo"));if(q("#hdddemo"))hddDemo(q("#hdddemo"));if(q("#laserdemo"))laserDemo(q("#laserdemo"));if(q("#xferdemo"))xferDemo(q("#xferdemo"));if(q("#flashdemo"))flashDemo(q("#flashdemo"));if(q("#ifdemo"))ifDemo(q("#ifdemo"));if(q("#asmdemo"))asmDemo(q("#asmdemo"));if(q("#trdemo"))trDemo(q("#trdemo"));if(q("#idedemo"))ideDemo(q("#idedemo"));if(q("#dbgdemo"))dbgDemo(q("#dbgdemo"));if(q("#acdemo"))acDemo(q("#acdemo"));if(q("#busdemo"))busDemo(q("#busdemo"));if(q("#keystr"))keyStr(q("#keystr"));if(q("#freq"))freqDemo(q("#freq"));if(q("#arqdemo"))arqDemo(q("#arqdemo"));if(q("#echodemo"))echoDemo(q("#echodemo"));
+  if(q("#cdcalc"))cdCalc(q("#cdcalc"));if(q("#csdemo"))csDemo(q("#csdemo"));if(q("#caesar"))caesarDemo(q("#caesar"));if(q("#lmc"))lmcDemo(q("#lmc"));if(q("#isdemo"))isDemo(q("#isdemo"));if(q("#intdemo"))intDemo(q("#intdemo"));root.querySelectorAll(".devx").forEach(devx);if(q("#tsdemo"))tsDemo(q("#tsdemo"));if(q("#laserp"))laserP(q("#laserp"));if(q("#adcdemo"))adcDemo(q("#adcdemo"));if(q("#macdemo"))macDemo(q("#macdemo"));if(q("#ipdemo"))ipDemo(q("#ipdemo"));if(q("#ip4b"))ip4b(q("#ip4b"));if(q("#ip6s"))ip6s(q("#ip6s"));if(q("#rtdemo"))rtDemo(q("#rtdemo"));if(q("#urldemo"))urlDemo(q("#urldemo"));if(q("#brdemo"))brDemo(q("#brdemo"));if(q("#dnsdemo"))dnsDemo(q("#dnsdemo"));if(q("#ckdemo"))ckDemo(q("#ckdemo"));if(q("#bcdemo"))bcDemo(q("#bcdemo"));if(q("#bfdemo"))bfDemo(q("#bfdemo"));if(q("#phdemo"))phDemo(q("#phdemo"));if(q("#fwdemo"))fwDemo(q("#fwdemo"));if(q("#uidemo"))uiDemo(q("#uidemo"));if(q("#memdemo"))memDemo(q("#memdemo"));if(q("#mtdemo"))mtDemo(q("#mtdemo"));if(q("#autodemo"))autoDemo(q("#autodemo"));if(q("#autoxp"))xploreDemo(q("#autoxp"),AUTO_XP);if(q("#robxp"))xploreDemo(q("#robxp"),ROB_XP);if(q("#robdemo"))robDemo(q("#robdemo"));if(q("#facedemo"))faceDemo(q("#facedemo"));if(q("#esdemo"))esDemo(q("#esdemo"));if(q("#mldemo"))mlDemo(q("#mldemo"));if(q("#lggates"))lgGates(q("#lggates"));if(q("#lgsix"))lgSix(q("#lgsix"));if(q("#lgrows"))lgRows(q("#lgrows"));if(q("#lgtt"))lgTT(q("#lgtt"));if(q("#lgbuild"))lgBuild(q("#lgbuild"));if(q("#lguni"))lgUni(q("#lguni"));if(q("#lghow"))lgHow(q("#lghow"));if(q("#lgcmp"))lgCmp(q("#lgcmp"));if(q("#dbparts"))dbParts(q("#dbparts"));if(q("#dbkey"))dbKey(q("#dbkey"));if(q("#dbtypes"))dbTypes(q("#dbtypes"));if(q("#dbval"))dbVal(q("#dbval"));if(q("#sqlsteps"))sqlSteps(q("#sqlsteps"));document.querySelectorAll(".sqlplay").forEach(sqlPlay);if(typeof pyInitRunnable==="function")pyInitRunnable(root);document.querySelectorAll("pre.pc:not([data-run])").forEach(pcDecorate);document.querySelectorAll(".psrun").forEach(psRun);document.querySelectorAll(".fltr").forEach(flTracer);document.querySelectorAll(".vfw").forEach(vfWidget);document.querySelectorAll(".tdw").forEach(tdWidget);document.querySelectorAll(".trfw").forEach(trFill);document.querySelectorAll(".lsw").forEach(lsWidget);document.querySelectorAll(".bsw").forEach(bsWidget);document.querySelectorAll(".flst").forEach(flStatic);document.querySelectorAll(".sdw").forEach(sdWidget);document.querySelectorAll(".iposw").forEach(iposWidget);if(q("#flsym"))flSymbols(q("#flsym"));if(q("#pdlc"))pdlcWidget(q("#pdlc"));if(q("#pstypes"))psTypes(q("#pstypes"));document.querySelectorAll(".arrstatic").forEach(x=>{x.innerHTML=arrBoxes(JSON.parse(x.dataset.arr),{name:x.dataset.name,q:x.dataset.q!=="0"})});if(q("#arr1d"))arr1d(q("#arr1d"));if(q("#arrloop"))arrLoop(q("#arrloop"));if(q("#arrloop2"))arrLoop(q("#arrloop2"));if(q("#arr2d"))arr2d(q("#arr2d"));if(q("#arrcinema"))arrCinema(q("#arrcinema"));document.querySelectorAll(".dbtbl").forEach(x=>{x.innerHTML=dbTableHTML(x.dataset.db)});document.querySelectorAll(".lgsim").forEach(lgSim);if(q("#swlayers"))swLayers(q("#swlayers"));if(q("#bootdemo"))bootDemo(q("#bootdemo"));if(q("#thdemo"))thDemo(q("#thdemo"));if(q("#cpucmp"))cpuCompare(q("#cpucmp"));if(q("#cachedemo"))cacheDemo(q("#cachedemo"));if(q("#vmdemo"))vmDemo(q("#vmdemo"));if(q("#hdddemo"))hddDemo(q("#hdddemo"));if(q("#laserdemo"))laserDemo(q("#laserdemo"));if(q("#xferdemo"))xferDemo(q("#xferdemo"));if(q("#flashdemo"))flashDemo(q("#flashdemo"));if(q("#ifdemo"))ifDemo(q("#ifdemo"));if(q("#asmdemo"))asmDemo(q("#asmdemo"));if(q("#trdemo"))trDemo(q("#trdemo"));if(q("#idedemo"))ideDemo(q("#idedemo"));if(q("#dbgdemo"))dbgDemo(q("#dbgdemo"));if(q("#acdemo"))acDemo(q("#acdemo"));if(q("#busdemo"))busDemo(q("#busdemo"));if(q("#keystr"))keyStr(q("#keystr"));if(q("#freq"))freqDemo(q("#freq"));if(q("#arqdemo"))arqDemo(q("#arqdemo"));if(q("#echodemo"))echoDemo(q("#echodemo"));
   const uw=root.querySelector("#usbwires");if(uw)usbWires(uw);
   root.querySelectorAll(".pixdemo").forEach(pixDemo);
   const at=root.querySelector("#asciitab");if(at)asciiTable(at);
@@ -3950,7 +3956,7 @@ function progressPanel(){
   const open=S.fold||{};
   return `<div class="panel span3 prog-panel"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><h3>Course progress</h3>
    <span class="sub">Open a unit to see each lesson. Overall = average of all the tasks. ${TROPHY.replace('width="22" height="22"','width="16" height="16"')} at 90% or more.</span></div>
-   ${[1,2].map(p=>{const cs=CH.filter(c=>c.paper===p),po=Math.round(cs.reduce((a,c)=>a+unitOverall(c),0)/cs.length);
+   ${PIDS.map(p=>{const cs=CH.filter(c=>c.paper===p),po=Math.round(cs.reduce((a,c)=>a+unitOverall(c),0)/cs.length);
     return `<div class="ppaper" style="${accent(p)}"><div class="ppaper-h"><span><span class="eyebrow">${PAPERS[p].code}</span> <b>${PAPERS[p].title}</b></span><span class="ovc"><b>${po}%</b>${tro(po)}</span></div>
     ${cs.map(c=>{const uo=unitOverall(c),has=c.topics.some(t=>t.lessons);
       return `<details class="unit" data-unit="${c.n}"><summary><span class="un">${c.n}</span><span class="ut">${c.title}<small>${c.topics.length} section${c.topics.length>1?"s":""}${has?"":" · lessons coming soon"}</small></span><span class="ubar"><span class="bar"><i style="width:${uo}%"></i></span></span><span class="ovc"><b>${uo}%</b>${tro(uo)}</span><span class="chev" aria-hidden="true"></span></summary>
@@ -3977,8 +3983,7 @@ function dashboard(){
   <div class="dgrid">
    ${schoolPanel()}
    ${typeof rwPanel==="function"&&!teacher?rwPanel():""}
-   <div class="panel" style="${accent(1)}"><span class="eyebrow">Paper 1 · Computer Systems</span><div class="stat">${avg(1)}<small>%</small></div><div class="bar"><i style="width:${avg(1)}%"></i></div><span class="sub">Average completion across all tasks, units 1–6</span></div>
-   <div class="panel" style="${accent(2)}"><span class="eyebrow">Paper 2 · Algorithms, Programming & Logic</span><div class="stat">${avg(2)}<small>%</small></div><div class="bar"><i style="width:${avg(2)}%"></i></div><span class="sub">Average completion across all tasks, units 7–10</span></div>
+   ${PIDS.map(p=>{const cs=CH.filter(c=>c.paper===p);return `<div class="panel" style="${accent(p)}"><span class="eyebrow">${PAPERS[p].code} · ${PAPERS[p].title}</span><div class="stat">${avg(p)}<small>%</small></div><div class="bar"><i style="width:${avg(p)}%"></i></div><span class="sub">Average completion across all tasks, ${CRS.id==="igcse"?"units":"topics"} ${cs[0].n}–${cs[cs.length-1].n}</span></div>`}).join("")}
    <div class="panel" style="${accent(1)}"><span class="eyebrow">Lessons complete</span><div class="stat">${lessonsDone}<small> / ${ALL_LESSONS.length}</small></div><div class="bar"><i style="width:${lessonsDone/ALL_LESSONS.length*100}%"></i></div>${nextLesson?`<a class="btn small" style="align-self:flex-start" href="#l-${nextLesson.id}">Next: ${nextLesson.title}</a>`:`<span class="sub">All available lessons complete</span>`}</div>
    <div class="panel" style="${accent(1)}"><span class="eyebrow">Sections secure</span><div class="stat">${secure}<small> / ${TOPICS.length}</small></div><span class="sub">80% or more across all the tasks in the section</span>${nextUp?`<a class="btn small" style="align-self:flex-start" href="#t-${nextUp.id}">Next: ${nextUp.code} ${nextUp.title}</a>`:""}</div>
    <div class="panel span3"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline"><h3>Syllabus map</h3>
@@ -3987,7 +3992,7 @@ function dashboard(){
     <span class="sub">One cell per syllabus section, coloured by completion across all its tasks. A cell flips to 1 when the section is secure (80%+). The small fraction shows lessons complete.</span></div>
    ${progressPanel()}
    <div class="panel" style="grid-column:span 2"><h3>Recent activity</h3>${recent.length?`<div class="tscroll"><table class="table"><thead><tr><th>Activity</th><th>Last</th><th>Best</th><th>Tries</th></tr></thead><tbody>
-    ${recent.map(r=>`<tr><td><a href="#${r.href}">${esc(r.name)}</a><br><span class="sub">${r.type}</span></td><td>${r.s.last}%</td><td>${r.s.best}%</td><td>${r.s.attempts}</td></tr>`).join("")}</tbody></table></div>`:`<p class="sub">Nothing yet. Start with the first lesson, then take its quick check.</p><a class="btn small" style="align-self:flex-start" href="#l-1-1-binary">Start lesson 1: Binary number system</a>`}</div>
+    ${recent.map(r=>`<tr><td><a href="#${r.href}">${esc(r.name)}</a><br><span class="sub">${r.type}</span></td><td>${r.s.last}%</td><td>${r.s.best}%</td><td>${r.s.attempts}</td></tr>`).join("")}</tbody></table></div>`:`<p class="sub">Nothing yet. Start with the first lesson, then take its quick check.</p>${firstLesson()?`<a class="btn small" style="align-self:flex-start" href="#l-${firstLesson().id}">Start lesson 1: ${esc(firstLesson().title)}</a>`:""}`}</div>
    <div class="panel" style="grid-column:span 2"><h3>Revisit</h3>${review.length?review.map(t=>`<div class="pbar"><div class="row"><a href="#t-${t.id}" style="text-decoration:none;font-weight:700">${t.code} ${t.title}</a><span class="mono">${secStatus(t).pct}%</span></div><div class="bar" style="${accent(t.ch.paper)}"><i style="width:${secStatus(t).pct}%"></i></div></div>`).join(""):`<p class="sub">Sections you've started that are under 80% will appear here.</p>`}</div>
   </div>`;
 }
@@ -3996,10 +4001,10 @@ function dashboard(){
 function homeCoverage(){const years=typeof EXAMS!=="undefined"&&EXAMS.length?[...new Set(EXAMS.map(x=>2000+ +String(x.id).slice(0,2)))].sort():[];
   const acts=ALL_LESSONS.reduce((a,l)=>a+(l.acts||[]).length,0),units=CH.length,secs=TOPICS.length;
   const stat=(n,l)=>`<div><b>${n}</b><span>${l}</span></div>`;
-  return `<section class="hcov" aria-label="Syllabus coverage"><div class="hcovh"><div class="eyebrow">Complete 0478 coverage</div><h2>The whole syllabus, nothing left out</h2>
-    <p>Every one of the ${secs} syllabus sections across the ${units} units has its own lessons, vocabulary and practice, written for the current Cambridge IGCSE Computer Science (0478) specification, with past paper questions mapped to the lessons they test.</p></div>
-   <div class="hcovs">${stat(units,"units")}${stat(secs,"syllabus sections")}${stat(ALL_LESSONS.length,"lessons")}${stat(acts,"interactive activities")}${stat((typeof EXQ!=="undefined"&&BOB.content&&BOB.content.full?EXQ.length:1275).toLocaleString(),"past paper questions")}${years.length?stat(EXAMS.length,`past papers, ${years.length>1?years[0]+"–"+years[years.length-1]:years[0]}`):""}</div>
-   <div class="hcovu">${CH.map(c=>`<a href="#paper-${c.paper}" class="p${c.paper}" title="Unit ${c.n}: ${esc(c.title)}"><span>✓</span>${c.n}. ${esc(c.title)}</a>`).join("")}</div></section>`}
+  return `<section class="hcov" aria-label="Syllabus coverage"><div class="hcovh"><div class="eyebrow">Complete ${CRS.code} coverage</div><h2>The whole ${CRS.id==="igcse"?"syllabus":"specification"}, nothing left out</h2>
+    <p>${CRS.coverText||`Every one of the ${secs} syllabus sections across the ${units} units has its own lessons, vocabulary and practice, written for the current Cambridge IGCSE Computer Science (0478) specification, with past paper questions mapped to the lessons they test.`}</p></div>
+   <div class="hcovs">${stat(units,CRS.id==="igcse"?"units":"topics")}${stat(secs,CRS.id==="igcse"?"syllabus sections":"specification sections")}${stat(ALL_LESSONS.length,"lessons")}${stat(acts,"interactive activities")}${stat((typeof EXQ!=="undefined"&&(CRS.id!=="igcse"||BOB.content&&BOB.content.full)?EXQ.length:1275).toLocaleString(),CRS.qLabel||"past paper questions")}${years.length?stat(EXAMS.length,`past papers, ${years.length>1?years[0]+"–"+years[years.length-1]:years[0]}`):""}</div>
+   <div class="hcovu">${CH.map(c=>`<a href="#paper-${c.paper}" class="p${c.paper%2===1?1:2}" title="${CRS.id==="igcse"?"Unit":"Topic"} ${c.n}: ${esc(c.title)}"><span>✓</span>${c.n}. ${esc(c.title)}</a>`).join("")}</div></section>`}
 function homeAudience(){const guest=!S.user;
   const box=(cls,eye,h,lead,items,ctas)=>`<div class="haud ${cls}"><div class="eyebrow">${eye}</div><h2>${h}</h2><p class="sub">${lead}</p>
     <ul>${items.map(([b,t])=>`<li><b>${b}</b><span>${t}</span></li>`).join("")}</ul><div class="tbb">${ctas}</div></div>`;
@@ -4025,3 +4030,7 @@ function homeAudience(){const guest=!S.user;
   </section>`}
 
 /* register, sign in, password reset and pricing: see 05-account.js */
+
+/* a second course (the A-Level preview) adds its own activity generators and question banks */
+if(typeof AL_GEN!=="undefined")Object.assign(GEN,AL_GEN);
+if(typeof AL_BANKS!=="undefined")Object.assign(BANKS,AL_BANKS);

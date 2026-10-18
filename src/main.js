@@ -11,9 +11,11 @@ import { createContent, forgetContent } from './content.js';
 
 const ENV = import.meta.env || {};
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : String(Date.now());
-const APP = ['01-content.js', '02-core.js', '03-exams.js', '04-school.js', '05-account.js', '06-extra-activities.js', '06p-tarsia-pairs.js', '06q-tarsia.js', '06r-rewards.js', '07-router.js', '08-reading.js', '09-demo.js', '10-seo.js'];
+const APP = ['01-content.js', '02-core.js', '03-exams.js', '04-school.js', '05-account.js', '06-extra-activities.js', '06p-tarsia-pairs.js', '06q-tarsia.js', '06r-rewards.js', '06s-python.js', '07-router.js', '08-reading.js', '09-demo.js', '10-seo.js'];
 /* Google Analytics 4 measurement ID (it's public). Analytics only load after a visitor agrees. */
 const GA_ID = ENV.VITE_GA_ID || 'G-TBRKMHE7BF';
+/* ?course=al opens the A-Level site, which only admins can see while it's being built */
+const COURSE_ID = new URLSearchParams(location.search).get('course') === 'al' ? 'al' : null;
 
 /* Pages have their own addresses for search engines (scripts/prerender.mjs), e.g. /lesson/1-1-binary.
    The app itself works from #routes, so an address like that opens the matching page. */
@@ -41,6 +43,12 @@ async function backend() {
   // the local test server (tests/devserver.py) when it's running, otherwise the live project
   return (await devBackend()) || supabaseBackend(LIVE.url, LIVE.key);
 }
+/* a script whose text came from the database (the A-Level course files) */
+const inlineScript = (text, name) => {
+  const s = document.createElement('script');
+  s.textContent = text + `\n//# sourceURL=course-${name}`;
+  document.body.appendChild(s);
+};
 const script = (src) => new Promise((ok, fail) => {
   const s = document.createElement('script');
   s.src = `${src}?v=${BUILD}`; s.onload = ok; s.onerror = () => fail(new Error('Could not load ' + src));
@@ -79,7 +87,8 @@ async function boot() {
     pay,
     content,
     /* after joining a class or paying: fetch what this person can now open, then redraw */
-    refreshContent: async () => { await content.load(); content.apply(); await pay.load(); },
+    refreshContent: async () => { await content.load(); if (!COURSE_ID) content.apply(); await pay.load(); },
+    course: COURSE_ID,
     google: false,
     gaId: GA_ID,
   };
@@ -99,11 +108,24 @@ async function boot() {
   }
   const land = await store.afterLoad();
   await content.load();
-  content.apply();
+  let course = null;
+  if (COURSE_ID) {
+    // anyone else asking for the A-Level site gets the normal one
+    if (!store.user || store.user.role !== 'admin') { location.replace('/' + (location.hash || '')); return; }
+    course = await api.db.rpc('admin_course', { c: COURSE_ID });
+    if (!course || !course['content.js']) throw new Error('The A-Level course has not been uploaded yet. Upload it from the Admin page.');
+    content.applyCourse(course);
+    document.documentElement.classList.add('course-' + COURSE_ID);
+  } else content.apply();
   await pay.load();
   window.BOB.google = api && api.name === 'supabase' && (ENV.VITE_GOOGLE_SIGN_IN === 'on' || !!(await providersP).google);
   if (land) history.replaceState(null, '', location.pathname + location.search + '#' + land);
-  for (const f of APP) await script('/app/' + f);
+  /* the A-Level course brings its own syllabus, lessons and puzzle pairs; everything else is shared */
+  const swap = course ? { '01-content.js': 'content.js', '06p-tarsia-pairs.js': 'pairs.js' } : {};
+  for (const f of APP) {
+    if (swap[f] && course[swap[f]]) inlineScript(course[swap[f]], swap[f]);
+    else await script('/app/' + f);
+  }
   document.getElementById('boot')?.remove();
   if (checkout === 'success') afterCheckout(pay, school);
 }

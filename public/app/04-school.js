@@ -15,7 +15,7 @@ const me=()=>S.user?(SC.users[S.user.id]||Object.assign({cls:null},S.user)):null
 const isTeacher=()=>!!(S.user&&(S.user.role==="teacher"||S.user.role==="admin"));
 /* home page buttons: guests are invited to register; signed-in people go to their own pages,
    and students without full access are offered a subscription */
-function homeCtas(){const browse=`<a class="btn" href="#paper-1">Browse the course</a>`;
+function homeCtas(){const browse=`<a class="btn" href="#paper-${PIDS[0]}">Browse the course</a>`;
   if(!S.user)return `<a class="btn primary" href="#register">Create a free account</a>${browse}<a class="btn" href="#dashboard">Preview the dashboards</a>`;
   if(isTeacher())return `<a class="btn primary" href="#teacher">Go to my classes</a>${browse}`;
   if(!BOB.pay.full())return `<a class="btn primary" href="#pricing">Subscribe for full access</a>${browse}`;
@@ -179,7 +179,7 @@ function classProgress(c){
 function classAssign(c){
   const as=classAsg(c),studs=studentsOf(c);
   const F=TV.form||(TV.form=newForm());
-  const picker=[1,2].map(pp=>{const np=F.lessons.filter(id=>{const l=ALL_LESSONS.find(x=>x.id===id);return l&&l.topic.ch.paper===pp}).length;return `<details class="tpaper"${TV.open["p"+pp]?" open":""} data-topen="p${pp}"><summary><span>Paper ${pp} · ${pp===1?"Computer systems":"Algorithms, programming and logic"}</span>${np?`<span class="chip sec">${np} chosen</span>`:""}</summary><div class="tpick">${TOPICS.filter(t=>t.ch.paper===pp&&t.lessons).map(t=>{const n=t.lessons.filter(l=>F.lessons.includes(l.id)).length;
+  const picker=PIDS.map(pp=>{const np=F.lessons.filter(id=>{const l=ALL_LESSONS.find(x=>x.id===id);return l&&l.topic.ch.paper===pp}).length;return `<details class="tpaper"${TV.open["p"+pp]?" open":""} data-topen="p${pp}"><summary><span>${PAPERS[pp].code} · ${PAPERS[pp].title}</span>${np?`<span class="chip sec">${np} chosen</span>`:""}</summary><div class="tpick">${TOPICS.filter(t=>t.ch.paper===pp&&t.lessons).map(t=>{const n=t.lessons.filter(l=>F.lessons.includes(l.id)).length;
     return `<details${TV.open[t.id]||n?" open":""} data-topen="${t.id}"><summary><span>${t.code} ${esc(t.title)}</span>${n?`<span class="chip sec">${n} chosen</span>`:""}</summary>
      <div class="tpl">${t.lessons.map(l=>`<label><input type="checkbox" data-tl="${l.id}"${F.lessons.includes(l.id)?" checked":""}> ${l.n}. ${esc(l.title)}</label>`).join("")}</div></details>`}).join("")}</div></details>`}).join("");
   const list=as.length?as.map(a=>{if(a.kind==="exam")return examAsgCard(a,studs);const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),nd=st.filter(x=>x.r.complete).length,
@@ -323,12 +323,12 @@ function newForm(){return {kind:TV.lastKind||"lessons",title:"",due:isoDay(new D
 function examPool(F){return EXQ.filter(q=>F.papers.includes(exPap(q.x))&&F.years.includes(exYear(q.x))&&(F.big||q.t!=="big")&&q.l.some(l=>F.topics.includes(L2T[l])))}
 function examFields(F){const pool=examPool(F),n=Math.min(F.n,pool.length),avgM=pool.length?pool.reduce((a,q)=>a+q.m,0)/pool.length:0;
   const tops=pp=>TOPICS.filter(t=>t.ch.paper===pp).map(t=>({t,k:examPool({...F,topics:[t.id]}).length})).filter(x=>x.k);
-  return `<fieldset class="tfs"><legend>Exam papers</legend><div class="tchk">${[1,2].map(pp=>`<label><input type="checkbox" data-ta="paper" value="${pp}"${F.papers.includes(pp)?" checked":""}> Paper ${pp}</label>`).join("")}
+  return `<fieldset class="tfs"><legend>Exam papers</legend><div class="tchk">${PIDS.map(pp=>`<label><input type="checkbox" data-ta="paper" value="${pp}"${F.papers.includes(pp)?" checked":""}> ${PAPERS[pp].code}</label>`).join("")}
     ${F.papers.includes(2)?`<label><input type="checkbox" data-ta="big"${F.big?" checked":""}> Include the 15-mark programming questions</label>`:""}</div></fieldset>
    <fieldset class="tfs"><legend>Exam years</legend><div class="tchk">${EXYEARS.map(y=>`<label><input type="checkbox" data-ta="year" value="${y}"${F.years.includes(y)?" checked":""}> ${y}</label>`).join("")}</div></fieldset>
    <div><span class="tlab">Syllabus sections <span class="sub">${plural(F.topics.length,"section")} chosen</span></span>
     ${F.papers.map(pp=>{const T=tops(pp),on=T.filter(x=>F.topics.includes(x.t.id)).length;
-      return `<details class="tpaper"${TV.open["xp"+pp]?" open":""} data-topen="xp${pp}"><summary><span>Paper ${pp} · ${pp===1?"Computer systems":"Algorithms, programming and logic"}</span>${on?`<span class="chip sec">${on} chosen</span>`:""}</summary>
+      return `<details class="tpaper"${TV.open["xp"+pp]?" open":""} data-topen="xp${pp}"><summary><span>${PAPERS[pp].code} · ${PAPERS[pp].title}</span>${on?`<span class="chip sec">${on} chosen</span>`:""}</summary>
        <div class="tpl"><span class="sub" style="text-align:right;font-size:.75rem">questions</span><label class="tall"><input type="checkbox" data-ta="alltop" data-p="${pp}"${on&&on===T.length?" checked":""}> <b>All sections</b></label>
        ${T.map(({t,k})=>`<label><input type="checkbox" data-ta="topic" value="${t.id}"${F.topics.includes(t.id)?" checked":""}> ${t.code} ${esc(t.title)} <span class="sub">${k}</span></label>`).join("")}</div></details>`}).join("")||`<p class="sub">Choose a paper first.</p>`}</div>
    <p class="tpool">${F.topics.length?`<b>${pool.length}</b> questions match. Each student gets the same <b>${n}</b>, picked at random when you set it (about ${Math.round(avgM*n)} marks).${pool.length<F.n?" There aren't enough matching questions for the number you chose, so all of them will be used.":""}`:"Choose at least one section to see how many questions match."}</p>`}
@@ -344,7 +344,7 @@ function examAsgCard(a,studs){const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),n
     <div class="tasum"><span class="mono">${nd}/${st.length}</span><span class="sub">completed</span></div></summary><div class="tasgb">
    ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
    ${examAsgInsights(a,st)}
-   <p class="sub" style="margin:0">Paper ${(sp.papers||[]).join(" and ")} · ${(sp.years||[]).join(", ")}${sp.big?" · includes 15-mark questions":""} · sections ${(sp.topics||[]).map(id=>(TOPICS.find(t=>t.id===id)||{code:id}).code).join(", ")}</p>
+   <p class="sub" style="margin:0">${(sp.papers||[]).map(p=>PAPERS[p]?PAPERS[p].code:"Paper "+p).join(" and ")} · ${(sp.years||[]).join(", ")}${sp.big?" · includes 15-mark questions":""} · sections ${(sp.topics||[]).map(id=>(TOPICS.find(t=>t.id===id)||{code:id}).code).join(", ")}</p>
    ${st.length?`${reBar(a)}<div class="tscroll"><table class="table ttab"><thead><tr>${selHead(a,st)}<th>Student</th><th>Status</th><th>Score</th>${qs.map((q,i)=>`<th title="${esc(exX(q.x).s)} ${exX(q.x).code} Q${q.n} · ${q.m} marks">Q${i+1}</th>`).join("")}<th></th></tr></thead><tbody>
     ${st.map(({s,r})=>`<tr>${selBox(a,s)}<td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?`${r.marks}/${r.total} <span class="sub">${r.score}%</span>`:"–"}</td>${r.per.map(x=>`<td class="tck"><span class="${x.m==null?"sub":x.m===x.q.m?"tgood":x.m?"tpart":"tbad"}"${x.t?' title="Mark changed by you"':""}>${x.m==null?"·":x.m}${x.t?"<sup>*</sup>":""}</span></td>`).join("")}<td><div class="tbb tnowrap">${r.started||r.complete?`<button class="btn small" data-tc="rev" data-a="${a.id}" data-v="${s.id}">View answers</button>`:""}${reBtn(a,s)}</div></td></tr>`).join("")}
     <tr class="tqm"><td colspan="4" class="sub">Marks available</td>${qs.map(q=>`<td class="tck sub">${q.m}</td>`).join("")}<td></td></tr></tbody></table></div>
@@ -448,7 +448,7 @@ function exRoundInsights(ids,markOf){const qs=ids.map(id=>EXQ.find(q=>q.id===id)
   const weak=[...T].filter(t=>t.max&&t.got/t.max<.5).sort((a,b)=>b.papers-a.papers)[0];
   return `<aside class="rins" aria-label="How often these come up">
    <span class="eyebrow">How often this comes up</span>
-   <p class="sub" style="margin:0">Across all ${NP} Paper ${P} papers in the question bank.</p>
+   <p class="sub" style="margin:0">Across all ${NP} ${PAPERS[P]?PAPERS[P].code:"Paper "+P} papers in the question bank.</p>
    <h4>Topics</h4><ul>${L.map(x=>`<li><div class="rrow"><a href="#l-${x.l.id}">${x.l.topic.code} · ${esc(x.l.title)}</a>${you(x.got,x.max)}</div>${bar(x.papers,NP)}<span class="sub">In ${x.papers} of ${NP} papers · about ${x.marks<1?x.marks.toFixed(1):Math.round(x.marks)} mark${Math.round(x.marks)===1?"":"s"} a paper</span></li>`).join("")}</ul>
    <h4>Question types</h4><ul>${T.map(x=>`<li><div class="rrow"><span>${esc(x.lab)}</span>${you(x.got,x.max)}</div>${bar(x.papers,NP)}<span class="sub">In ${x.papers} of ${NP} papers · ${x.share}% of all marks</span></li>`).join("")}</ul>
    ${weak?`<p class="rtip">💡 <b>${esc(weak.lab)}</b> come up in ${weak.papers} of ${NP} papers and cost you marks here, so they're worth practising.</p>`:""}
@@ -520,13 +520,13 @@ function lessonOpen(l){const L=typeof l==="string"?ALL_LESSONS.find(x=>x.id===l)
   if(!S.user||isTeacher())return true;const c=myClass();if(!c||!c.restrict)return true;
   return c.released.includes(id)||myAsg().some(a=>a.kind==="lessons"&&a.lessons.includes(id))}
 function paywallPage(l){const t=l.topic,first=t.lessons[0],stu=S.user&&!isTeacher();
-  return `<div class="crumbs"><a href="#paper-${t.ch.paper}">Paper ${t.ch.paper}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
+  return `<div class="crumbs"><a href="#paper-${t.ch.paper}">${PAPERS[t.ch.paper].code}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
   <div class="formwrap lockpage"><div class="lockicon" aria-hidden="true">🔒</div><div><div class="eyebrow">${t.code} · Lesson ${l.n}</div><h1 style="margin-top:8px">${esc(l.title)}</h1></div>
    <p>This lesson is part of the full course. The first lesson in every section is free; subscribe to unlock all ${ALL_LESSONS.length} lessons with their quick checks, activities and past paper questions.</p>
    <div class="tbb"><a class="btn primary" href="#pricing">See plans</a><a class="btn" href="#l-${first.id}">Try the free lesson: ${esc(first.title)}</a></div>
    <p class="sub" style="margin:0">${stu?`In a school class? Enter your teacher's join code on your <a href="#dashboard">dashboard</a> for full access.`:S.user?"":`Already subscribed or in a school class? <a href="#login">Sign in</a>.`}</p></div>`}
 function lockedPage(l){if(!paidOpen(l))return paywallPage(l);const t=l.topic,c=myClass(),next=t.lessons.find(x=>x!==l&&lessonOpen(x));
-  return `<div class="crumbs"><a href="#paper-${t.ch.paper}">Paper ${t.ch.paper}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
+  return `<div class="crumbs"><a href="#paper-${t.ch.paper}">${PAPERS[t.ch.paper].code}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
   <div class="formwrap lockpage"><div class="lockicon" aria-hidden="true">🔒</div><div><div class="eyebrow">${t.code} · Lesson ${l.n}</div><h1 style="margin-top:8px">${esc(l.title)}</h1></div>
    <p>${esc(teacherOf(c).name)} hasn't opened this lesson for ${esc(c.name)} yet. It will unlock here when they do.</p>
    <div class="tbb">${next?`<a class="btn primary" href="#l-${next.id}">Go to ${esc(next.title)}</a>`:""}<a class="btn" href="#t-${t.id}">Back to ${t.code}</a>${myAsg().length?`<a class="btn" href="#todo">My to-do list</a>`:""}</div></div>`}
@@ -538,9 +538,9 @@ function classLessons(c){const R=new Set(c.released),AL=new Set(classAsg(c).filt
   const mode=`<div class="tkind" role="radiogroup" aria-label="Lesson access">${[["all","All lessons open","Students work through any lesson at their own pace"],["released","Only lessons I open","Students can open only the lessons you choose, plus any lesson in an assignment"]].map(([k,n,d])=>{const on=(k==="released")===c.restrict;
     return `<label class="${on?"on":""}"><input type="radio" name="tacc" value="${k}" data-tacc="mode"${on?" checked":""}><span><b>${n}</b><small>${d}</small></span></label>`}).join("")}</div>`;
   if(!c.restrict)return `<section class="panel"><h3>Lesson access</h3>${mode}<p class="sub" style="margin:0">Every lesson is open to students in ${esc(c.name)}. Choose <b>Only lessons I open</b> to release lessons as you teach them.</p></section>`;
-  const tree=[1,2].map(pp=>{const ls=ALL_LESSONS.filter(l=>l.topic.ch.paper===pp),n=ls.filter(isOpen).length;
-    return `<details class="tpaper"${TV.open["la"+pp]?" open":""} data-topen="la${pp}"><summary><span>Paper ${pp} · ${pp===1?"Computer systems":"Algorithms, programming and logic"}</span><span class="chip ${n===ls.length?"sec":n?"dev":"none"}">${n}/${ls.length} open</span></summary>
-     <div class="tbb" style="padding:10px 0 6px"><button class="btn small" data-tc="laall" data-v="${pp}">Open all of Paper ${pp}</button><button class="btn small" data-tc="lanone" data-v="${pp}">Close all of Paper ${pp}</button></div>
+  const tree=PIDS.map(pp=>{const ls=ALL_LESSONS.filter(l=>l.topic.ch.paper===pp),n=ls.filter(isOpen).length;
+    return `<details class="tpaper"${TV.open["la"+pp]?" open":""} data-topen="la${pp}"><summary><span>${PAPERS[pp].code} · ${PAPERS[pp].title}</span><span class="chip ${n===ls.length?"sec":n?"dev":"none"}">${n}/${ls.length} open</span></summary>
+     <div class="tbb" style="padding:10px 0 6px"><button class="btn small" data-tc="laall" data-v="${pp}">Open all of ${PAPERS[pp].code}</button><button class="btn small" data-tc="lanone" data-v="${pp}">Close all of ${PAPERS[pp].code}</button></div>
      <div class="tpick">${TOPICS.filter(t=>t.ch.paper===pp&&t.lessons).map(t=>{const m=t.lessons.filter(isOpen).length;
       return `<details${TV.open["la"+t.id]?" open":""} data-topen="la${t.id}"><summary><span>${t.code} ${esc(t.title)}</span><span class="chip ${m===t.lessons.length?"sec":m?"dev":"none"}">${m}/${t.lessons.length}</span></summary>
        <div class="tpl"><label class="tall"><input type="checkbox" data-tacc="sec" value="${t.id}"${m===t.lessons.length?" checked":""}> <b>All of ${t.code}</b></label>
@@ -555,7 +555,7 @@ document.addEventListener("change",e=>{const t=e.target;if(!t.matches("[data-tac
   ids.forEach(id=>t.checked?R.add(id):R.delete(id));saveAccess(c,true,[...R])});
 document.addEventListener("click",e=>{const b=e.target.closest('[data-tc="laall"],[data-tc="lanone"]');if(!b||!isTeacher())return;const c=SC.classes[location.hash.slice(7)];if(!c||c.teacher!==me().id)return;
   const pp=+b.dataset.v,ids=ALL_LESSONS.filter(l=>l.topic.ch.paper===pp).map(l=>l.id),R=new Set(c.released);
-  if(b.dataset.tc==="lanone"&&!confirm(`Close every Paper ${pp} lesson for ${c.name}? Lessons in an assignment stay open.`))return;
+  if(b.dataset.tc==="lanone"&&!confirm(`Close every ${PAPERS[pp].code} lesson for ${c.name}? Lessons in an assignment stay open.`))return;
   ids.forEach(id=>b.dataset.tc==="laall"?R.add(id):R.delete(id));saveAccess(c,true,[...R])});
 
 /* ---------- progress tab: every exam question assignment, one column each ---------- */

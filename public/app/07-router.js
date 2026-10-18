@@ -13,7 +13,7 @@ function renderRoute(r){
   if(r==="signout"){BOB.signOut();return}
   const app=$("#app");let t=null;
   if(r==="home")app.innerHTML=home();
-  else if(r==="paper-1"||r==="paper-2")app.innerHTML=paper(+r.slice(-1));
+  else if(/^paper-\d+$/.test(r)&&PAPERS[+r.slice(6)])app.innerHTML=paper(+r.slice(6));
   else if(r.startsWith("t-")&&(t=TOPICS.find(x=>"t-"+x.id===r))){if(Q&&Q.id!==t.id)Q=null;app.innerHTML=topic(t);vocab(t)}
   else if(r.startsWith("l-")&&(t=ALL_LESSONS.find(x=>"l-"+x.id===r))&&!lessonOpen(t))app.innerHTML=lockedPage(t);
   else if(r.startsWith("l-")&&(t=ALL_LESSONS.find(x=>"l-"+x.id===r))){

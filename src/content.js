@@ -39,5 +39,15 @@ export function createContent(api) {
     X.EXAMS.splice(0, X.EXAMS.length, ...C.exams);
     X.Q.splice(0, X.Q.length, ...C.q);
   };
+  /* the A-Level course (admins only while it's built): its files replace the IGCSE lessons and questions */
+  C.applyCourse = (files) => {
+    const box = document.getElementById('content');
+    box.innerHTML = files['theory.html'] || '';
+    let ex = { EXAMS: [], Q: [] };
+    try { if (files['exams.json']) ex = JSON.parse(files['exams.json']); } catch (e) { console.error(e); }
+    const X = window.__EXDATA || (window.__EXDATA = { EXAMS: [], Q: [] });
+    X.EXAMS.splice(0, X.EXAMS.length, ...(ex.EXAMS || []));
+    X.Q.splice(0, X.Q.length, ...(ex.Q || []));
+  };
   return C;
 }

@@ -5,6 +5,8 @@ S.ex=S.ex||{};S.exh=S.exh||[];
 const exPap=id=>+String(id)[3]||1;
 const EX={paper:S.exPaper||1,sel:{},xs:new Set(EXAMS.map(x=>x.id)),n:"10",order:"rand",fresh:false,big:false,mode:"setup"};
 const exL=id=>ALL_LESSONS.find(l=>l.id===id);
+/* the papers (or units) that have questions */
+const exPids=()=>{const s=new Set(EXAMS.map(x=>exPap(x.id)));const p=PIDS.filter(x=>s.has(x));return p.length?p:PIDS.slice(0,1)};
 /* lessons a teacher hasn't opened yet are left out of practice (lessonOpen: 04-school.js) */
 const exPool=(lids,xs,o={})=>EXQ.filter(q=>q.l.some(l=>lids.includes(l)&&lessonOpen(l))&&(!xs||xs.has(q.x))&&(o.big!==false||!q.big));
 const exX=id=>EXAMS.find(x=>x.id===id);
@@ -166,13 +168,13 @@ function exPage(){const P=EX.paper,sel=exSel();
   return `<div class="crumbs"><a href="#home">Home</a><span>/</span><span>Exam questions</span></div>
   <div class="lhead"><div class="eyebrow">Revision</div><h1>Exam questions</h1><p class="lead" style="max-width:64ch">Practise real past paper questions, sorted by topic. Most answers are marked for you, including truth tables, trace tables and SQL. For written answers and code, you'll compare your answer with the mark scheme and award your own marks.</p></div>
   <div class="extabs"><a href="#exams" class="on">Practise</a><a href="#exam-insights">Insights</a></div>
-  <div class="expaper" role="group" aria-label="Choose a paper">${[1,2].map(p=>`<button data-expaper="${p}" aria-pressed="${P===p}"><b>Paper ${p}</b><span>${p===1?"Computer systems":"Algorithms, programming and logic"}</span></button>`).join("")}</div>
-  <div class="fcstat fcpagestat" style="margin:6px 0 18px"><div><b>${att.length}/${QP.length}</b><span>questions attempted</span></div><div><b>${m?Math.round(b/m*100)+"%":"–"}</b><span>best marks on those</span></div><div><b>${S.exh.length}</b><span>rounds played</span></div><div><b>${nP}</b><span>Paper ${P} papers</span></div></div>
+  <div class="expaper" role="group" aria-label="Choose a paper">${exPids().map(p=>`<button data-expaper="${p}" aria-pressed="${P===p}"><b>${PAPERS[p].code}</b><span>${PAPERS[p].title}</span></button>`).join("")}</div>
+  <div class="fcstat fcpagestat" style="margin:6px 0 18px"><div><b>${att.length}/${QP.length}</b><span>questions attempted</span></div><div><b>${m?Math.round(b/m*100)+"%":"–"}</b><span>best marks on those</span></div><div><b>${S.exh.length}</b><span>rounds played</span></div><div><b>${nP}</b><span>${PAPERS[P]?PAPERS[P].code:"Paper "+P} papers</span></div></div>
   <div class="fcpage${EX.mode!=="setup"?" exfull":""}">
    <div class="fcpanel"${EX.mode!=="setup"?' style="display:none"':""}><h2>1 · Choose topics</h2><div class="fcrow"><button class="btn small" data-exall="1">Select all</button><button class="btn small" data-exall="0">Clear</button></div><div class="fctree">${tree}</div></div>
    <div class="fcpanel"><h2 id="exh2"></h2><div class="exrun" id="exw"></div></div>
   </div>
-  <div class="fcpanel" style="margin-top:20px"><h2>Progress by lesson · Paper ${P}</h2>${studied.length?`<div class="tscroll"><table class="pvt fctable"><tr><th>Lesson</th><th>Attempted</th><th>Best marks</th></tr>${studied.map(l=>{const st=exLessonStats([l.id]);return `<tr><td style="text-align:left"><a href="#l-${l.id}">${l.topic.code} · ${esc(l.title)}</a></td><td>${st.att}/${st.n}</td><td>${st.b}/${st.m} (${st.m?Math.round(st.b/st.m*100):0}%)</td></tr>`}).join("")}</table></div>`:`<p class="vfoot" style="margin:0">Answer some questions and your progress for each lesson will appear here.</p>`}</div>`}
+  <div class="fcpanel" style="margin-top:20px"><h2>Progress by lesson · ${PAPERS[P]?PAPERS[P].code:"Paper "+P}</h2>${studied.length?`<div class="tscroll"><table class="pvt fctable"><tr><th>Lesson</th><th>Attempted</th><th>Best marks</th></tr>${studied.map(l=>{const st=exLessonStats([l.id]);return `<tr><td style="text-align:left"><a href="#l-${l.id}">${l.topic.code} · ${esc(l.title)}</a></td><td>${st.att}/${st.n}</td><td>${st.b}/${st.m} (${st.m?Math.round(st.b/st.m*100):0}%)</td></tr>`}).join("")}</table></div>`:`<p class="vfoot" style="margin:0">Answer some questions and your progress for each lesson will appear here.</p>`}</div>`}
 const exRefresh=()=>{const y=window.scrollY;$("#app").innerHTML=exPage();exDraw();window.scrollTo(0,y)};
 function exLessonCard(l){const el=$("#exlesson");if(!el)return;const st=exLessonStats([l.id]);if(!st.n){el.hidden=true;return}
   el.innerHTML=`<div class="vhead exh"><h3>Exam questions<small>${st.n} past paper question${st.n>1?"s":""} · ${st.tot} marks</small></h3></div><div class="vbody"><div class="fcw"><p style="margin:0">Try real exam questions on this lesson, and check your answers against the mark scheme.</p>${st.att?`<div class="fcstat"><div><b>${st.att}/${st.n}</b><span>attempted</span></div><div><b>${st.b}/${st.m}</b><span>best marks</span></div></div>`:""}<div class="fcrow"><button class="btn primary" data-exlesson="${l.id}" style="background:var(--ex);border-color:var(--ex)">Practise these questions</button></div></div></div>`}
@@ -355,11 +357,11 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-exq]");if(
 document.addEventListener("click",e=>{const b=e.target.closest("[data-inp]");if(!b)return;EXI.paper=+b.dataset.inp;EXI.sec="all";const y=window.scrollY;$("#app").innerHTML=exInsights();window.scrollTo(0,y)});
 document.addEventListener("toggle",e=>{const d=e.target;if(d.dataset&&d.dataset.ext)EXTI.open=d.open?d.dataset.ext:(EXTI.open===d.dataset.ext?null:EXTI.open)},true);
 function exInsights(){const P=EXI.paper,XS=EXAMS.filter(x=>exPap(x.id)===P),QS=EXQ.filter(q=>exPap(q.x)===P),NP=XS.length,tot=QS.reduce((a,q)=>a+q.m,0),series=[...new Set(XS.map(x=>x.id.slice(0,3)))];
-  const toggle=`<div class="expaper" role="group" aria-label="Choose a paper">${[1,2].map(p=>`<button data-inp="${p}" aria-pressed="${P===p}"><b>Paper ${p}</b><span>${p===1?"Computer systems":"Algorithms, programming and logic"}</span></button>`).join("")}</div>`;
+  const toggle=`<div class="expaper" role="group" aria-label="Choose a paper">${exPids().map(p=>`<button data-inp="${p}" aria-pressed="${P===p}"><b>${PAPERS[p].code}</b><span>${PAPERS[p].title}</span></button>`).join("")}</div>`;
   const head=`<div class="crumbs"><a href="#home">Home</a><span>/</span><a href="#exams">Exam questions</a><span>/</span><span>Insights</span></div>
-  <div class="lhead"><div class="eyebrow">Revision</div><h1>Exam insights</h1><p class="lead" style="max-width:64ch">What comes up, how often, and how many marks it's worth, based on every Paper ${P} in the question bank.</p></div>
+  <div class="lhead"><div class="eyebrow">Revision</div><h1>Exam insights</h1><p class="lead" style="max-width:64ch">What comes up, how often, and how many marks it's worth, based on every ${PAPERS[P]?PAPERS[P].code:"Paper "+P} in the question bank.</p></div>
   <div class="extabs"><a href="#exams">Practise</a><a href="#exam-insights" class="on">Insights</a></div>${toggle}`;
-  if(!NP)return head+`<p class="msg" style="margin:0">There are no Paper ${P} questions yet.</p>`;
+  if(!NP)return head+`<p class="msg" style="margin:0">There are no ${PAPERS[P]?PAPERS[P].code:"Paper "+P} questions yet.</p>`;
   const tops=TOPICS.filter(t=>t.lessons&&t.ch.paper===P);
   const secM={},lesM={},lesP={},secP={};QS.forEach(q=>{const w=q.m/q.l.length;q.l.forEach(l=>{const L=exL(l);if(!L)return;const sid=L.topic.id;secM[sid]=(secM[sid]||0)+w;lesM[l]=(lesM[l]||0)+w;(lesP[l]=lesP[l]||new Set).add(q.x);(secP[sid]=secP[sid]||new Set).add(q.x)})});
   const secs=tops.map(t=>({t,m:secM[t.id]||0,p:(secP[t.id]||new Set()).size})).sort((a,b)=>b.m-a.m),maxS=Math.max(1,...secs.map(x=>x.m));

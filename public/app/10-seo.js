@@ -2,6 +2,7 @@
 
 /* each page's own address (the ones scripts/prerender.mjs builds for search engines) */
 function seoPath(r){let m;
+  if(BOB.course)return null; /* the A-Level preview is never indexed */
   if(r==="home")return "/";
   if(/^paper-[12]$/.test(r))return "/"+r;
   if((m=r.match(/^t-(.+)$/))&&TOPICS.some(t=>t.id===m[1]))return "/topic/"+m[1];
@@ -9,6 +10,7 @@ function seoPath(r){let m;
   return {exams:"/exam-questions",flashcards:"/flash-cards",pricing:"/pricing",dashboard:"/dashboard-preview",contact:"/contact"}[r]||null}
 const SEO_COURSE="Cambridge IGCSE Computer Science (0478)";
 function seoMeta(r){const B="Bits of Bytes",lc=s=>s.charAt(0).toLowerCase()+s.slice(1);let t,l,m;
+  if(BOB.course){const L=r.startsWith("l-")&&ALL_LESSONS.find(x=>"l-"+x.id===r),T=r.startsWith("t-")&&TOPICS.find(x=>"t-"+x.id===r);return {title:`${L?L.title+" · ":T?T.code+" "+T.title+" · ":""}${CRS.short} (preview) · ${B}`}}
   if(r==="home")return {title:`${B} · Cambridge IGCSE Computer Science 0478 lessons, quizzes and past papers`,desc:`Full coverage of the ${SEO_COURSE} syllabus: short lessons, key vocabulary, quizzes, activities and past paper questions, with dashboards for students and teachers.`};
   if(/^paper-[12]$/.test(r)){const P=PAPERS[+r.slice(-1)];return {title:`${P.code}: ${P.title} · IGCSE Computer Science 0478 · ${B}`,desc:`${SEO_COURSE} ${P.code}, ${P.title}: ${P.blurb}`}}
   if((m=r.match(/^t-(.+)$/))&&(t=TOPICS.find(x=>x.id===m[1])))return {title:`${t.code} ${t.title} · IGCSE Computer Science 0478 · ${B}`,desc:`${t.code} ${t.title} for ${SEO_COURSE}: ${t.obj.map(lc).join("; ")}.`};

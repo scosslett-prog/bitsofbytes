@@ -163,7 +163,8 @@ function adminPage(){
   const T={};D.teachers.forEach(t=>T[t.id]=t);const who=id=>T[id]||{name:"Unknown teacher",email:"",school:""};
   const pend=D.req.filter(r=>r.status==="pending"),past=D.req.filter(r=>r.status!=="pending").slice(0,20);
   return `<div style="${accent(2)}"><div class="phead" style="padding-bottom:18px"><div class="eyebrow">Admin</div><h1>Admin</h1><p>Course content, the paywall, and teachers' licences.</p></div>${msg}
-  ${admSite(D.site)}
+  ${BOB.course?`<section class="panel admsite"><h3>Course content and paywall</h3><p class="sub" style="margin:0">You're in the A-Level preview. To upload the IGCSE content or change the paywall, <a href="/#admin">go back to the IGCSE site</a>.</p></section>`:admSite(D.site)}
+  ${admAlevel()}
   <h2 class="admh">Licences</h2><p class="sub">Approve teachers' licence requests, or give licences directly. Approving adds the licences to the teacher's account straight away.</p>
   <section class="panel"><div class="trow"><h3>Requests waiting (${pend.length})</h3><button class="btn small" data-adm="reload">Refresh</button></div>
    ${pend.length?`<div class="tscroll"><table class="table"><thead><tr><th>Teacher</th><th>Licences</th><th>Message</th><th>Requested</th><th></th></tr></thead><tbody>
@@ -179,7 +180,27 @@ function adminPage(){
     ${D.teachers.map(t=>`<tr><td><b>${esc(t.name)}</b><br><span class="sub mono">${esc(t.email)}</span>${t.school?` <span class="sub">· ${esc(t.school)}</span>`:""}</td><td class="mono">${t.used}</td><td class="mono">${t.total}</td></tr>`).join("")}</tbody></table></div>`:`<p class="sub" style="margin:0">No teacher accounts yet.</p>`}</section></div>
   ${past.length?`<section class="panel" style="margin-top:16px"><h3>Recent decisions</h3><ul class="tlist">${past.map(r=>{const t=who(r.teacher);return `<li><span>${esc(t.name)} · ${plural(r.n,"licence")}</span><span class="chip ${r.status==="approved"?"sec":"start"}">${r.status==="approved"?"Approved":"Declined"} ${r.decided?dshort(r.decided):""}</span></li>`}).join("")}</ul></section>`:""}</div>`}
 /* course content and the paywall */
-let ADMUP="";
+let ADMUP="",ADMAL="";
+/* the A-Level site: being built, so only admins can see it */
+function admAlevel(){return `<section class="panel admsite"><h3>A-Level site (preview)</h3>
+   <div class="admrow"><div><b>Pearson Edexcel IAL Computer Science</b><p class="sub">A copy of the site built for the International A-Level specification. Only admin accounts can open it, and nothing from it is shown to students or search engines.</p>
+     ${ADMAL?`<p class="admprog" role="status">${esc(ADMAL)}</p>`:""}</div>
+    <div class="tbb">${BOB.course?`<a class="btn primary" href="/#home">Back to the IGCSE site</a>`:`<a class="btn primary" href="/?course=al#home">View A-Level site</a>`}<button class="btn" data-adm="alup">Upload A-Level files</button>
+     <input type="file" id="admalfiles" accept=".js,.html,.json" multiple hidden></div></div></section>`}
+const AL_FILES=["content.js","pairs.js","theory.html","exams.json"];
+async function admAlFiles(){
+  const get=async n=>{try{const r=await fetch("/__content/al/"+n,{cache:"no-store"});return r.ok?await r.text():null}catch(e){return null}};
+  const got=await Promise.all(AL_FILES.map(get));
+  if(got.every(Boolean))return Object.fromEntries(AL_FILES.map((n,i)=>[n,got[i]]));
+  return new Promise(ok=>{const f=$("#admalfiles");f.value="";f.onchange=async()=>{const fs=[...f.files],out={};
+    for(const n of AL_FILES){const x=fs.find(y=>y.name===n);if(!x){alert("Choose all four files from the content/al folder: "+AL_FILES.join(", ")+".");ok(null);return}out[n]=await x.text()}ok(out)};
+    alert("Choose the four files in the content/al folder of the site: "+AL_FILES.join(", ")+" (hold Cmd to pick them all).");f.click()})}
+async function admAlUpload(){const F=await admAlFiles();if(!F)return;const step=t=>{ADMAL=t;tRender()};
+  try{JSON.parse(F["exams.json"])}catch(e){ADMAL="exams.json isn't valid JSON.";tRender();return}
+  document.body.classList.add("tbusy");
+  try{for(const n of AL_FILES){step(`Uploading ${n}…`);await BOB.school.admin.putCourseFile("al",n,F[n])}
+    step(`Uploaded. ${BOB.course?"Refresh the page to see the changes.":"Open the A-Level site to see it."}`)}
+  catch(e){step("Upload stopped: "+e.message)}finally{document.body.classList.remove("tbusy")}}
 function admSite(s){
   if(!s||s.error)return `<section class="panel admsite"><h3>Course content and paywall</h3><p class="msg bad" style="margin:0">This needs a database update: run <span class="mono">supabase/migrations/20261017070000_admin_content.sql</span> in the Supabase SQL Editor, then refresh.</p></section>`;
   const none=!s.lessons;
@@ -223,6 +244,7 @@ async function admDo(fn,ok){ADM={err:"",ok:""};document.body.classList.add("tbus
 document.addEventListener("click",e=>{const b=e.target.closest("[data-adm]");if(!b||!isAdmin())return;const a=b.dataset.adm,v=b.dataset.v;
   if(a==="reload"){SC.admin=null;ADM={err:"",ok:""};tRender();adminLoad();return}
   if(a==="upload"){admUpload();return}
+  if(a==="alup"){admAlUpload();return}
   if(a==="paywall"){const on=v==="on";if(confirm(on?"Turn the paywall on? People without a subscription or a licensed class will only see the first lesson of each section.":"Turn the paywall off? Everyone will be able to open every lesson."))
     admDo(async()=>{await BOB.school.admin.setPayments(on);await BOB.refreshContent()},on?"The paywall is on.":"The paywall is off.");return}
   const r=SC.admin&&SC.admin.req.find(x=>x.id===v);if(!r)return;
@@ -267,7 +289,7 @@ function userMenu(route){const u=S.user,RL={student:"Student",teacher:"Teacher",
     <div class="uhead"><span class="uavatar big" aria-hidden="true">${esc(initials(u.name))}</span><div><b>${esc(u.name)}</b><span class="sub">${esc(u.email)}</span><span class="sub">${RL[u.role]||""}${c?` · ${esc(c.name)}`:u.school?` · ${esc(u.school)}`:""}</span></div></div>
     <a role="menuitem" href="#account"${on("account")}>Account settings</a>
     <a role="menuitem" href="#display"${on("display")}>Display settings</a>
-    ${isAdmin()?`<a role="menuitem" href="#admin"${on("admin")}>Admin</a>`:""}
+    ${isAdmin()?`<a role="menuitem" href="#admin"${on("admin")}>Admin</a>${BOB.course?`<a role="menuitem" href="/#home">IGCSE site</a>`:`<a role="menuitem" href="/?course=al#home">A-Level site (preview)</a>`}`:""}
     <a role="menuitem" href="#pricing"${on("pricing")}>Pricing</a>
     <hr><a role="menuitem" href="#signout" class="uout">Sign out</a></div></div>`}
 function umenuSet(open){const b=document.querySelector('[data-um="toggle"]'),d=$("#udrop");if(!b||!d)return;d.hidden=!open;b.setAttribute("aria-expanded",open);

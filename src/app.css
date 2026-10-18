@@ -579,3 +579,68 @@ html.tzopen,html.tzopen body{overflow:hidden}
 .lside.grouped .check.compact:not(.focus)>.vhead:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .lside.grouped .check.focus .fsum{display:none}
 .lside.grouped .check .fsum{display:flex;align-items:center;gap:7px;font-size:.8rem;margin-top:5px;color:var(--muted);font-family:var(--body);font-weight:400}
+
+/* ---------- A-Level preview ---------- */
+#albar{position:sticky;top:0;z-index:60;display:flex;justify-content:center;gap:8px 16px;flex-wrap:wrap;align-items:center;padding:7px 16px;background:#4C2FA8;color:#fff;font-size:.85rem;text-align:center}
+#albar b{margin-right:6px}#albar a{color:#fff;font-weight:600}
+html.course-al .nav{top:var(--albar-h,0px)}
+.papers.papers4{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media (max-width:880px){.papers.papers4{grid-template-columns:1fr}}
+
+/* ---------- Python: runnable examples and "Code it" activities ---------- */
+.pyrun{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:14px 0;background:var(--surface)}
+.pyhead{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:6px 8px 6px 12px;background:var(--sunk);font:600 .78rem var(--mono);color:var(--muted)}
+.pybtns{display:flex;gap:6px}
+.pyrun pre.pc{margin:0;border:0;border-radius:0}
+textarea.pyed{display:block;width:100%;box-sizing:border-box;border:0;border-top:1px solid var(--line);padding:12px 14px;font:.88rem/1.55 var(--mono);color:var(--ink);background:var(--surface);resize:vertical;tab-size:4;white-space:pre;overflow:auto;min-height:120px}
+textarea.pyed:focus{outline:2px solid var(--accent);outline-offset:-2px}
+.pyinp{display:flex;flex-direction:column;gap:4px;padding:8px 12px;border-top:1px solid var(--line);font-size:.8rem;color:var(--muted)}
+.pyinp textarea{font:.85rem var(--mono);padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);resize:vertical}
+.pyout{border-top:1px solid var(--line);padding:8px 12px 10px;background:#0f1a1d;color:#e4f1ec}
+.pyout .eyebrow{color:#8fb9ab}
+.pyout pre{margin:4px 0 0;font:.85rem/1.5 var(--mono);white-space:pre-wrap;word-break:break-word;max-height:320px;overflow:auto}
+.pyout small{color:#8fb9ab}
+.pyerr{color:#ff9d8a}.pymuted{color:#8fb9ab}
+.pytask{gap:12px}
+.pytabs{display:flex;gap:6px;flex-wrap:wrap}
+.pytabs button{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);font-size:.82rem;background:var(--surface)}
+.pytabs button span{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--sunk);font:700 .7rem var(--mono)}
+.pytabs button[aria-selected=true]{border-color:var(--accent);background:var(--accent-soft);font-weight:600}
+.pytabs button.ok span{background:var(--good);color:#fff}
+.pybrief{line-height:1.55}.pybrief p{margin:0 0 8px}.pybrief pre{margin:6px 0}
+.pyedwrap{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.pytask .pyout{border:1px solid var(--line);border-radius:12px}
+.pyres{border-radius:12px;padding:10px 14px;border:1px solid var(--line)}
+.pyres.ok{background:var(--good-soft);border-color:color-mix(in srgb,var(--good) 40%,transparent)}
+.pyres.bad{background:var(--bad-soft);border-color:color-mix(in srgb,var(--bad) 30%,transparent)}
+.pyres ul{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:4px}
+.pyres li{display:grid;grid-template-columns:18px 1fr;gap:6px;font-size:.88rem}
+.pyres li small{grid-column:2;color:var(--muted);font-family:var(--mono);font-size:.78rem}
+.pyres li.ok span{color:var(--good)}.pyres li.no span{color:var(--bad)}
+.pymore{display:flex;gap:8px;flex-wrap:wrap}
+.pysol pre{margin:6px 0 0}
+
+/* ---------- lesson diagrams (A-Level): theme-aware SVG ---------- */
+.dgfig{margin:16px 0;display:flex;flex-direction:column;gap:6px;align-items:center}
+.dgfig figcaption{font-size:.85rem;color:var(--muted);text-align:center;max-width:62ch}
+svg.dg{width:100%;height:auto;color:var(--ink);font-family:var(--body);overflow:visible}
+.dg text{fill:var(--ink);font-size:15px}
+.dg .t{font-weight:700}.dg .s{font-size:12.5px;fill:var(--muted)}.dg .m{font-family:var(--mono);font-size:13.5px}.dg .h{font-family:var(--display);font-weight:800;font-size:17px}
+.dg .c{text-anchor:middle}
+.dg .b{fill:var(--surface);stroke:var(--ink);stroke-width:2}
+.dg .b2{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.dg .b3{fill:var(--sunk);stroke:var(--line);stroke-width:1.5}
+.dg .bw{fill:var(--warn-soft);stroke:var(--warn);stroke-width:2}
+.dg .bg{fill:var(--good-soft);stroke:var(--good);stroke-width:2}
+.dg .bi{fill:var(--info-soft);stroke:var(--info);stroke-width:2}
+.dg .bb{fill:var(--bad-soft);stroke:var(--bad);stroke-width:2}
+.dg .l{stroke:var(--ink);stroke-width:2;fill:none}
+.dg .la{stroke:var(--accent);stroke-width:3;fill:none}
+.dg .lw{stroke:var(--warn);stroke-width:3;fill:none}
+.dg .li{stroke:var(--info);stroke-width:3;fill:none}
+.dg .ld{stroke:var(--muted);stroke-width:1.5;fill:none;stroke-dasharray:5 4}
+.dg .fa{fill:var(--accent)}.dg .fw{fill:var(--warn)}.dg .fi{fill:var(--info)}.dg .fk{fill:var(--ink)}
+.dg .ta{fill:var(--accent)}.dg .tw{fill:var(--warn)}.dg .ti{fill:var(--info)}.dg .tg{fill:var(--good)}.dg .tb{fill:var(--bad)}
+.subtab td,.subtab th{padding:4px 6px;min-width:1.4em;text-align:center}
+.rtn{font-family:var(--mono);background:var(--sunk);border-radius:8px;padding:10px 14px;line-height:1.9;margin:10px 0}
+.rtn b{color:var(--accent)}

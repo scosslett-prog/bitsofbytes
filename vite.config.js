@@ -8,7 +8,8 @@ const contentForAdmin = {
   configureServer(server) {
     server.middlewares.use('/__content/', (req, res) => {
       const name = (req.url || '').replace(/^\//, '').split('?')[0];
-      if (!['theory.html', 'exams.json'].includes(name)) { res.statusCode = 404; return res.end(); }
+      const ok = ['theory.html', 'exams.json', 'al/content.js', 'al/pairs.js', 'al/theory.html', 'al/exams.json'];
+      if (!ok.includes(name)) { res.statusCode = 404; return res.end(); }
       res.setHeader('content-type', 'text/plain; charset=utf-8');
       res.end(fs.readFileSync(new URL('./content/' + name, import.meta.url)));
     });

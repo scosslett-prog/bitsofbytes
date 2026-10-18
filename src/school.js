@@ -140,6 +140,7 @@ export function createSchool(api, getUser) {
     },
     decide: (r, approve) => db.rpc('decide_licence_request', { r, approve }),
     setPayments: (on) => db.rpc('admin_set_payments', { on_: on }),
+    putCourseFile: (c, n, body) => db.rpc('admin_put_course_file', { c, n, body }),
     putContent: (kind, rows) => db.rpc('admin_put_content', { kind, rows }),
     finishContent: (ids) => db.rpc('admin_finish_content', ids),
     async grant(email, n, note) {
