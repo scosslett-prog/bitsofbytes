@@ -1,5 +1,21 @@
 /* start-up, saving and account styles (the rest of the site's styles are in styles.css) */
 .boot{position:fixed;inset:0;display:grid;place-items:center;background:var(--bg,#fff);color:var(--muted,#555);font:600 1rem/1.4 "Atkinson Hyperlegible",system-ui,sans-serif;z-index:50;padding:16px;text-align:center}
+/* loading: eight bits drop in, one at a time, to make the byte 01100010 ('b', as in the logo) */
+.boot{grid-template-rows:auto;align-content:center;gap:18px}
+.boot .btext{font-family:var(--display);font-weight:700;color:var(--muted)}
+.bload{display:flex;flex-direction:column;align-items:center;gap:12px}
+.bbits{display:flex;gap:6px}
+.bt{--d:3.4s;display:flex;flex-direction:column;align-items:center;gap:4px;animation:btin var(--d) cubic-bezier(.34,1.56,.64,1) calc(var(--i)*.16s) infinite both}
+.bt small{font:400 .7rem/1 var(--mono);color:var(--muted)}
+.bt b{display:grid;place-items:center;width:36px;height:42px;border-radius:8px;border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:600 1.05rem/1 var(--mono)}
+.bt.one b{animation:btone var(--d) ease calc(var(--i)*.16s) infinite both}
+.bdone{font:600 .9rem/1.3 var(--body);color:var(--muted);animation:btdone 3.4s ease infinite both}
+.bdone b{color:var(--p1);font-family:var(--mono)}
+@keyframes btin{0%{opacity:0;transform:translateY(-18px) scale(.6)}9%{opacity:1;transform:none}72%{opacity:1;transform:none}82%,100%{opacity:0;transform:translateY(10px) scale(.9)}}
+@keyframes btone{0%,9%{background:var(--surface);color:var(--ink);border-color:var(--line)}16%,72%{background:var(--p1);color:var(--surface);border-color:var(--p1)}82%,100%{background:var(--p1);color:var(--surface);border-color:var(--p1)}}
+@keyframes btdone{0%,40%{opacity:0;transform:translateY(4px)}50%,74%{opacity:1;transform:none}86%,100%{opacity:0}}
+@media (max-width:400px){.bbits{gap:4px}.bt b{width:30px;height:36px;font-size:.95rem}}
+@media (prefers-reduced-motion:reduce){.bt,.bt.one b,.bdone{animation:none}.bt.one b{background:var(--p1);color:var(--surface);border-color:var(--p1)}}
 #savestat{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);max-width:calc(100vw - 32px);padding:8px 14px;border-radius:999px;font-size:.875rem;font-weight:700;z-index:60;pointer-events:none}
 #savestat:empty{display:none}
 #savestat.error{background:var(--bad-soft,#fde2e2);color:var(--bad,#a30000);border:1px solid currentColor}
