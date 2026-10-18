@@ -1,6 +1,8 @@
 /* router */
 function render(){
-  const r=(location.hash||"#home").slice(1)||"home";
+  let r=(location.hash||"#home").slice(1)||"home";
+  /* teachers have My classes instead of a dashboard */
+  if(r==="dashboard"&&isTeacher()){r="teacher";history.replaceState(null,"","#teacher")}
   /* visitors who aren't signed in see example dashboards (09-demo.js) */
   const d=typeof demoView==="function"?demoView(r):null;
   if(!d){renderRoute(r);if(typeof demoAfter==="function")demoAfter(r,null);return}

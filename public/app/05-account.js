@@ -52,7 +52,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-rese
 const GLOGO=`<svg viewBox="0 0 48 48" width="20" height="20" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.7 6c4.5-4.2 6.9-10.3 6.9-17.7z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.7-6c-2.1 1.4-4.9 2.3-8.2 2.3-6.2 0-11.5-4.1-13.4-9.9l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>`;
 const googleBtn=(where)=>BOB.google?`<button class="btn gbtn" type="button" data-google="${where}">${GLOGO}<span>Continue with Google</span></button><div class="gor"><span>or ${where==="reg"?"sign up":"sign in"} with email</span></div>`:"";
 function register(){
-  if(S.user)return `<div class="formwrap"><h1>You're signed in</h1><p>You're signed in as ${esc(S.user.email)}.</p><a class="btn primary" href="#dashboard">Go to your dashboard</a></div>`;
+  if(S.user)return `<div class="formwrap"><h1>You're signed in</h1><p>You're signed in as ${esc(S.user.email)}.</p>${isTeacher()?`<a class="btn primary" href="#teacher">Go to my classes</a>`:`<a class="btn primary" href="#dashboard">Go to your dashboard</a>`}</div>`;
   return `<div class="formwrap"><div><div class="eyebrow">Create an account</div><h1 style="margin-top:8px">Join Bits of Bytes</h1></div>
   ${AUTH_OFF()}
   <form id="regForm" novalidate>
@@ -251,7 +251,7 @@ document.addEventListener("submit",async e=>{const f=e.target;
     await formBusy(f,async()=>{try{await BOB.auth.forgot(email);const ok=$("#fok");ok.textContent="If there's an account with that email, a reset link is on its way. Check your inbox (and spam folder).";ok.hidden=false}catch(x){formErr("ferr",x.message)}});return}
   if(f.id==="resetForm"||f.id==="pwForm"){e.preventDefault();const reset=f.id==="resetForm",id=reset?"np":"pw",p1=$("#"+id).value,p2=$("#"+id+"2").value,er=reset?"nperr":"pwerr",okid=reset?"npok":"pwok";
     const pm=pwMessage(p1,p2,pwCtx(id));if(pm)return formErr(er,pm);formErr(er,"");
-    await formBusy(f,async()=>{try{await BOB.auth.setPassword(p1);f.reset();pwUpdate(id);const ok=$("#"+okid);ok.innerHTML=reset?`Password saved. <a href="#dashboard">Go to your dashboard</a>.`:"Password changed.";ok.hidden=false}catch(x){formErr(er,x.message)}});return}
+    await formBusy(f,async()=>{try{await BOB.auth.setPassword(p1);f.reset();pwUpdate(id);const ok=$("#"+okid);ok.innerHTML=reset?(isTeacher()?`Password saved. <a href="#teacher">Go to my classes</a>.`:`Password saved. <a href="#dashboard">Go to your dashboard</a>.`):"Password changed.";ok.hidden=false}catch(x){formErr(er,x.message)}});return}
   if(f.id==="profForm"){e.preventDefault();const name=$("#pname").value.trim();if(!name)return formErr("perr","Enter your name.");formErr("perr","");
     await formBusy(f,async()=>{try{await BOB.auth.updateProfile({name,school:$("#pschool").value.trim()});const ok=$("#pok");ok.textContent="Saved.";ok.hidden=false;nav("account")}catch(x){formErr("perr",x.message)}});return}
   if(f.id==="grantForm"&&isAdmin()){e.preventDefault();const email=$("#gemail").value.trim(),n=Math.floor(+$("#gn").value);

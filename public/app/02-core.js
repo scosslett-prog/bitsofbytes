@@ -32,7 +32,7 @@ function nav(route){
   <a href="#flashcards"${on("flashcards")}>Flash cards</a>
   <a href="#exams"${on("exam")}>Exam questions</a>
   ${isTeacher()?`<a href="#teacher"${route==="teacher"||route.startsWith("class-")?' class="on"':""}>My classes</a>`:myClass()?`<a href="#todo"${on("todo")}>To-do${todoCount()?` <span class="tbadge" aria-label="${todoCount()} to do">${todoCount()}</span>`:""}</a>`:""}
-  <a href="#dashboard"${on("dashboard")}${S.user?"":' title="See example student and teacher dashboards"'}>${S.user?"Dashboard":"Dashboard preview"}</a>${S.user?"":`<a href="#pricing"${on("pricing")}>Pricing</a>`}
+  ${isTeacher()?"":`<a href="#dashboard"${on("dashboard")}${S.user?"":' title="See example student and teacher dashboards"'}>${S.user?"Dashboard":"Dashboard preview"}</a>`}${S.user?"":`<a href="#pricing"${on("pricing")}>Pricing</a>`}
   ${S.user?userMenu(route):`<a href="#login"${on("login")}>Sign in</a><a class="btn primary small" href="#register">Register</a>`}`;
 }
 
@@ -3951,7 +3951,7 @@ function homeAudience(){const guest=!S.user;
      ["A dashboard that shows what's secure","A syllabus map, scores for every task, confidence ratings and the topics to revisit next."],
      ["Your teacher's homework in one place","A to-do list with due dates, progress and feedback."],
      ["Comfortable to read","Dyslexia-friendly mode, text size, light or dark theme and your own colours."]],
-     guest?`<a class="btn primary small" href="#register">Create a free account</a><a class="btn small" href="#dashboard" data-pv="student">See the student view</a>`:`<a class="btn small" href="#dashboard">Go to my dashboard</a>`)}
+     guest?`<a class="btn primary small" href="#register">Create a free account</a><a class="btn small" href="#dashboard" data-pv="student">See the student view</a>`:isTeacher()?`<a class="btn small" href="#teacher">Go to my classes</a>`:`<a class="btn small" href="#dashboard">Go to my dashboard</a>`)}
    ${box("tch","For teachers","Set it, track it, act on it","Licences for your class, homework that marks itself, and a clear view of what each student knows.",[
      ["Class licences","Students join with a class code or an email invitation. Buy licences by card or ask for an invoice."],
      ["Two kinds of homework","Set lessons to complete, or real past paper questions chosen by paper, year and syllabus section."],
