@@ -128,6 +128,10 @@ export function pages(D, site) {
   out.push({ path: '/pricing', title: `Plans and pricing · ${NAME}`,
     desc: 'Start free with the first lesson of every section. Students can subscribe monthly or yearly; schools buy yearly class licences.',
     ld: [courseLd], body: `<div class="phead"><div class="eyebrow">Pricing</div><h1>Plans and pricing</h1><p>The first lesson of every section is free. Students can subscribe monthly or yearly for the full course; teachers buy yearly licences for their classes, by card or invoice.</p></div>` });
+  out.push({ path: '/contact', title: `Contact us · ${NAME}`,
+    desc: 'Questions about Bits of Bytes, school licences, invoices or your account? Send us a message or email info@bitsofbytes.ac.',
+    ld: [{ '@context': 'https://schema.org', '@type': 'ContactPage', name: 'Contact Bits of Bytes', url: url('/contact'), mainEntity: { ...org, email: 'info@bitsofbytes.ac' } }],
+    body: `<div class="phead"><div class="eyebrow">Contact</div><h1>Contact us</h1><p>Questions about the course, school licences and invoices, or your account? Email <a href="mailto:info@bitsofbytes.ac">info@bitsofbytes.ac</a> or use the form on this page.</p></div>` });
   out.push({ path: '/dashboard-preview', title: `Student and teacher dashboards · ${NAME}`,
     desc: 'See what Bits of Bytes looks like with an account: an example student dashboard and to-do list, and a teacher view with class tracking, assignments and insights.',
     ld: [courseLd], body: `<div class="phead"><div class="eyebrow">Preview</div><h1>Student and teacher dashboards</h1><p>An example student account with progress, a syllabus map and a homework to-do list, and an example teacher account with classes, progress tracking, assignment insights and every student's answers.</p></div>` });

@@ -6,7 +6,7 @@ function seoPath(r){let m;
   if(/^paper-[12]$/.test(r))return "/"+r;
   if((m=r.match(/^t-(.+)$/))&&TOPICS.some(t=>t.id===m[1]))return "/topic/"+m[1];
   if((m=r.match(/^l-(.+)$/))&&ALL_LESSONS.some(l=>l.id===m[1]))return "/lesson/"+m[1];
-  return {exams:"/exam-questions",flashcards:"/flash-cards",pricing:"/pricing",dashboard:"/dashboard-preview"}[r]||null}
+  return {exams:"/exam-questions",flashcards:"/flash-cards",pricing:"/pricing",dashboard:"/dashboard-preview",contact:"/contact"}[r]||null}
 const SEO_COURSE="Cambridge IGCSE Computer Science (0478)";
 function seoMeta(r){const B="Bits of Bytes",lc=s=>s.charAt(0).toLowerCase()+s.slice(1);let t,l,m;
   if(r==="home")return {title:`${B} · Cambridge IGCSE Computer Science 0478 lessons, quizzes and past papers`,desc:`Full coverage of the ${SEO_COURSE} syllabus: short lessons, key vocabulary, quizzes, activities and past paper questions, with dashboards for students and teachers.`};
@@ -16,6 +16,7 @@ function seoMeta(r){const B="Bits of Bytes",lc=s=>s.charAt(0).toLowerCase()+s.sl
   const T={exams:["IGCSE Computer Science 0478 past paper questions by topic","Practise Cambridge IGCSE Computer Science (0478) past paper questions by topic, with mark schemes and instant marking."],
     flashcards:["IGCSE Computer Science 0478 flash cards","Flash cards for every Cambridge IGCSE Computer Science (0478) lesson, with spaced practice."],
     pricing:["Plans and pricing","Start free with the first lesson of every section. Students subscribe monthly or yearly; schools buy yearly class licences."],
+    contact:["Contact us","Questions about Bits of Bytes, school licences or your account? Send us a message or email info@bitsofbytes.ac."],
     dashboard:["Student and teacher dashboards","Example student and teacher dashboards: progress, to-do lists, class tracking and assignment insights."],
     register:["Create an account"],login:["Sign in"],teacher:["My classes"],todo:["My to-do list"],account:["My account"],display:["Display settings"],admin:["Admin"]}[r.startsWith("class-")?"teacher":r];
   return T?{title:`${T[0]} · ${B}`,desc:T[1]}:{title:B}}

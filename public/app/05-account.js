@@ -325,3 +325,31 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-goog
   const reg=b.dataset.google==="reg",role=reg?(document.querySelector("input[name=role]:checked")||{}).value:"student";
   const code=reg&&role==="student"&&$("#rcode")?$("#rcode").value.trim().toUpperCase().replace(/[^A-Z0-9]/g,""):"";
   b.disabled=true;try{await BOB.auth.google({role,code})}catch(x){b.disabled=false;formErr(reg?"rerr":"gerr",x.message)}});
+
+/* ---------- contact: a form that Netlify delivers to info@, with the address as a fallback ---------- */
+const CONTACT_EMAIL="info@bitsofbytes.ac";
+let CONTACT_SENT=false;
+function contactPage(){const u=S.user,teach=u&&isTeacher();
+  if(CONTACT_SENT)return `<div class="formwrap"><div class="eyebrow">Contact</div><h1 style="margin-top:8px">Thanks, your message is on its way</h1><p>We usually reply within a couple of school days, to the email address you gave. If it's urgent, you can also email <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p><div class="tbb"><a class="btn primary" href="#home">Back to the home page</a><button class="btn" data-contact="again">Send another message</button></div></div>`;
+  const opt=(v,t)=>`<option value="${v}">${t}</option>`;
+  return `<div class="formwrap"><div><div class="eyebrow">Contact</div><h1 style="margin-top:8px">Contact us</h1></div>
+   <p>Questions about the course, school licences and invoices, or your account? Send us a message, or email <a href="mailto:${CONTACT_EMAIL}">${CONTACT_EMAIL}</a>.</p>
+   <form id="contactForm" name="contact" novalidate>
+    <input type="hidden" name="form-name" value="contact">
+    <p hidden><label>Leave this empty<input name="bot-field" tabindex="-1" autocomplete="off"></label></p>
+    <label for="cname">Your name<input type="text" id="cname" name="name" autocomplete="name" maxlength="100" required value="${esc(u?u.name:"")}"></label>
+    <label for="cemail">Email<input type="email" id="cemail" name="email" autocomplete="email" required value="${esc(u?u.email:"")}"></label>
+    <label for="crole">I am a<select id="crole" name="role">${opt(teach?"Teacher":"Student",teach?"Teacher":"Student")}${opt(teach?"Student":"Teacher",teach?"Student":"Teacher")}${opt("Parent","Parent")}${opt("School leader or admin","School leader or admin")}${opt("Other","Other")}</select></label>
+    <label for="ctopic">About<select id="ctopic" name="topic">${opt("School licences or invoices","School licences or invoices")}${opt("My subscription or payment","My subscription or payment")}${opt("My account or signing in","My account or signing in")}${opt("A mistake in a lesson or question","A mistake in a lesson or question")}${opt("Something else","Something else")}</select></label>
+    <label for="cmsg">Message<textarea id="cmsg" name="message" rows="6" maxlength="5000" required></textarea></label>
+    <p class="err" id="cerr" hidden></p>
+    <button class="btn primary" type="submit">Send message</button>
+   </form><p class="vfoot">We only use your details to reply to you.</p></div>`}
+document.addEventListener("submit",async e=>{const f=e.target;if(f.id!=="contactForm")return;e.preventDefault();
+  const name=$("#cname").value.trim(),email=$("#cemail").value.trim(),msg=$("#cmsg").value.trim();
+  if(!name)return formErr("cerr","Enter your name.");if(!/^\S+@\S+\.\S+$/.test(email))return formErr("cerr","Enter a valid email address so we can reply.");if(msg.length<5)return formErr("cerr","Write a message.");
+  formErr("cerr","");const data=new URLSearchParams(new FormData(f));data.set("page",location.href);
+  await formBusy(f,async()=>{try{const r=await fetch("/",{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:data.toString()});
+      if(!r.ok)throw new Error(r.status);CONTACT_SENT=true;render()}
+    catch(x){formErr("cerr",`Your message couldn't be sent just now. Please email ${CONTACT_EMAIL} instead; you can copy your message from the box above.`)}})});
+document.addEventListener("click",e=>{if(e.target.closest('[data-contact="again"]')){CONTACT_SENT=false;render()}});

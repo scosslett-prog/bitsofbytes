@@ -24,7 +24,7 @@ export function pathToRoute(p) {
   if ((m = p.match(/^\/paper-([12])$/))) return 'paper-' + m[1];
   if ((m = p.match(/^\/topic\/([\w-]+)$/))) return 't-' + m[1];
   if ((m = p.match(/^\/lesson\/([\w-]+)$/))) return 'l-' + m[1];
-  return { '/exam-questions': 'exams', '/flash-cards': 'flashcards', '/pricing': 'pricing', '/dashboard-preview': 'dashboard' }[p] || 'home';
+  return { '/exam-questions': 'exams', '/flash-cards': 'flashcards', '/pricing': 'pricing', '/dashboard-preview': 'dashboard', '/contact': 'contact' }[p] || 'home';
 }
 {
   const r = pathToRoute(location.pathname);

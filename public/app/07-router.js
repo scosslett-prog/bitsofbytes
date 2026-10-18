@@ -31,6 +31,7 @@ function renderRoute(r){
   else if(r==="display")app.innerHTML=displayPage();
   else if(r==="admin"){app.innerHTML=adminPage();adminLoad()}
   else if(r==="pricing")app.innerHTML=pricing();
+  else if(r==="contact")app.innerHTML=contactPage();
   else if(r==="teacher")app.innerHTML=teacherPage();
   else if(r.startsWith("class-")){app.innerHTML=classPage(r.slice(6));tPost(app)}
   else if(r==="todo"){app.innerHTML=todoPage();tPost(app)}

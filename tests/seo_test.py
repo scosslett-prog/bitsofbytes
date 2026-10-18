@@ -7,7 +7,7 @@ def ok(n,c,i=''):
     global fails; print(('PASS ' if c else 'FAIL ')+n+('' if c else '  -> '+str(i)),flush=True); fails+=0 if c else 1
 D=tempfile.mkdtemp(); shutil.copy(os.path.join(ROOT,'index.html'),D); shutil.copytree(os.path.join(ROOT,'public'),D,dirs_exist_ok=True)
 out=subprocess.run(['node',os.path.join(ROOT,'scripts/prerender.mjs'),D],capture_output=True,text=True,env={**os.environ,'SITE_URL':'https://example.org'}).stdout
-ok('pages generated', 'wrote 120 pages' in out, out)
+ok('pages generated', 'wrote 121 pages' in out, out)
 files=glob.glob(D+'/**/index.html',recursive=True)
 ok('every page has one canonical, a title and valid structured data', all(open(f).read().count('rel="canonical"')==1 and all(json.loads(m) for m in re.findall(r'<script type="application/ld\+json">(.*?)</script>',open(f).read(),re.S)) for f in files))
 ok('sitemap lists every page', open(D+'/sitemap.xml').read().count('<loc>')==len(files))
