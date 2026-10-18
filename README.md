@@ -107,6 +107,10 @@ Supabase sends the emails; Resend delivers them (Supabase's built-in sender only
 5. **Supabase → Authentication → Rate Limits:** raise **emails per hour** (e.g. 100).
 6. **Supabase → Authentication → URL Configuration:** the Redirect URLs must include the site (`https://<domain>/**`) and `http://localhost:5173/**`.
 
+## Logo
+
+`scripts/logo.py` draws the logo (`public/logo.svg`, and the small `public/favicon.svg`). The PNG versions (`logo.png` for search results, `logo-email.png` for the email templates, `apple-touch-icon.png` and the share image `og.png`) were made from those SVGs; redo them if the logo changes.
+
 ## Search engines and analytics
 
 **Search:** `npm run build` runs `scripts/prerender.mjs` after Vite. It gives every public page its own address (`/paper-1`, `/topic/1-1`, `/lesson/1-1-binary`, `/exam-questions`, `/flash-cards`, `/pricing`, `/dashboard-preview`) and writes a real HTML page for each, with its own title, description, social preview (`public/og.png`), structured data (Course, LearningResource, breadcrumbs) and a readable outline of the page. It also writes `sitemap.xml`, `robots.txt` and `404.html`. Paid lesson text is never included. When someone opens one of those addresses, the app shows the matching page (`pathToRoute` in `src/main.js`), and `public/app/10-seo.js` keeps the title, description and canonical address right as people move around. The site address comes from Netlify's `URL` (or `SITE_URL`). If the step fails it only prints a warning, so it can't stop a deploy.

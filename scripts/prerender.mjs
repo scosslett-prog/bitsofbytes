@@ -51,7 +51,7 @@ export function pages(D, site) {
   const url = (p) => site + p;
   const years = [...new Set(exams.EXAMS.map((x) => 2000 + +String(x.id).slice(0, 2)))].sort();
   const nAct = ALL_LESSONS.reduce((a, l) => a + (l.acts || []).length, 0);
-  const org = { '@type': 'Organization', name: NAME, url: site };
+  const org = { '@type': 'Organization', name: NAME, url: site, logo: site + '/logo.png', email: 'info@bitsofbytes.ac' };
   const courseLd = { '@context': 'https://schema.org', '@type': 'Course', name: COURSE, description: `Lessons, key vocabulary, quizzes, interactive activities and ${exams.Q.length || 'over 1,000'} past paper questions covering the whole Cambridge IGCSE Computer Science (0478) syllabus, Paper 1 and Paper 2.`, provider: org, url: site + '/', educationalLevel: 'IGCSE', inLanguage: 'en-GB', about: ['Computer science', 'Programming', 'Algorithms', 'Data representation', 'Networks', 'Cyber security', 'Databases', 'Boolean logic'] };
   const crumbs = (xs) => ({ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: xs.map(([n, p], i) => ({ '@type': 'ListItem', position: i + 1, name: n, item: url(p) })) });
   const crumbHtml = (xs) => `<nav class="crumbs" aria-label="Breadcrumb">${xs.map(([n, p], i) => i < xs.length - 1 ? `<a href="${p}">${esc(n)}</a><span>/</span>` : `<span>${esc(n)}</span>`).join('')}</nav>`;

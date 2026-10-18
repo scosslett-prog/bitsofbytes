@@ -145,6 +145,9 @@ class H(SimpleHTTPRequestHandler):
         p = path.split('?', 1)[0].split('#', 1)[0]
         if p.startswith('/__content/'): return os.path.join(ROOT, 'content', os.path.basename(p))
         if p.startswith('/app/'): return os.path.join(ROOT, 'public', p.lstrip('/'))
+        # like Vite and Netlify: files in public/ are served from the site root
+        pub = os.path.join(ROOT, 'public', p.lstrip('/'))
+        if p != '/' and os.path.isfile(pub): return pub
         return super().translate_path(path)
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store'); super().end_headers()
