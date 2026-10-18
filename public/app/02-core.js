@@ -150,36 +150,42 @@ function lesson(l){
    <div style="margin-top:28px">${next?"":`<div class="endcta" style="margin-bottom:18px"><span><b>That's the last lesson in ${t.code}.</b> See how the whole section is going, and practise it.</span><a class="btn primary small" href="#t-${t.id}">Back to ${t.code}</a></div>`}
    <nav class="pager">${prev?`<a href="#l-${prev.id}"><small>← Lesson ${prev.n}</small><b>${prev.title}</b></a>`:`<a href="#t-${t.id}"><small>← Section overview</small><b>${t.code} ${t.title}</b></a>`}${next?`<a class="next" href="#l-${next.id}"><small>Lesson ${next.n} →</small><b>${next.title}</b></a>`:""}</nav></div>
   </div>
-  <aside class="lside${l.acts||l.v?" multi":""}"><div class="check" id="lcheck"></div>${l.v?`<div class="check" id="vocab"></div>`:""}${(l.acts||[]).map(a=>`<div class="check" id="act-${a.id}"></div>`).join("")}<div class="check" id="fclesson" data-fcw="l-${l.id}"></div><div class="check" id="tzcard"></div><div class="check" id="exlesson"></div></aside></div></div>`;
+  <aside class="lside multi grouped">
+   ${sbSec("check",l.v?"Quick check and vocab":"Quick check",`<div class="check" id="lcheck"></div>${l.v?`<div class="check" id="vocab"></div>`:""}`)}
+   ${(l.acts||[]).length?sbSec("acts","Activities",(l.acts||[]).map(a=>`<div class="check" id="act-${a.id}"></div>`).join("")):""}
+   ${sbSec("rev","Revision",`<div class="check" id="fclesson" data-fcw="l-${l.id}"></div><div class="check" id="exlesson"></div>`)}
+   ${sbSec("tz","Puzzles",`<div class="check" id="tzcard"></div>`)}</aside></div></div>`;
 }
 
-/* folded lesson sidebar (trial): each card shows a one-line summary until it's opened */
-const FOLD_TRIAL=new Set(["3-1-buses"]),FOLDST={};
-function foldMeta(l,id){const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
-  if(id==="lcheck"){const s=S.lessons[l.id],ok=qcPassed(l);return {st:ok?"ok":s?"part":"",t:s?`${ok?"Passed":"Not passed yet"} · best ${s.best}% · ${pl(s.attempts,"attempt")}`:"Not started"}}
-  if(id==="vocab"){const v=S.scores["lv-"+l.id];return {st:v?"ok":"",t:v?`Done · best ${v.best}% · ${pl(v.attempts,"attempt")}`:"Not started"}}
-  if(id.startsWith("act-")){const s=actStats(S.acts[l.id+"-"+id.slice(4)]);return {st:s?"ok":"",t:s?`Done · best ${s.best}% · ${pl(s.attempts,"attempt")}`:"Not started"}}
-  if(id==="tzcard"){const b=tzBest(l.id);return {st:tzDone(l.id)?"ok":"",t:tzDone(l.id)?`Solved · best ${b}%`:"Bonus puzzle"}}
-  if(id==="exlesson"){const st=exLessonStats([l.id]);return {st:st.n&&st.att===st.n?"ok":st.att?"part":"",t:st.att?`${st.att} of ${st.n} questions tried · ${st.b}/${st.m} marks`:"Not started"}}
-  return {st:"fo",t:"Optional practice"}}
-function foldDecorate(el,l){const h=el.querySelector(":scope > .vhead");if(!h)return;const id=el.id,open=FOLDST[l.id+":"+id]===true;
-  if(el.classList.contains("focus")&&!h.querySelector('[data-act="afocus"],[data-fclose]'))h.insertAdjacentHTML("beforeend",`<button class="iconbtn fclose" data-fclose aria-label="Close full screen view" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button>`);
-  if(!el.classList.contains("focus"))h.querySelector("[data-fclose]")?.remove();
-  el.classList.toggle("folded",!open);h.setAttribute("role","button");h.tabIndex=0;h.setAttribute("aria-expanded",open);
-  const h3=h.querySelector("h3");if(!h3)return;const old=h3.querySelector(".fsum");if(old)old.remove();
-  const m=foldMeta(l,id);h3.insertAdjacentHTML("beforeend",`<small class="fsum"><i class="fdot ${m.st}" aria-hidden="true">${m.st==="ok"?"✓":""}</i>${m.t}</small>`)}
-function foldInit(l){const side=$(".lside");if(!side)return;side.classList.add("folding");if(!side.querySelector(":scope > .lstitle"))side.insertAdjacentHTML("afterbegin",`<h2 class="lstitle">Lesson activities</h2>`);if(!side.querySelector(":scope > .lsgrp")){const g=(el,t,n,c)=>{if(el)el.insertAdjacentHTML("beforebegin",`<h3 class="lsgrp${c?" "+c:""}">${t}<small>${n}</small></h3>`)};
-    g(side.querySelector(":scope > #lcheck"),"Check your learning","Needed to complete the lesson");g(side.querySelector(':scope > [id^="act-"]'),"Activities","Needed to complete the lesson");
-    g(side.querySelector(":scope > #fclesson"),"Revision","Extra practice for revision. Not needed to complete the lesson.","rev")}
-  side.querySelectorAll(":scope > .check").forEach(el=>{
-    new MutationObserver(()=>foldDecorate(el,l)).observe(el,{childList:true});foldDecorate(el,l);
-    const tog=()=>{if(el.classList.contains("focus"))return;
-      side.querySelectorAll(":scope > .check").forEach(o=>{FOLDST[l.id+":"+o.id]=o===el;foldDecorate(o,l)});
-      const ib=el.querySelector(':scope > .vhead [data-act="afocus"]');
-      if(ib)ib.click();else{setFocus(el);foldDecorate(el,l)}
-      const f=el.querySelector('.vbody button:not([disabled]),.vbody input,[data-fclose],[data-act="afocus"]');if(f)f.focus({preventScroll:true})};
-    el.addEventListener("click",e=>{const h=e.target.closest(".vhead");if(!h||h.parentElement!==el||e.target.closest("button,a,input,select,label"))return;tog()});
-    el.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("vhead")&&e.target.parentElement===el){e.preventDefault();tog()}})})}
+/* the lesson sidebar: four foldable groups (quick check and vocab, activities, revision, puzzles).
+   One group is open at a time; each header shows how far the student has got. */
+const SBOPEN={};
+const sbSec=(k,title,body)=>`<section class="lgrp" data-lg="${k}"><button type="button" class="lghead" data-lgt="${k}" aria-expanded="false"><span><b>${title}</b><small class="lgsum"></small></span><i class="fdot" aria-hidden="true"></i></button><div class="lgbody" hidden>${body}</div></section>`;
+function sbMeta(l,k){const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
+  if(k==="check"){const q=S.lessons[l.id],ok=qcPassed(l),v=l.v?S.scores["lv-"+l.id]:null,need=l.v?2:1,n=(ok?1:0)+(v?1:0);
+    return {st:n===need?"ok":q||v?"part":"",t:n===need?`Done · quick check ${q.best}%${v?` · vocab ${v.best}%`:""}`:q||v?`${n} of ${need} done${q?` · quick check best ${q.best}%`:""}`:"Needed to complete the lesson"}}
+  if(k==="acts"){const as=l.acts||[],n=as.filter(a=>actStats(S.acts[l.id+"-"+a.id])).length;
+    return {st:n===as.length?"ok":n?"part":"",t:n===as.length?`All ${as.length} done`:n?`${n} of ${as.length} done`:`${as.length} activit${as.length===1?"y":"ies"} · needed to complete the lesson`}}
+  if(k==="rev"){const f=S.fcs[l.id],e=exLessonStats([l.id]);
+    return {st:"fo",t:[f?`flash cards best ${f.best}%`:"",e.att?`${e.att}/${e.n} exam questions`:""].filter(Boolean).join(" · ")||`Flash cards${e.n?" and exam questions":""} · optional`}}
+  if(k==="tz")return {st:tzDone(l.id)?"ok":"fo",t:tzDone(l.id)?`Solved · best ${tzBest(l.id)}%`:"Tarsia puzzle · bonus points"};
+  return {st:"",t:""}}
+function sbDraw(l){const side=$(".lside.grouped");if(!side)return;
+  side.querySelectorAll(".lgrp").forEach(g=>{const k=g.dataset.lg,open=SBOPEN[l.id]===k,m=sbMeta(l,k),h=g.querySelector(".lghead");
+    g.classList.toggle("open",open);g.querySelector(".lgbody").hidden=!open;h.setAttribute("aria-expanded",String(open));
+    /* only touch what changed, so the watcher below doesn't fire again */
+    const sm=g.querySelector(".lgsum"),d=h.querySelector(".fdot"),tk=m.st==="ok"?"✓":"";
+    if(sm.textContent!==m.t)sm.textContent=m.t;if(d.className!=="fdot "+m.st)d.className="fdot "+m.st;if(d.textContent!==tk)d.textContent=tk})}
+function foldInit(l){const side=$(".lside.grouped");if(!side)return;
+  if(!side.querySelector(":scope > .lstitle"))side.insertAdjacentHTML("afterbegin",`<h2 class="lstitle">Lesson activities</h2>`);
+  /* open the first group that still needs work */
+  if(!(l.id in SBOPEN))SBOPEN[l.id]=["check","acts"].find(k=>side.querySelector(`[data-lg="${k}"]`)&&sbMeta(l,k).st!=="ok")||null;
+  side.addEventListener("click",e=>{const h=e.target.closest("[data-lgt]");if(!h)return;const k=h.dataset.lgt;
+    SBOPEN[l.id]=SBOPEN[l.id]===k?null:k;sbDraw(l);
+    if(SBOPEN[l.id]){const g=h.closest(".lgrp");requestAnimationFrame(()=>{const r=g.getBoundingClientRect();if(r.top<70||r.top>innerHeight*.6)g.scrollIntoView({block:"nearest",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})})}});
+  /* keep the summaries up to date as results come in */
+  new MutationObserver(()=>{clearTimeout(side._lg);side._lg=setTimeout(()=>sbDraw(l),60)}).observe(side,{childList:true,subtree:true});
+  sbDraw(l)}
 function lcheck(l){
   const el=$("#lcheck");if(!el)return;const s=S.lessons[l.id];let body;
   const next=l.topic.lessons[l.n];
@@ -2597,7 +2603,7 @@ function setFocus(card){
   let sc=document.getElementById("scrim");
   if(!card){if(sc)sc.remove();document.documentElement.classList.remove("locked");
     const l=typeof ALL_LESSONS!=="undefined"&&ALL_LESSONS.find(x=>"l-"+x.id===location.hash.slice(1));
-    if(l)document.querySelectorAll(".lside.folding > .check:not(.folded)").forEach(o=>{FOLDST[l.id+":"+o.id]=false;foldDecorate(o,l)});return}
+    if(l)sbDraw(l);return}
   if(!sc){sc=document.createElement("div");sc.id="scrim";document.body.append(sc)}
   card.classList.add("focus");document.documentElement.classList.add("locked");
 }

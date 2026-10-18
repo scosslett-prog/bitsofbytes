@@ -76,7 +76,7 @@ with sync_playwright() as p:
 
     # ---- student 1 sees the puzzle is required and solves it
     go(S1, 'l-1-2-sound'); S1.wait_for_timeout(300)
-    S1.click('#tzcard .vhead'); S1.wait_for_timeout(200)
+    S1.click('[data-lgt="tz"]'); S1.wait_for_timeout(200)
     ok('lesson card says the teacher set the puzzle', 'Set by your teacher' in S1.inner_text('#tzcard'))
     go(S1, 'todo'); S1.evaluate('document.querySelectorAll("details.todo").forEach(d=>d.open=true)')
     ok('to-do card mentions the puzzles', '+ tarsia puzzles' in S1.inner_text('#app'))

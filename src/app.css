@@ -543,3 +543,27 @@ html.tzopen,html.tzopen body{overflow:hidden}
 .rwbadge.r0 b,.rwbadge.r1 b,.rwbadge.r2 b{font-size:1em}
 @media (max-width:640px){.rwachs{grid-template-columns:1fr 1fr}.rwach{padding:8px;gap:6px}.rwach .rwai{font-size:1.2rem}.rwach small{font-size:.72rem}}
 .rwlbsw{display:inline-flex;gap:8px;align-items:center;font-weight:600;font-size:.9rem;cursor:pointer}
+
+/* ---------- lesson sidebar: four foldable groups ---------- */
+.lside.grouped{gap:10px}
+.lside.grouped>*{flex-shrink:0}
+.lgrp{border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:clip}
+.lghead{all:unset;box-sizing:border-box;width:100%;display:flex;align-items:center;gap:12px;padding:14px 44px 14px 16px;cursor:pointer;position:relative}
+.lghead>span{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.lghead b{font-family:var(--display);font-size:1.02rem}
+.lghead small{color:var(--muted);font-size:.8rem}
+.lghead::after{content:"";position:absolute;right:18px;top:50%;width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-75%) rotate(45deg);transition:transform .2s}
+.lgrp.open .lghead::after{transform:translateY(-25%) rotate(225deg)}
+.lghead:hover{background:var(--sunk)}
+.lghead:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:14px}
+.lgrp[data-lg="check"] .lghead{box-shadow:inset 4px 0 0 var(--accent)}
+.lgrp[data-lg="acts"] .lghead{box-shadow:inset 4px 0 0 var(--warn)}
+.lgrp[data-lg="rev"] .lghead{box-shadow:inset 4px 0 0 var(--info)}
+.lgrp[data-lg="tz"] .lghead{box-shadow:inset 4px 0 0 var(--p2)}
+.lgbody{display:flex;flex-direction:column;gap:12px;padding:0 12px 12px}
+.lgbody>.check{border-radius:12px}
+.lgrp .fdot{flex:none}
+@media (min-width:881px){.lside.grouped{position:sticky;top:calc(env(safe-area-inset-top,0px) + 76px);max-height:calc(100vh - 92px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding-bottom:4px}}
+.lside.grouped:has(.check.focus){position:static;max-height:none;overflow:visible}
+.lgrp:has(.check.focus){overflow:visible}
+@media (prefers-reduced-motion:reduce){.lghead::after{transition:none}}
