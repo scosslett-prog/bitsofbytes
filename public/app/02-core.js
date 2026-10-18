@@ -160,6 +160,26 @@ function lesson(l){
 /* the lesson sidebar: four foldable groups (quick check and vocab, activities, revision, puzzles).
    One group is open at a time; each header shows how far the student has got. */
 const SBOPEN={};
+/* every page load starts with all groups closed */
+addEventListener("hashchange",()=>{for(const k in SBOPEN)delete SBOPEN[k]});
+/* inside a group each card is a one-line row; tapping it opens the card full screen, where it's used */
+function cardMeta(l,id){const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
+  if(id==="lcheck"){const s=S.lessons[l.id],ok=qcPassed(l);return {st:ok?"ok":s?"part":"",t:s?`${ok?"Passed":"Not passed yet"} · best ${s.best}%`:"Not started"}}
+  if(id==="vocab"){const v=S.scores["lv-"+l.id];return {st:v?"ok":"",t:v?`Done · best ${v.best}%`:"Not started"}}
+  if(id.startsWith("act-")){const s=actStats(S.acts[l.id+"-"+id.slice(4)]);return {st:s?"ok":"",t:s?`Done · ${Math.round(s.correct/s.total*100)}% overall · ${pl(s.attempts,"try")}`.replace("trys","tries"):"Not started"}}
+  if(id==="fclesson"){const f=S.fcs[l.id];return {st:f?"ok":"fo",t:f?`Best ${f.best}% · ${pl(f.rounds,"round")}`:"Optional practice"}}
+  if(id==="exlesson"){const st=exLessonStats([l.id]);return {st:st.n&&st.att===st.n?"ok":st.att?"part":"fo",t:st.att?`${st.att} of ${st.n} tried · ${st.b}/${st.m} marks`:`${pl(st.n,"question")} · optional`}}
+  return {st:"",t:""}}
+const SB_X=`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg>`;
+function cardDecorate(el,l){const h=el.querySelector(":scope > .vhead");if(!h)return;const big=el.classList.contains("focus");
+  if(big&&!h.querySelector('[data-act="afocus"],[data-fclose]'))h.insertAdjacentHTML("beforeend",`<button class="iconbtn fclose" data-fclose aria-label="Close full screen view" title="Close">${SB_X}</button>`);
+  if(!big)h.querySelector("[data-fclose]")?.remove();
+  if(big){h.removeAttribute("role");h.removeAttribute("tabindex");h.removeAttribute("aria-expanded")}else{h.setAttribute("role","button");h.tabIndex=0;h.setAttribute("aria-expanded","false")}
+  const h3=h.querySelector("h3");if(!h3)return;const m=cardMeta(l,el.id),html=`<i class="fdot ${m.st}" aria-hidden="true">${m.st==="ok"?"✓":""}</i>${esc(m.t)}`;
+  let f=h3.querySelector(".fsum");if(!f){f=document.createElement("small");f.className="fsum";h3.append(f)}if(f.innerHTML!==html)f.innerHTML=html}
+function cardOpen(el,l){if(el.classList.contains("focus"))return;const ib=el.querySelector(':scope > .vhead [data-act="afocus"]');
+  if(ib)ib.click();else setFocus(el);cardDecorate(el,l);
+  const f=el.querySelector('.vbody button:not([disabled]),.vbody input,[data-fclose],[data-act="afocus"]');if(f)f.focus({preventScroll:true})}
 const sbSec=(k,title,body)=>`<section class="lgrp" data-lg="${k}"><button type="button" class="lghead" data-lgt="${k}" aria-expanded="false"><span><b>${title}</b><small class="lgsum"></small></span><i class="fdot" aria-hidden="true"></i></button><div class="lgbody" hidden>${body}</div></section>`;
 function sbMeta(l,k){const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
   if(k==="check"){const q=S.lessons[l.id],ok=qcPassed(l),v=l.v?S.scores["lv-"+l.id]:null,need=l.v?2:1,n=(ok?1:0)+(v?1:0);
@@ -175,11 +195,16 @@ function sbDraw(l){const side=$(".lside.grouped");if(!side)return;
     g.classList.toggle("open",open);g.querySelector(".lgbody").hidden=!open;h.setAttribute("aria-expanded",String(open));
     /* only touch what changed, so the watcher below doesn't fire again */
     const sm=g.querySelector(".lgsum"),d=h.querySelector(".fdot"),tk=m.st==="ok"?"✓":"";
-    if(sm.textContent!==m.t)sm.textContent=m.t;if(d.className!=="fdot "+m.st)d.className="fdot "+m.st;if(d.textContent!==tk)d.textContent=tk})}
+    if(sm.textContent!==m.t)sm.textContent=m.t;if(d.className!=="fdot "+m.st)d.className="fdot "+m.st;if(d.textContent!==tk)d.textContent=tk});
+  side.querySelectorAll(".check.compact").forEach(el=>cardDecorate(el,l))}
 function foldInit(l){const side=$(".lside.grouped");if(!side)return;
   if(!side.querySelector(":scope > .lstitle"))side.insertAdjacentHTML("afterbegin",`<h2 class="lstitle">Lesson activities</h2>`);
-  /* open the first group that still needs work */
-  if(!(l.id in SBOPEN))SBOPEN[l.id]=["check","acts"].find(k=>side.querySelector(`[data-lg="${k}"]`)&&sbMeta(l,k).st!=="ok")||null;
+  side.querySelectorAll(".check:not(#tzcard)").forEach(el=>{el.classList.add("compact");
+    new MutationObserver(()=>cardDecorate(el,l)).observe(el,{childList:true});
+    el.addEventListener("click",e=>{if(el.classList.contains("focus")||e.target.closest('a,input,select,label,[data-fclose],[data-act="afocus"]'))return;
+      if(e.target.closest("button")&&!e.target.closest(".vhead"))return;e.preventDefault();e.stopPropagation();cardOpen(el,l)},true);
+    el.addEventListener("keydown",e=>{if((e.key==="Enter"||e.key===" ")&&e.target.classList.contains("vhead")&&!el.classList.contains("focus")){e.preventDefault();cardOpen(el,l)}})});
+  if(!(l.id in SBOPEN))SBOPEN[l.id]=null;
   side.addEventListener("click",e=>{const h=e.target.closest("[data-lgt]");if(!h)return;const k=h.dataset.lgt;
     SBOPEN[l.id]=SBOPEN[l.id]===k?null:k;sbDraw(l);
     if(SBOPEN[l.id]){const g=h.closest(".lgrp");requestAnimationFrame(()=>{const r=g.getBoundingClientRect();if(r.top<70||r.top>innerHeight*.6)g.scrollIntoView({block:"nearest",behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})})}});
