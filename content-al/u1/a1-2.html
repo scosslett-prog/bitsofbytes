@@ -1,0 +1,182 @@
+<template id="th-a1-2-role">
+<div class="theory airy">
+ <section>
+  <h2>What the operating system does</h2>
+  <p class="lede">Without an operating system, every program would have to drive the hardware itself and fight other programs for the CPU and memory. The <b>operating system (OS)</b> sits between the hardware and the applications and <b>manages the computer's resources</b> for them.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 560 250" role="img" aria-label="Layers: the user at the top, then applications, then the operating system with its kernel, then the hardware">
+   <rect x="80" y="10" width="400" height="44" rx="10" class="b3"/><text x="280" y="38" class="t c">User</text>
+   <rect x="80" y="66" width="400" height="44" rx="10" class="bw"/><text x="280" y="94" class="t c">Applications (browser, IDE, games…)</text>
+   <rect x="80" y="122" width="400" height="60" rx="10" class="b2"/><text x="280" y="148" class="t c">Operating system</text><text x="280" y="168" class="s c">user interface · kernel · device drivers</text>
+   <rect x="80" y="194" width="400" height="44" rx="10" class="bg"/><text x="280" y="222" class="t c">Hardware (CPU, memory, devices)</text>
+  </svg><figcaption>The OS hides the hardware's complexity: applications ask the OS, and the OS deals with the hardware.</figcaption></figure>
+ </section>
+ <section>
+  <h2>The five main roles</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Role</th><th>What it involves</th></tr>
+   <tr><td class="lbl">User interface</td><td>Lets people use the computer. A <b>GUI</b> (windows, icons, menus, pointer) is easy to learn; a <b>command-line interface</b> is quicker for experts and can be <b>scripted</b> to automate tasks.</td></tr>
+   <tr><td class="lbl">User management</td><td>User <b>accounts</b>, logins and passwords, <b>access rights</b> to files and folders, and a separate area and settings for each user.</td></tr>
+   <tr><td class="lbl">Peripheral management</td><td>Communicates with devices using <b>device drivers</b>, and uses <b>buffers</b> (e.g. a print spool) so a fast CPU isn't held up by a slow device.</td></tr>
+   <tr><td class="lbl">Process management</td><td>Starts and ends processes, <b>schedules</b> them so they share the CPU, and handles <b>interrupts</b>.</td></tr>
+   <tr><td class="lbl">Memory management</td><td>Decides where programs and data go in RAM, keeps track of free memory, <b>protects</b> each process's memory, and uses <b>virtual memory</b> when RAM is full.</td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><p>All five roles come down to <b>sharing limited resources</b> (CPU time, memory, devices, files) between users and programs safely and efficiently.</p></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>Questions often describe a situation, e.g. "a student can't open a teacher's files". Name the role (<b>user management</b>) <b>and</b> say how the OS does it (<b>access rights</b> on each file).</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-2-multitasking">
+<div class="theory airy">
+ <section>
+  <h2>Multitasking</h2>
+  <p class="lede">You can stream music, download a file and type an essay at once, even on a single-core CPU. A core can only execute <b>one</b> instruction stream at a time, so how?</p>
+  <div class="callout"><span class="k">Key idea</span><h3>Time sharing</h3><p>The OS gives each process a short <b>time slice</b> of the CPU (a few milliseconds), then switches to the next. The switching is so fast that every process <b>appears</b> to run at the same time.</p></div>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 120" role="img" aria-label="Timeline: processes A, B and C take turns on the CPU in short slices, with small context switches between them">
+   <g><rect x="20" y="30" width="90" height="40" rx="4" class="bi"/><text x="65" y="56" class="t c">A</text>
+   <rect x="116" y="30" width="90" height="40" rx="4" class="bw"/><text x="161" y="56" class="t c">B</text>
+   <rect x="212" y="30" width="90" height="40" rx="4" class="bg"/><text x="257" y="56" class="t c">C</text>
+   <rect x="308" y="30" width="90" height="40" rx="4" class="bi"/><text x="353" y="56" class="t c">A</text>
+   <rect x="404" y="30" width="90" height="40" rx="4" class="bw"/><text x="449" y="56" class="t c">B</text>
+   <rect x="500" y="30" width="90" height="40" rx="4" class="bg"/><text x="545" y="56" class="t c">C</text></g>
+   <line x1="20" y1="90" x2="600" y2="90" class="l"/><text x="20" y="110" class="s">time →</text><text x="113" y="22" class="s c">switch</text><text x="209" y="22" class="s c">switch</text>
+  </svg><figcaption>Each block is one time slice. The narrow gaps are context switches.</figcaption></figure>
+  <h3>Context switching</h3>
+  <p>To pause a process and resume it later, the OS must remember exactly where it was. A <b>context switch</b> saves the running process's <b>context</b> (the contents of the PC, the other registers and the status flags) and loads the saved context of the next process. Context switching is pure <b>overhead</b>: no useful work happens while it's going on.</p>
+ </section>
+ <section>
+  <h2>Interrupts</h2>
+  <p>An <b>interrupt</b> is a signal to the CPU that something needs attention now. Interrupts are how a key press is noticed, how a printer says it's out of paper, and how the OS takes the CPU back when a time slice ends.</p>
+  <div class="ccards">
+   <div class="keypts"><h3>Hardware</h3><p>From a device: a key press, a disk transfer finishing, a power failure.</p></div>
+   <div class="keypts"><h3>Timer</h3><p>From the system clock: ends a time slice so the scheduler can switch processes.</p></div>
+   <div class="keypts"><h3>Software</h3><p>From a program: an error such as dividing by zero, or a request to the OS.</p></div>
+  </div>
+  <h3>How an interrupt is handled</h3>
+  <p class="stepline"><b>1</b><span>The device sets a bit in the <b>interrupt register</b>.</span></p>
+  <p class="stepline"><b>2</b><span>At the <b>end of each fetch-decode-execute cycle</b>, the CPU checks the interrupt register.</span></p>
+  <p class="stepline"><b>3</b><span>If an interrupt is waiting and its <b>priority is higher</b> than the current task, the CPU <b>saves its registers</b> (including the PC) <b>on the stack</b>.</span></p>
+  <p class="stepline"><b>4</b><span>The PC is loaded with the address of the matching <b>interrupt service routine (ISR)</b>, found in a table of ISR addresses (the interrupt vector table).</span></p>
+  <p class="stepline"><b>5</b><span>The ISR runs. A <b>higher</b>-priority interrupt can interrupt it; a lower one waits.</span></p>
+  <p class="stepline"><b>6</b><span>When the ISR ends, the saved registers are <b>popped</b> off the stack and the original task carries on exactly where it stopped.</span></p>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>The CPU does <b>not</b> stop mid-instruction. It finishes the current cycle first, then checks for interrupts.</p></div>
+  <div class="callout tip"><span class="k">Why the stack?</span><p>Interrupts can be <b>nested</b>. A stack is last in, first out, so the most recently interrupted task is the first one resumed.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-2-processes">
+<div class="theory airy">
+ <section>
+  <h2>Processes and their states</h2>
+  <p class="lede">A <b>process</b> is a program in execution: its code, its data and its current state (the registers, the PC). The OS tracks every process as it moves between five <b>states</b>.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 260" role="img" aria-label="Process states: new to ready (admitted), ready to running (scheduled), running to ready (time slice ends), running to blocked (waits for I/O), blocked to ready (I/O completes), running to terminated (finishes)">
+   <defs><marker id="psA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="10" y="30" width="100" height="44" rx="22" class="b3"/><text x="60" y="57" class="t c">New</text>
+   <rect x="200" y="30" width="110" height="44" rx="22" class="bw"/><text x="255" y="57" class="t c">Ready</text>
+   <rect x="420" y="30" width="110" height="44" rx="22" class="bi"/><text x="475" y="57" class="t c">Running</text>
+   <rect x="310" y="190" width="120" height="44" rx="22" class="bg"/><text x="370" y="217" class="t c">Blocked</text>
+   <rect x="530" y="190" width="105" height="44" rx="22" class="b3"/><text x="582" y="217" class="t c">Terminated</text>
+   <line x1="110" y1="52" x2="194" y2="52" class="l" marker-end="url(#psA)"/><text x="152" y="44" class="s c">admitted</text>
+   <path d="M310 42 C350 20, 380 20, 416 42" class="l" fill="none" marker-end="url(#psA)"/><text x="363" y="18" class="s c">scheduled</text>
+   <path d="M420 64 C380 86, 350 86, 314 64" class="l" fill="none" marker-end="url(#psA)"/><text x="363" y="100" class="s c">time slice ends</text>
+   <line x1="460" y1="74" x2="410" y2="186" class="l" marker-end="url(#psA)"/><text x="462" y="140" class="s">waits for I/O</text>
+   <line x1="335" y1="190" x2="265" y2="78" class="l" marker-end="url(#psA)"/><text x="200" y="140" class="s">I/O completes</text>
+   <line x1="500" y1="74" x2="570" y2="186" class="l" marker-end="url(#psA)"/><text x="560" y="130" class="s">finishes</text>
+  </svg><figcaption>A blocked process can't go straight to running: it goes back to the ready queue first.</figcaption></figure>
+ </section>
+ <section>
+  <h2>Scheduling algorithms</h2>
+  <p>The <b>scheduler</b> picks which ready process runs next. The aims are to keep the CPU busy, respond quickly to users, be fair, and get as much work done as possible.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Algorithm</th><th>How it works</th><th>Strengths</th><th>Weaknesses</th></tr>
+   <tr><td class="lbl">Round robin</td><td>Each process gets the same time slice in turn, then goes to the back of the queue</td><td>Fair; good response for interactive users</td><td>Many context switches; long jobs take a long time overall</td></tr>
+   <tr><td class="lbl">First-come, first-served</td><td>Runs processes to completion in arrival order</td><td>Simple; no starvation</td><td>Short jobs can be stuck behind a long one</td></tr>
+   <tr><td class="lbl">Shortest job first</td><td>Runs the process with the shortest burst time next</td><td>Lowest average waiting time</td><td>Burst times must be known; long jobs can <b>starve</b></td></tr>
+   <tr><td class="lbl">Multi-level queue</td><td>Separate queues by type or priority (e.g. system, interactive, batch), each with its own algorithm</td><td>Suits a mix of process types</td><td>Low-priority queues can starve; more complex</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Worked example</h2>
+  <p>Three processes arrive at time 0 in the order A, B, C, with burst times <b>A = 6</b>, <b>B = 2</b>, <b>C = 4</b>. Waiting time is how long a process waits before it starts.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>First-come, first-served</h3><p>Order A, B, C.<br>Waits: A 0, B 6, C 8.<br>Average = 14 ÷ 3 ≈ <b>4.67</b></p></div>
+   <div class="keypts"><h3>Shortest job first</h3><p>Order B, C, A.<br>Waits: B 0, C 2, A 6.<br>Average = 8 ÷ 3 ≈ <b>2.67</b></p></div>
+  </div>
+  <p>Round robin with a time slice of 2 runs A, B, C, A, C, A: B finishes at 4, C at 10 and A at 12.</p>
+  <pre class="pc py" data-run data-t="Try it: round robin">from collections import deque
+burst = {"A": 6, "B": 2, "C": 4}
+quantum = 2
+queue, time = deque(burst), 0
+while queue:
+    p = queue.popleft()
+    run = min(quantum, burst[p])
+    time = time + run
+    burst[p] = burst[p] - run
+    if burst[p] > 0:
+        queue.append(p)            # not finished: back of the queue
+    else:
+        print(p, "finishes at", time)</pre>
+  <p class="vfoot">Change the quantum to 1 or 6 and run it again. What happens when the time slice is longer than every job?</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-2-memory">
+<div class="theory airy">
+ <section>
+  <h2>Memory management</h2>
+  <p class="lede">Many processes share one RAM. The OS has to <b>track</b> which parts are free, <b>allocate</b> memory to processes, <b>protect</b> each process from the others, and cope when RAM runs out.</p>
+ </section>
+ <section>
+  <h2>Paging</h2>
+  <p>Memory is split into <b>fixed-size</b> blocks. A process is divided into <b>pages</b>, and physical memory into <b>frames</b> of the same size. Pages can go into <b>any free frames</b>, so a process doesn't need one continuous block. A <b>page table</b> records which frame each page is in.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 250" role="img" aria-label="Process pages 0 to 3 mapped through a page table into scattered frames of physical memory">
+   <defs><marker id="pgA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <text x="70" y="20" class="t c">Process</text>
+   <rect x="20" y="30" width="100" height="40" class="bi"/><text x="70" y="55" class="m c">page 0</text>
+   <rect x="20" y="70" width="100" height="40" class="bi"/><text x="70" y="95" class="m c">page 1</text>
+   <rect x="20" y="110" width="100" height="40" class="bi"/><text x="70" y="135" class="m c">page 2</text>
+   <rect x="20" y="150" width="100" height="40" class="bi"/><text x="70" y="175" class="m c">page 3</text>
+   <text x="260" y="20" class="t c">Page table</text>
+   <rect x="200" y="30" width="120" height="160" class="b"/>
+   <text x="260" y="55" class="m c">0 → frame 5</text><text x="260" y="95" class="m c">1 → frame 1</text><text x="260" y="135" class="m c">2 → frame 6</text><text x="260" y="175" class="m c">3 → frame 3</text>
+   <text x="510" y="20" class="t c">Physical memory</text>
+   <g><rect x="460" y="30" width="100" height="26" class="b3"/><text x="510" y="48" class="s c">0 · OS</text>
+   <rect x="460" y="56" width="100" height="26" class="bi"/><text x="510" y="74" class="s c">1 · page 1</text>
+   <rect x="460" y="82" width="100" height="26" class="bw"/><text x="510" y="100" class="s c">2 · other</text>
+   <rect x="460" y="108" width="100" height="26" class="bi"/><text x="510" y="126" class="s c">3 · page 3</text>
+   <rect x="460" y="134" width="100" height="26" class="b"/><text x="510" y="152" class="s c">4 · free</text>
+   <rect x="460" y="160" width="100" height="26" class="bi"/><text x="510" y="178" class="s c">5 · page 0</text>
+   <rect x="460" y="186" width="100" height="26" class="bi"/><text x="510" y="204" class="s c">6 · page 2</text>
+   <rect x="460" y="212" width="100" height="26" class="bw"/><text x="510" y="230" class="s c">7 · other</text></g>
+   <line x1="120" y1="110" x2="194" y2="110" class="l" marker-end="url(#pgA)"/><line x1="320" y1="110" x2="454" y2="110" class="l" marker-end="url(#pgA)"/>
+  </svg><figcaption>The pages of one process scattered across free frames.</figcaption></figure>
+ </section>
+ <section>
+  <h2>Segmentation</h2>
+  <p>A program is split into <b>variable-sized</b> blocks that match its <b>logical parts</b>: a code segment, a data segment, a stack segment, or one segment per module. Each segment can be given its own protection, e.g. code can be read and executed but not written.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Paging</th><th>Segmentation</th></tr>
+   <tr><td class="lbl">Block size</td><td>Fixed</td><td>Variable</td></tr>
+   <tr><td class="lbl">Based on</td><td>Physical division of memory</td><td>Logical structure of the program</td></tr>
+   <tr><td class="lbl">Benefit</td><td>Simple to fit into any free frames</td><td>Each part can be protected and shared sensibly</td></tr>
+   <tr><td class="lbl">Drawback</td><td>A page may split a routine in two; the last page is part empty</td><td>Gaps form between segments as they come and go</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Virtual memory</h2>
+  <p>When RAM is full, the OS uses part of <b>secondary storage</b> as if it were extra RAM. Pages that <b>haven't been used recently</b> are <b>swapped out</b> to disk, and swapped back in when they're needed.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>More programs can be open than RAM alone could hold.</li><li>A program bigger than RAM can still run.</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>Secondary storage is thousands of times slower than RAM.</li><li>If pages are swapped constantly, the computer spends more time swapping than working: <b>disk thrashing</b>. The fix is more RAM.</li></ul></div>
+  </div>
+ </section>
+ <section>
+  <h2>Stack frames</h2>
+  <p>Each time a subroutine is <b>called</b>, a <b>stack frame</b> is pushed onto the call stack. It holds the <b>return address</b> (where to carry on afterwards), the <b>parameters</b> and the <b>local variables</b>. When the subroutine <b>returns</b>, its frame is popped and the CPU jumps to the return address.</p>
+  <p>If too many frames are pushed, for example by recursion that never reaches its base case, the stack runs out of space: a <b>stack overflow</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: watch the stack grow">def countdown(n):
+    print("frame for n =", n)
+    if n > 0:
+        countdown(n - 1)        # pushes a new stack frame
+    print("returning from n =", n)
+
+countdown(3)</pre>
+ </section>
+</div>
+</template>

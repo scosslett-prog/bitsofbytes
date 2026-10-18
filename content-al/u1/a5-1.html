@@ -1,0 +1,341 @@
+<template id="th-a5-1-algorithms">
+<div class="theory airy">
+ <section>
+  <h2>What is an algorithm?</h2>
+  <p class="lede">An <b>algorithm</b> is a precise, ordered set of steps that solves a problem. The same algorithm can be written in <b>words</b>, drawn as a <b>flowchart</b>, or written as <b>code</b>. Exam questions ask you to read, complete and correct all three.</p>
+ </section>
+ <section>
+  <h2>Flowcharts</h2>
+  <div class="kpgrid2">
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 300 300" role="img" aria-label="Flowchart symbols: terminator, input/output, process, subprocess, decision">
+   <rect x="20" y="10" width="120" height="40" rx="20" class="b3"/><text x="80" y="35" class="s c">Start / Stop</text><text x="160" y="35" class="s">terminator</text>
+   <path d="M35 70 L145 70 L125 110 L15 110 Z" class="bw"/><text x="80" y="95" class="s c">INPUT x</text><text x="160" y="95" class="s">input / output</text>
+   <rect x="20" y="130" width="120" height="40" class="b"/><text x="80" y="155" class="s c">total ← total + x</text><text x="160" y="155" class="s">process</text>
+   <rect x="20" y="190" width="120" height="40" class="b"/><line x1="32" y1="190" x2="32" y2="230" class="l"/><line x1="128" y1="190" x2="128" y2="230" class="l"/><text x="80" y="215" class="s c">sortList</text><text x="160" y="215" class="s">subprocess</text>
+   <path d="M80 245 L140 270 L80 295 L20 270 Z" class="bi"/><text x="80" y="274" class="s c">x &gt; 0?</text><text x="160" y="274" class="s">decision</text>
+  </svg></figure>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 300 420" role="img" aria-label="Flowchart that inputs numbers until 0 is entered, then outputs the total">
+   <defs><marker id="fcA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="90" y="5" width="110" height="34" rx="17" class="b3"/><text x="145" y="27" class="s c">Start</text>
+   <rect x="80" y="60" width="130" height="34" class="b"/><text x="145" y="82" class="s c">total ← 0</text>
+   <path d="M95 115 L205 115 L190 149 L80 149 Z" class="bw"/><text x="143" y="137" class="s c">INPUT x</text>
+   <path d="M145 170 L205 200 L145 230 L85 200 Z" class="bi"/><text x="145" y="204" class="s c">x = 0?</text>
+   <rect x="80" y="260" width="130" height="34" class="b"/><text x="145" y="282" class="s c">total ← total + x</text>
+   <path d="M225 300 L285 300 L272 334 L212 334 Z" class="bw"/><text x="248" y="322" class="s c">OUTPUT</text>
+   <rect x="215" y="370" width="70" height="34" rx="17" class="b3"/><text x="250" y="392" class="s c">Stop</text>
+   <line x1="145" y1="39" x2="145" y2="56" class="l" marker-end="url(#fcA)"/><line x1="145" y1="94" x2="145" y2="111" class="l" marker-end="url(#fcA)"/><line x1="145" y1="149" x2="145" y2="166" class="l" marker-end="url(#fcA)"/>
+   <line x1="145" y1="230" x2="145" y2="256" class="l" marker-end="url(#fcA)"/><text x="155" y="248" class="s">No</text>
+   <path d="M80 277 L40 277 L40 132 L84 132" class="l" fill="none" marker-end="url(#fcA)"/>
+   <path d="M205 200 L250 200 L250 296" class="l" fill="none" marker-end="url(#fcA)"/><text x="220" y="192" class="s">Yes</text>
+   <line x1="250" y1="334" x2="250" y2="366" class="l" marker-end="url(#fcA)"/>
+  </svg></figure>
+  </div>
+  <p>The flowchart on the right adds numbers until 0 is entered, then outputs the total. The arrow from the process back to the input makes a <b>loop</b>; the decision decides when it ends.</p>
+ </section>
+ <section>
+  <h2>Finding and correcting errors</h2>
+  <p>A <b>logic error</b> lets a program run but produces the wrong result. Common causes:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Error</th><th>Example</th></tr>
+   <tr><td class="lbl">Wrong comparison</td><td><span class="mono">&lt;</span> instead of <span class="mono">&gt;</span>, or <span class="mono">&gt;</span> instead of <span class="mono">&gt;=</span></td></tr>
+   <tr><td class="lbl">Off by one</td><td><span class="mono">range(1, 10)</span> when 10 should be included</td></tr>
+   <tr><td class="lbl">Wrong starting value</td><td>finding a maximum starting from 0 when all values could be negative</td></tr>
+   <tr><td class="lbl">Wrong place</td><td>resetting a total inside the loop instead of before it</td></tr>
+   <tr><td class="lbl">Loop never ends</td><td>a <span class="mono">while</span> condition whose variable never changes</td></tr></table></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>To correct an algorithm, give the <b>line</b> and the <b>corrected code</b>, not just a description of the problem.</p></div>
+ </section>
+ <section>
+  <h2>Efficiency</h2>
+  <p>Two correct algorithms can need very different amounts of <b>time</b> (number of steps) and <b>memory</b>. What matters is how the work <b>grows</b> as the input gets bigger:</p>
+  <div class="facts3"><div><b>Linear</b><span>double the data → double the work (e.g. linear search)</span></div><div><b>Quadratic</b><span>double the data → 4× the work (e.g. bubble sort)</span></div><div><b>Logarithmic</b><span>double the data → one more step (e.g. binary search)</span></div></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-1-trace">
+<div class="theory airy">
+ <section>
+  <h2>Trace tables</h2>
+  <p class="lede">A <b>trace table</b> follows an algorithm line by line, recording each variable whenever it changes. It's how you find out what code does, and where it goes wrong, without a computer: a <b>dry run</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: the code being traced" data-stdin="">n = 4721
+total = 0
+while n &gt; 0:
+    total = total + n % 10
+    n = n // 10
+print(total)</pre>
+  <div class="tscroll"><table class="pvt mono"><tr><th>n</th><th>n &gt; 0?</th><th>n % 10</th><th>total</th><th>output</th></tr>
+   <tr><td>4721</td><td></td><td></td><td>0</td><td></td></tr>
+   <tr><td></td><td>True</td><td>1</td><td>1</td><td></td></tr>
+   <tr><td>472</td><td>True</td><td>2</td><td>3</td><td></td></tr>
+   <tr><td>47</td><td>True</td><td>7</td><td>10</td><td></td></tr>
+   <tr><td>4</td><td>True</td><td>4</td><td>14</td><td></td></tr>
+   <tr><td>0</td><td>False</td><td></td><td></td><td>14</td></tr></table></div>
+  <p>The algorithm adds up the digits of n. <span class="mono">n % 10</span> gives the last digit and <span class="mono">n // 10</span> removes it.</p>
+  <div class="callout tip"><span class="k">How to trace</span><p>Give each variable a column, plus one for conditions and one for output. Move down a row when a value changes. Only write a value when it's <b>assigned</b>; a blank means "unchanged".</p></div>
+ </section>
+ <section>
+  <h2>Useful operators</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operator</th><th>Meaning</th><th>17 and 5</th></tr>
+   <tr><td class="mono">/</td><td>division (always a real number)</td><td>3.4</td></tr>
+   <tr><td class="mono">//</td><td>integer division (whole number part)</td><td>3</td></tr>
+   <tr><td class="mono">%</td><td>modulus (remainder)</td><td>2</td></tr>
+   <tr><td class="mono">**</td><td>exponent</td><td>1419857</td></tr></table></div>
+  <h3>Loops</h3>
+  <p>A <b>count-controlled</b> loop (<span class="mono">for i in range(start, stop, step)</span>) runs a set number of times: <span class="mono">stop</span> is <b>not</b> included, so <span class="mono">range(2, 9, 3)</span> gives 2, 5, 8. A <b>condition-controlled</b> loop (<span class="mono">while</span>) runs as long as its condition is true, and might not run at all.</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-1-recursion">
+<div class="theory airy">
+ <section>
+  <h2>Recursion</h2>
+  <p class="lede">A <b>recursive</b> subroutine solves a problem by calling <b>itself</b> on a smaller version of the same problem, until the problem is small enough to answer directly.</p>
+  <div class="callout"><span class="k">Key idea</span><p>Every recursive subroutine needs:</p><ul><li>a <b>base case</b>, which returns an answer without calling itself, and</li><li>a <b>general case</b>, which calls itself with a smaller input, moving towards the base case.</li></ul></div>
+  <pre class="pc py" data-run data-t="Try it: factorial">def factorial(n):
+    if n &lt;= 1:              # base case
+        return 1
+    return n * factorial(n - 1)   # general case
+
+print(factorial(4))</pre>
+ </section>
+ <section>
+  <h2>Tracing recursion</h2>
+  <p>Each call waits for the one it made to return. The calls build up on the <b>call stack</b> until the base case is reached, then <b>unwind</b> in reverse order.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 230" role="img" aria-label="factorial(4) calls factorial(3), which calls factorial(2), then factorial(1) returns 1; the results unwind: 2, 6, 24">
+   <defs><marker id="rcA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="20" y="10" width="180" height="36" rx="6" class="b"/><text x="110" y="33" class="m c">factorial(4)</text>
+   <rect x="70" y="62" width="180" height="36" rx="6" class="b"/><text x="160" y="85" class="m c">factorial(3)</text>
+   <rect x="120" y="114" width="180" height="36" rx="6" class="b"/><text x="210" y="137" class="m c">factorial(2)</text>
+   <rect x="170" y="166" width="180" height="36" rx="6" class="bw"/><text x="260" y="189" class="m c">factorial(1) base</text>
+   <path d="M40 46 L40 80 L66 80" class="l" fill="none" marker-end="url(#rcA)"/><path d="M90 98 L90 132 L116 132" class="l" fill="none" marker-end="url(#rcA)"/><path d="M140 150 L140 184 L166 184" class="l" fill="none" marker-end="url(#rcA)"/>
+   <text x="390" y="189" class="ta m">returns 1</text><text x="340" y="137" class="ta m">returns 2 × 1 = 2</text><text x="290" y="85" class="ta m">returns 3 × 2 = 6</text><text x="240" y="33" class="ta m">returns 4 × 6 = 24</text>
+  </svg><figcaption>Calls go down to the base case; answers come back up.</figcaption></figure>
+  <div class="callout warnbox"><span class="k">Watch out</span><p>With no base case, or one that's never reached, the calls never stop. Each one adds a <b>stack frame</b>, until the stack runs out of space: a <b>stack overflow</b>. Python stops it with a RecursionError.</p></div>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>Natural and short for problems that are defined in terms of themselves (trees, nested folders, divide and conquer).</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>Every call uses a stack frame, so it needs more memory than a loop.</li><li>Can be slower and harder to trace.</li></ul></div>
+  </div>
+  <pre class="pc py" data-run data-t="Try it: where does print go?">def show(n):
+    if n &gt; 0:
+        print("down", n)
+        show(n - 1)
+        print("up", n)      # runs as the calls unwind
+
+show(3)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-2-searching">
+<div class="theory airy">
+ <section>
+  <h2>Linear search</h2>
+  <p class="lede">A <b>linear search</b> checks each item in turn, from the start, until it finds the target or reaches the end. It works on <b>any</b> list, sorted or not.</p>
+  <p>On a list of n items it makes up to <b>n comparisons</b>. If the list is <b>sorted</b>, it can stop early as soon as it passes the place where the target would be.</p>
+ </section>
+ <section>
+  <h2>Binary search</h2>
+  <p>A <b>binary search</b> only works on a <b>sorted</b> list. It checks the <b>middle</b> item; if that isn't the target, it throws away the half that can't contain it, and repeats on the other half.</p>
+  <p>Search for <b>23</b>:</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>index</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td></tr><tr><th>value</th><td>2</td><td>5</td><td>8</td><td>12</td><td>16</td><td>23</td><td>38</td><td>56</td><td>72</td></tr></table></div>
+  <div class="tscroll"><table class="pvt mono"><tr><th>low</th><th>high</th><th>mid = (low + high) // 2</th><th>value at mid</th><th>action</th></tr>
+   <tr><td>0</td><td>8</td><td>4</td><td>16</td><td>23 &gt; 16 → low = 5</td></tr>
+   <tr><td>5</td><td>8</td><td>6</td><td>38</td><td>23 &lt; 38 → high = 5</td></tr>
+   <tr><td>5</td><td>5</td><td>5</td><td>23</td><td>found at index 5</td></tr></table></div>
+  <p>If <b>low</b> ever passes <b>high</b>, the range is empty and the target isn't in the list.</p>
+  <div class="callout"><span class="k">Key idea</span><p>Each comparison <b>halves</b> what's left. 1,000 items need at most about 10 comparisons (2<sup>10</sup> = 1024); a million need about 20. A linear search could need a million.</p></div>
+  <h3>Recursive binary search</h3>
+  <p>The same algorithm can call itself on the half that's left. The base cases are "found" and "range empty".</p>
+  <pre class="pc py" data-run data-t="Try it: recursive binary search">def search(items, target, low, high):
+    if low &gt; high:
+        return -1                      # base case: not found
+    mid = (low + high) // 2
+    print("checking", items[mid])
+    if items[mid] == target:
+        return mid                     # base case: found
+    if items[mid] &lt; target:
+        return search(items, target, mid + 1, high)
+    return search(items, target, low, mid - 1)
+
+data = [2, 5, 8, 12, 16, 23, 38, 56, 72]
+print(search(data, 23, 0, len(data) - 1))</pre>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Linear</th><th>Binary</th></tr>
+   <tr><td class="lbl">Needs sorted data?</td><td>No</td><td>Yes</td></tr>
+   <tr><td class="lbl">Worst case, n items</td><td>n comparisons</td><td>about log₂ n comparisons</td></tr>
+   <tr><td class="lbl">Best for</td><td>Small or unsorted lists</td><td>Large sorted lists</td></tr></table></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-2-bubble">
+<div class="theory airy">
+ <section>
+  <h2>Bubble sort</h2>
+  <p class="lede">A <b>bubble sort</b> passes through the list comparing each <b>pair of neighbours</b>, swapping them if they're in the wrong order. After each pass, the largest remaining item has "bubbled" to its final place at the end.</p>
+  <h3>The first pass on 5, 1, 4, 2, 8</h3>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Compare</th><th>Swap?</th><th>List</th></tr>
+   <tr><td>5 and 1</td><td>yes</td><td><b>1, 5</b>, 4, 2, 8</td></tr>
+   <tr><td>5 and 4</td><td>yes</td><td>1, <b>4, 5</b>, 2, 8</td></tr>
+   <tr><td>5 and 2</td><td>yes</td><td>1, 4, <b>2, 5</b>, 8</td></tr>
+   <tr><td>5 and 8</td><td>no</td><td>1, 4, 2, <b>5, 8</b></td></tr></table></div>
+  <p>Pass 2 gives 1, 2, 4, 5, 8. Pass 3 makes <b>no swaps</b>, so the list must be sorted and the algorithm stops.</p>
+  <div class="callout"><span class="k">Key idea</span><p>An improved bubble sort uses a <b>swapped</b> flag. If a whole pass makes no swaps, it stops early. A list of n items needs at most n − 1 passes, each with up to n − 1 comparisons.</p></div>
+  <pre class="pc py" data-run data-t="Try it: bubble sort, pass by pass">items = [5, 1, 4, 2, 8]
+swapped = True
+p = 0
+while swapped:
+    swapped = False
+    for i in range(len(items) - 1):
+        if items[i] &gt; items[i + 1]:
+            items[i], items[i + 1] = items[i + 1], items[i]
+            swapped = True
+    p = p + 1
+    print("after pass", p, items)</pre>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>Simple to understand and code.</li><li>Sorts in place, needing no extra list.</li><li>Fast on lists that are already nearly sorted (with the flag).</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>Very slow on large lists: the work grows with the <b>square</b> of the size.</li><li>Worst case: a list in reverse order.</li></ul></div>
+  </div>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-2-insertion">
+<div class="theory airy">
+ <section>
+  <h2>Insertion sort</h2>
+  <p class="lede">An <b>insertion sort</b> builds a <b>sorted part</b> at the start of the list. At first only the first item is in it. Each pass takes the next item and <b>inserts</b> it into the right place in the sorted part, shifting larger items one place right.</p>
+  <h3>Sorting 7, 3, 5, 1</h3>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Pass</th><th>Current item</th><th>List afterwards (sorted part in bold)</th></tr>
+   <tr><td>start</td><td></td><td><b>7</b>, 3, 5, 1</td></tr>
+   <tr><td>1</td><td>3</td><td><b>3, 7</b>, 5, 1</td></tr>
+   <tr><td>2</td><td>5</td><td><b>3, 5, 7</b>, 1</td></tr>
+   <tr><td>3</td><td>1</td><td><b>1, 3, 5, 7</b></td></tr></table></div>
+  <p>A list of n items always takes <b>n − 1 passes</b>. After pass p, the first p + 1 items are sorted (but not necessarily in their final places).</p>
+  <pre class="pc py" data-run data-t="Try it: insertion sort">items = [7, 3, 5, 1]
+for i in range(1, len(items)):
+    current = items[i]
+    j = i - 1
+    while j &gt;= 0 and items[j] &gt; current:
+        items[j + 1] = items[j]     # shift right
+        j = j - 1
+    items[j + 1] = current          # insert
+    print("after pass", i, items)</pre>
+ </section>
+ <section>
+  <h2>Comparing the two sorts</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Bubble sort</th><th>Insertion sort</th></tr>
+   <tr><td class="lbl">Method</td><td>Swap neighbours, pass after pass</td><td>Insert each item into a growing sorted part</td></tr>
+   <tr><td class="lbl">After pass 1</td><td>Largest item is at the end</td><td>First two items are in order</td></tr>
+   <tr><td class="lbl">Already sorted list</td><td>One pass (with the flag)</td><td>n − 1 passes, each with one comparison</td></tr>
+   <tr><td class="lbl">Reverse-ordered list</td><td>Slowest case</td><td>Slowest case</td></tr>
+   <tr><td class="lbl">Large random lists</td><td colspan="2">Both slow: the work grows with the square of the size. Unit 4 covers faster sorts (merge and quick sort).</td></tr></table></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>When asked for the list "after the second pass", write out the <b>whole list</b> each time, not just the items that moved.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-3-expressions">
+<div class="theory airy">
+ <section>
+  <h2>Boolean logic</h2>
+  <p class="lede">A <b>Boolean expression</b> evaluates to true (1) or false (0). Programs use them in every <span class="mono">if</span> and <span class="mono">while</span>; CPUs are built from circuits that compute them.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operator</th><th>Notation</th><th>True when…</th></tr>
+   <tr><td class="lbl">AND</td><td class="mono">A.B</td><td>both inputs are true</td></tr>
+   <tr><td class="lbl">OR</td><td class="mono">A+B</td><td>at least one input is true</td></tr>
+   <tr><td class="lbl">NOT</td><td class="mono">A̅</td><td>the input is false</td></tr>
+   <tr><td class="lbl">XOR</td><td class="mono">A ⊕ B</td><td>exactly one input is true (the inputs differ)</td></tr>
+   <tr><td class="lbl">NAND</td><td class="mono"><span style="text-decoration:overline">A.B</span></td><td>not both are true</td></tr>
+   <tr><td class="lbl">NOR</td><td class="mono"><span style="text-decoration:overline">A+B</span></td><td>neither is true</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Order of precedence</h2>
+  <p>Like BIDMAS in maths, Boolean operators have an order: <b>brackets</b> first, then <b>NOT</b>, then <b>AND</b>, then <b>OR</b>. So <span class="mono">A OR B AND C</span> means <span class="mono">A OR (B AND C)</span>. When in doubt, add brackets.</p>
+  <h3>Worked example</h3>
+  <p>A = 1, B = 0, C = 1. Evaluate <span class="mono">NOT A OR B AND C</span>.</p>
+  <p class="stepline"><b>1</b><span>NOT first: NOT A = 0.</span></p>
+  <p class="stepline"><b>2</b><span>AND next: B AND C = 0 AND 1 = 0.</span></p>
+  <p class="stepline"><b>3</b><span>OR last: 0 OR 0 = <b>0</b>.</span></p>
+ </section>
+ <section>
+  <h2>Writing expressions from a problem</h2>
+  <p>A greenhouse fan (F) turns on when it's hot (H) and the door (D) is shut, or when the humidity alarm (M) is on: <b>F = (H AND NOT D) OR M</b>, or in symbols <span class="mono">F = H.D̅ + M</span>, where D is 1 when the door is open.</p>
+  <pre class="pc py" data-run data-t="Try it: Boolean expressions in Python">hot, door_open, humid = True, False, False
+fan = (hot and not door_open) or humid
+print(fan)
+a, b = True, True
+print(a != b)          # XOR of two Booleans
+print(not (a and b))   # NAND</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-3-truthtables">
+<div class="theory airy">
+ <section>
+  <h2>Truth tables</h2>
+  <p class="lede">A <b>truth table</b> lists every possible combination of inputs and the output for each. With n inputs there are <b>2<sup>n</sup> rows</b>. Count up in binary to make sure you include every one.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>A</th><th>B</th><th>AND</th><th>OR</th><th>XOR</th><th>NAND</th><th>NOR</th></tr>
+   <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+   <tr><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+   <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+   <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Longer expressions</h2>
+  <p>Add a column for each part of the expression, working inside brackets first. For <b>(A AND B) OR NOT C</b>:</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>A</th><th>B</th><th>C</th><th>A AND B</th><th>NOT C</th><th>Output</th></tr>
+   <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td><b>1</b></td></tr>
+   <tr><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td><b>0</b></td></tr>
+   <tr><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td><b>1</b></td></tr>
+   <tr><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td><b>0</b></td></tr>
+   <tr><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td><b>1</b></td></tr>
+   <tr><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td><td><b>0</b></td></tr>
+   <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+   <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td><b>1</b></td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><h3>Equivalent expressions</h3><p>Two expressions are <b>equivalent</b> if their output columns match in every row. De Morgan's laws are a famous pair: <b>NOT (A AND B) = NOT A OR NOT B</b>, and <b>NOT (A OR B) = NOT A AND NOT B</b>.</p></div>
+  <pre class="pc py" data-run data-t="Try it: print a truth table">print("A B C | out")
+for a in (0, 1):
+    for b in (0, 1):
+        for c in (0, 1):
+            out = (a and b) or not c
+            print(a, b, c, "|", int(out))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-4-paradigms">
+<div class="theory airy">
+ <section>
+  <h2>Programming paradigms</h2>
+  <p class="lede">A <b>programming paradigm</b> is a style of programming: a way of thinking about how a problem is described to the computer. Some languages support several paradigms.</p>
+ </section>
+ <section>
+  <h2>Procedural programming</h2>
+  <p><b>Procedural</b> programs are a sequence of <b>instructions</b> that say exactly <b>how</b> to solve a problem, step by step, changing the values of variables as they go. Code is organised into <b>procedures and functions</b> (subroutines) that can be called and reused. Python, used as in this course, is procedural.</p>
+  <pre class="pc py" data-run data-t="Try it: a procedural solution">def average(marks):
+    total = 0
+    for m in marks:
+        total = total + m
+    return total / len(marks)
+
+students = {"Ana": [72, 65], "Ben": [58, 81], "Cai": [90, 77]}
+for name, marks in students.items():
+    if average(marks) &gt; 70:
+        print(name)</pre>
+ </section>
+ <section>
+  <h2>Declarative programming</h2>
+  <p><b>Declarative</b> programs describe <b>what</b> result is wanted, not how to get it. The language (or system) works out the steps.</p>
+  <div class="ccards">
+   <div class="keypts"><h3>SQL</h3><p class="mono">SELECT Name FROM Student<br>WHERE Average &gt; 70;</p><p>You state which data you want; the database management system decides how to find it.</p></div>
+   <div class="keypts"><h3>Logic programming (Prolog)</h3><p class="mono">parent(ana, ben).<br>parent(ben, cai).<br>grandparent(X, Z) :-<br>&nbsp;&nbsp;parent(X, Y), parent(Y, Z).</p><p>You state <b>facts</b> and <b>rules</b>; a query such as <span class="mono">grandparent(ana, Who)</span> is answered from them.</p></div>
+  </div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Procedural</th><th>Declarative</th></tr>
+   <tr><td class="lbl">Describes</td><td>How: the steps</td><td>What: the result</td></tr>
+   <tr><td class="lbl">Examples</td><td>Python, C, BASIC</td><td>SQL, Prolog</td></tr>
+   <tr><td class="lbl">Benefits</td><td>Precise control; easy to follow the order of execution</td><td>Short, readable code; the system optimises how</td></tr>
+   <tr><td class="lbl">Drawbacks</td><td>More code; the programmer must get every step right</td><td>Less control over how it's done; suited to particular kinds of problem</td></tr></table></div>
+  <p class="vfoot">Unit 3 adds object-oriented and functional programming.</p>
+ </section>
+</div>
+</template>

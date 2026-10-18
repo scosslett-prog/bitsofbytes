@@ -42,6 +42,27 @@ for (const f of walk(path.join(SRC, 'exams'), '.json')) {
   const x = JSON.parse(read(f));
   exams.EXAMS.push(...(x.EXAMS || [])); exams.Q.push(...(x.Q || []));
 }
+/* exams/*.js: PAPER({id, s, p, v, code}) then Q(paperId, [questions]); question ids become paperId-n */
+{
+  const ex = { PAPER: (p) => exams.EXAMS.push(p), Q: (x, qs) => qs.forEach((q) => exams.Q.push({ id: `${x}-${String(q.n).replace(/[()]/g, '')}`, x, ...q })) };
+  vm.createContext(ex);
+  for (const f of walk(path.join(SRC, 'exams'), '.js')) { try { vm.runInContext(read(f), ex, { filename: f }); } catch (e) { problems.push(`${path.relative(ROOT, f)}: ${e.message}`); } }
+  const seen = new Set();
+  for (const q of exams.Q) {
+    if (seen.has(q.id)) problems.push(`exam question ${q.id}: duplicate id`); seen.add(q.id);
+    if (!exams.EXAMS.some((x) => x.id === q.x)) problems.push(`exam question ${q.id}: unknown paper ${q.x}`);
+    if (!q.m || !q.q || !q.t) problems.push(`exam question ${q.id}: needs marks, a question and a type`);
+    if (q.t === 'mc' && !(q.o && q.o[q.a] !== undefined)) problems.push(`exam question ${q.id}: mc needs options and a correct index`);
+    if (q.t === 'ans' && !(q.acc || []).length) problems.push(`exam question ${q.id}: ans needs accepted answers`);
+    if (q.t === 'self' && !(q.ms && (q.ms.pts || []).length)) problems.push(`exam question ${q.id}: self needs mark scheme points`);
+    if (q.t === 'pick' && (!q.o || (q.a || []).length !== q.k)) problems.push(`exam question ${q.id}: pick needs k answers`);
+    if (q.t === 'match' && (!q.L || !q.o || (q.a || []).length !== q.L.length)) problems.push(`exam question ${q.id}: match needs an answer per row`);
+    if (q.t === 'cloze' && ((q.txt.match(/\{\d+\}/g) || []).length !== (q.a || []).length || q.a.some((a) => !q.w.includes(a)))) problems.push(`exam question ${q.id}: cloze gaps and answers don't line up`);
+    if (q.t === 'set' && (!q.grp || q.grp.length < q.f)) problems.push(`exam question ${q.id}: set needs at least f answer groups`);
+    if (q.t === 'tt' && q.a.length !== Math.pow(2, q.ins.length) * q.out.length) problems.push(`exam question ${q.id}: truth table answer is the wrong length`);
+  }
+  for (const x of exams.EXAMS) { const m = exams.Q.filter((q) => q.x === x.id).reduce((a, q) => a + q.m, 0); console.log(`  ${x.id} ${x.s}: ${m} marks`); }
+}
 
 /* ---------- content.js ---------- */
 const genSrc = fs.existsSync(path.join(SRC, 'gen.js')) ? read(path.join(SRC, 'gen.js')) : 'const AL_GEN={};';
@@ -106,6 +127,38 @@ for (const l of lessons) {
   }
 }
 for (const id of tmpl) if (!ids.has(id)) problems.push(`theory for unknown lesson ${id}`);
+
+/* Code it tasks: each model solution must pass its own tests, and the starter must not (run with python3) */
+{
+  const { spawnSync } = await import('node:child_process');
+  const pySrc = read(path.join(ROOT, 'public/app/06s-python.js'));
+  const harness = pySrc.slice(pySrc.indexOf('String.raw`') + 11, pySrc.indexOf('`;', pySrc.indexOf('String.raw`')));
+  const run = (payload) => {
+    const p = spawnSync('python3', ['-I', '-c', harness + '\nimport sys\nprint(_bob_run(sys.stdin.read()))\n'], { input: JSON.stringify(payload), encoding: 'utf8', timeout: 8000, cwd: fs.mkdtempSync(path.join(fs.realpathSync('/tmp'), 'alpy-')) });
+    if (p.status !== 0) return { err: (p.stderr || 'python failed').trim().slice(-300), out: '', tests: [] };
+    return JSON.parse(p.stdout.trim().split('\n').pop());
+  };
+  const norm = (s) => String(s).replace(/\s+/g, ' ').trim().toLowerCase();
+  const passes = (t, code) => t.tests.every((x) => {
+    if (!Array.isArray(x.stdin || [])) return false;
+    if (x.py) { const r = run({ code, stdin: t.stdin || [], files: t.files, tests: [x.py] }); return !r.err && r.tests[0] && r.tests[0].ok; }
+    const r = run({ code, stdin: x.stdin || [], files: t.files }); return !r.err && [].concat(x.expect).every((w) => norm(r.out).includes(norm(w)));
+  });
+  /* every runnable example in the theory must run without an error */
+  const unesc = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
+  for (const m of theory.matchAll(/<template id="th-([^"]+)">([\s\S]*?)<\/template>/g)) for (const p of m[2].matchAll(/<pre class="pc py" data-run([^>]*)>([\s\S]*?)<\/pre>/g)) {
+    const st = /data-stdin="([^"]*)"/.exec(p[1]);
+    const r = run({ code: unesc(p[2]), stdin: st ? st[1].split('|') : [] });
+    if (r.err) problems.push(`theory ${m[1]}: runnable example fails: ${r.err}`);
+  }
+  for (const l of lessons) for (const a of l.acts || []) if (a.type === 'py') a.tasks.forEach((t, i) => {
+    const where = `lesson ${l.id} ${a.id} task ${i + 1}`;
+    if ((t.tests || []).some((x) => x.stdin !== undefined && !Array.isArray(x.stdin))) problems.push(`${where}: stdin must be a list of lines`);
+    if (!t.solution) problems.push(`${where}: no model solution`);
+    else if (!passes(t, t.solution)) problems.push(`${where}: the model solution fails its tests`);
+    if (t.starter && passes(t, t.starter)) problems.push(`${where}: the starter code already passes the tests`);
+  });
+}
 for (const [id, b] of Object.entries(BANKS)) b.forEach((q, i) => {
   if (q.t === 'mc' && (!q.a || !(q.w || []).length || (q.w || []).includes(q.a))) problems.push(`bank ${id} question ${i + 1}: needs an answer and different wrong answers`);
   if (q.t === 'blank' && (!(q.a || []).length || !q.q.includes('___'))) problems.push(`bank ${id} question ${i + 1}: blank needs ___ and answers`);

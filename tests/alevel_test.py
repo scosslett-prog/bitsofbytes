@@ -46,6 +46,32 @@ with sync_playwright() as p:
     bad=A.evaluate('''ALL_LESSONS.flatMap(l=>(l.acts||[]).filter(a=>a.type!=="py").map(a=>{try{const g=GEN[a.gen];const q=g.call(a);return (q&&(q.length||q.prompt||q.q))?null:l.id+" "+a.id}catch(e){return l.id+" "+a.id+": "+e.message}})).filter(Boolean)''')
     ok('all A-Level activities generate', not bad, bad)
     A.evaluate('location.hash="l-a1-1-components"'); A.wait_for_timeout(300); A.screenshot(path=SHOT+'al-components.png', full_page=True)
+    ok('all Unit 1 lessons loaded', A.evaluate('ALL_LESSONS.length')>=43, A.evaluate('ALL_LESSONS.length'))
+    # every lesson page renders with its theory, diagrams and runnable examples
+    bad=[]
+    for lid in A.evaluate('ALL_LESSONS.map(l=>l.id)'):
+        A.evaluate(f'location.hash="l-{lid}"'); A.wait_for_timeout(120)
+        if not A.evaluate('!!document.querySelector(".theory") && !document.querySelector(".placeholder:not([hidden])")'): bad.append(lid)
+        if A.evaluate('document.querySelectorAll("pre.pc.py[data-run]:not([data-ready])").length'): bad.append(lid+' (runnable not set up)')
+    ok('every lesson renders its theory', not bad, bad)
+    # a Code it task: the model solution passes the hidden tests
+    A.evaluate('location.hash="l-a5-1-recursion"'); A.wait_for_selector('#act-py1',state='attached')
+    A.click('[data-lgt=acts]'); A.click('#act-py1 .vhead'); A.wait_for_selector('.pytask textarea.pyed')
+    sol=A.evaluate('ALL_LESSONS.find(l=>l.id==="a5-1-recursion").acts.find(a=>a.id==="py1").tasks[0].solution')
+    A.fill('.pytask textarea.pyed', sol); A.click('.pytask [data-pyc=check]')
+    A.wait_for_function('(()=>{const l=ALL_LESSONS.find(x=>x.id==="a5-1-recursion"),a=l.acts.find(x=>x.id==="py1"),r=pyRecord(l,a);return r&&r.attempts>0})()',timeout=30000)
+    ok('Code it: solution passes', A.evaluate('(()=>{const l=ALL_LESSONS.find(x=>x.id==="a5-1-recursion"),a=l.acts.find(x=>x.id==="py1");return !!pyRecord(l,a).tasks[0]})()'), A.inner_text('.pytask')[:400])
+    A.screenshot(path=SHOT+'al-codeit.png')
+    A.fill('.pytask textarea.pyed', 'def total(n):\n    return 0\n'); A.click('.pytask [data-pyc=check]'); A.wait_for_timeout(2500)
+    ok('Code it: wrong code is not accepted', 'total(5) should be 15' in A.inner_text('.pytask'), A.inner_text('.pytask')[:400])
+    A.evaluate('document.querySelector("#act-py1 [data-act=afocus]")?.click()'); A.wait_for_timeout(200)
+    # practice exam questions
+    ok('practice questions loaded', A.evaluate('EXQ.length')>=80, A.evaluate('EXQ.length'))
+    A.evaluate('location.hash="exams"'); A.wait_for_timeout(500)
+    t=A.inner_html('#app'); ok('exam page uses A-Level wording', 'original exam-style questions' in t and 'Practice papers' in t and 'June' not in t and 'November' not in t, t[:500])
+    A.screenshot(path=SHOT+'al-exams.png', full_page=True)
+    A.evaluate('location.hash="l-a3-2-ciphers"'); A.wait_for_timeout(300)
+    ok('lesson shows its practice questions', 'practice question' in A.inner_html('#app'), '')
     # back to IGCSE
     A.goto(B+'#home'); A.wait_for_function('window.BOB && !document.getElementById("boot")')
     ok('IGCSE site unaffected', not A.evaluate('BOB.course') and A.evaluate('ALL_LESSONS.length')==89)

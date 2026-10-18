@@ -32,7 +32,7 @@ def _bob_run(payload):
         v = str(lines.pop(0))
         out.write(v + '\n')
         return v
-    g = {'__name__': '__main__', 'input': _input}
+    g = {'__name__': '__main__', 'input': _input, '__code__': payload['code']}
     old = sys.stdout
     sys.stdout = out
     err = ''

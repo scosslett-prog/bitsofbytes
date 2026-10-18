@@ -3,6 +3,8 @@
    Built into content/al/content.js by scripts/build-al.mjs. */
 const COURSE={id:"al",name:"Pearson Edexcel International A Level Computer Science",short:"IAL Computer Science",code:"IAL",unit:"Unit",
   qLabel:"practice exam questions",
+  exMonths:[["x","Practice papers"]],exNoun:"practice question",
+  exLead:"Practise original exam-style questions written for the IAL specification, sorted by topic.",
   coverText:"Every section of the Pearson Edexcel International Advanced Subsidiary and Advanced Level Computer Science specification, Units 1 to 4, with lessons, key vocabulary, Python practice and original exam-style questions mapped to the lessons they test.",
   hero:`<div class="eyebrow">Pearson Edexcel International A Level · Computer Science</div>
     <h1 style="margin-top:10px">A-Level Computer Science, one byte at a time.</h1>

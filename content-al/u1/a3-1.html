@@ -1,0 +1,179 @@
+<template id="th-a3-1-components">
+<div class="theory airy">
+ <section>
+  <h2>The hardware of a network</h2>
+  <p class="lede">A network needs hardware to connect each device, to move data around the local network, to reach other networks, and to keep unwanted traffic out.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 680 290" role="img" aria-label="A home network: laptops and a phone connect wirelessly to the access point, desktops connect by cable to the switch, all inside a home router that also contains a firewall, router and modem leading to the ISP and internet">
+   <rect x="170" y="40" width="340" height="200" rx="16" class="b3"/><text x="340" y="64" class="t c">Home router</text>
+   <rect x="190" y="80" width="140" height="44" rx="8" class="b"/><text x="260" y="107" class="c">Switch</text>
+   <rect x="190" y="140" width="140" height="44" rx="8" class="b"/><text x="260" y="167" class="c">Wireless AP</text>
+   <rect x="350" y="80" width="140" height="44" rx="8" class="bw"/><text x="420" y="107" class="c">Firewall</text>
+   <rect x="350" y="140" width="140" height="44" rx="8" class="b"/><text x="420" y="167" class="c">Router</text>
+   <rect x="350" y="192" width="140" height="36" rx="8" class="b"/><text x="420" y="215" class="c">Modem</text>
+   <rect x="20" y="70" width="100" height="40" rx="8" class="bi"/><text x="70" y="95" class="s c">Desktop (NIC)</text>
+   <rect x="20" y="130" width="100" height="40" rx="8" class="bi"/><text x="70" y="155" class="s c">Laptop</text>
+   <rect x="20" y="190" width="100" height="40" rx="8" class="bi"/><text x="70" y="215" class="s c">Phone</text>
+   <line x1="120" y1="90" x2="188" y2="100" class="l"/><text x="150" y="85" class="s c">copper</text>
+   <path d="M120 150 L188 160" class="ld"/><path d="M120 210 L188 170" class="ld"/><text x="152" y="200" class="s c">radio</text>
+   <rect x="560" y="120" width="105" height="64" rx="30" class="bg"/><text x="612" y="148" class="s c">ISP and</text><text x="612" y="166" class="s c">internet</text>
+   <line x1="490" y1="210" x2="558" y2="165" class="li"/><text x="540" y="222" class="ti s c">line / fibre</text>
+  </svg><figcaption>A home router is several network devices in one box.</figcaption></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Component</th><th>Purpose</th></tr>
+   <tr><td class="lbl">NIC</td><td>Connects one device to the network, wired or wireless. Each has a unique <b>MAC address</b>.</td></tr>
+   <tr><td class="lbl">Switch</td><td>Connects devices on a <b>local</b> network. It learns which MAC address is on which port and sends each frame <b>only</b> to its destination.</td></tr>
+   <tr><td class="lbl">Router</td><td>Connects <b>different networks</b> and forwards packets towards their destination using <b>IP addresses</b>.</td></tr>
+   <tr><td class="lbl">Modem</td><td><b>Modulates and demodulates</b>: converts between the computer's digital data and the signal used on the line to the internet service provider.</td></tr>
+   <tr><td class="lbl">Wireless access point</td><td>Lets wireless devices join a wired network using radio waves.</td></tr>
+   <tr><td class="lbl">Home router</td><td>A router, switch, wireless access point, modem and firewall combined in one device.</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Transmission media</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Copper cable</th><th>Fibre-optic cable</th><th>Wireless</th></tr>
+   <tr><td class="lbl">Signal</td><td>Electricity</td><td>Pulses of light</td><td>Radio waves</td></tr>
+   <tr><td class="lbl">Bandwidth</td><td>Good</td><td>Very high</td><td>Lower; shared between devices</td></tr>
+   <tr><td class="lbl">Range</td><td>Up to about 100 m</td><td>Many kilometres</td><td>Tens of metres; reduced by walls</td></tr>
+   <tr><td class="lbl">Interference</td><td>Electrical interference possible</td><td>None from electrical sources</td><td>Other networks, devices, walls</td></tr>
+   <tr><td class="lbl">Cost and fitting</td><td>Cheap, easy to fit</td><td>Expensive; fragile</td><td>No cables; devices can move</td></tr>
+   <tr><td class="lbl">Security</td><td>Must physically connect</td><td>Very hard to tap</td><td>Signal can be picked up by anyone in range, so it must be encrypted</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Firewalls</h2>
+  <p>A <b>firewall</b> checks traffic coming into and going out of a network against a set of <b>rules</b> (allowed addresses, ports and protocols) and blocks anything that breaks them.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Hardware firewall</h3><p>A separate device (or part of the router) between the network and the internet. It protects <b>every device</b> on the network and doesn't use their processing power.</p></div>
+   <div class="keypts"><h3>Software firewall</h3><p>A program on one computer. It protects <b>that device</b>, even on other networks, and can control which applications may use the network.</p></div>
+  </div>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-1-performance">
+<div class="theory airy">
+ <section>
+  <h2>How fast is a network?</h2>
+  <p class="lede">"Speed" means several different things. To compare connections, you need to know which one is being measured.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Term</th><th>Meaning</th><th>Unit</th></tr>
+   <tr><td class="lbl">Bandwidth</td><td>The <b>maximum</b> amount of data a connection can carry each second</td><td>bps, Mbps, Gbps</td></tr>
+   <tr><td class="lbl">Transfer rate</td><td>The amount of data <b>actually</b> transferred each second</td><td>bps, Mbps</td></tr>
+   <tr><td class="lbl">Latency</td><td>The <b>delay</b> between sending data and it arriving</td><td>milliseconds (ms)</td></tr>
+   <tr><td class="lbl">Range</td><td>How far the signal travels before it's too weak to use</td><td>metres, km</td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><p>Bandwidth is like the number of lanes on a motorway; latency is how long the journey takes. A connection can have high bandwidth and high latency (e.g. satellite), which is fine for downloads but bad for video calls and games.</p></div>
+  <p>The transfer rate is usually below the bandwidth because of <b>congestion</b> (other users), <b>interference</b>, <b>distance</b>, and extra data such as packet headers and error checking.</p>
+ </section>
+ <section>
+  <h2>Transfer time calculations</h2>
+  <div class="callout tip"><span class="k">Expression</span><p><b>time (s) = file size (bits) ÷ transfer rate (bits per second)</b><br>Rearranged: size = rate × time, and rate = size ÷ time.</p></div>
+  <h3>Worked example</h3>
+  <p>A 25 MB video is sent at 40 Mbps. How long does it take? (1 MB = 1,000,000 bytes)</p>
+  <p class="stepline"><b>Step 1</b><span>Convert the size to bits: 25 MB × 8 = 200 Mb (200,000,000 bits).</span></p>
+  <p class="stepline"><b>Step 2</b><span>Divide by the rate: 200 ÷ 40 = <b>5 seconds</b>.</span></p>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>File sizes are in <b>bytes</b>; transfer rates are in <b>bits</b>. Always multiply the file size by 8 first. Also check whether the question uses 1000 or 1024 for its prefixes.</p></div>
+  <pre class="pc py" data-run data-t="Try it: transfer time">def transfer_time(size_mb, rate_mbps):
+    bits = size_mb * 1_000_000 * 8
+    return bits / (rate_mbps * 1_000_000)
+
+print(transfer_time(25, 40), "seconds")
+print(transfer_time(4000, 100) / 60, "minutes for a 4 GB film")</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-1-addressing">
+<div class="theory airy">
+ <section>
+  <h2>Two kinds of address</h2>
+  <p class="lede">Every device on a network has a <b>MAC address</b>, fixed in its hardware, and an <b>IP address</b>, given to it by the network it joins.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>MAC address</th><th>IPv4 address</th><th>IPv6 address</th></tr>
+   <tr><td class="lbl">Size</td><td>48 bits</td><td>32 bits</td><td>128 bits</td></tr>
+   <tr><td class="lbl">Written as</td><td>6 pairs of hex digits<br><span class="mono">3C:22:FB:9A:01:7E</span></td><td>4 denary numbers, 0–255<br><span class="mono">192.168.1.20</span></td><td>8 groups of 4 hex digits<br><span class="mono">2001:0db8:85a3:0000:0000:8a2e:0370:7334</span></td></tr>
+   <tr><td class="lbl">Set by</td><td>The manufacturer</td><td colspan="2">The network (often automatically, by a DHCP server)</td></tr>
+   <tr><td class="lbl">Changes?</td><td>Normally fixed</td><td colspan="2">Can change when the device moves network</td></tr>
+   <tr><td class="lbl">Used for</td><td>Delivering frames <b>within</b> a local network</td><td colspan="2">Routing packets <b>between</b> networks</td></tr></table></div>
+  <p>IPv4 has 2<sup>32</sup> ≈ 4.3 billion addresses, which isn't enough for every device in the world. <b>IPv6</b>, with 2<sup>128</sup> addresses, solves that. IPv6 addresses can be shortened: leading zeros in a group can be left out, and one run of all-zero groups can be written as <span class="mono">::</span>.</p>
+ </section>
+ <section>
+  <h2>Network and host parts</h2>
+  <p>An IP address has two parts: the <b>network address</b>, shared by every device on that network, and the <b>host address</b>, which identifies one device. A <b>subnet mask</b> shows where the split is: 1s mark network bits, 0s mark host bits.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>IP address</th><td>192</td><td>168</td><td>1</td><td>20</td></tr><tr><th>Subnet mask</th><td>255</td><td>255</td><td>255</td><td>0</td></tr><tr><th>IP AND mask</th><td><b>192</b></td><td><b>168</b></td><td><b>1</b></td><td><b>0</b></td></tr></table></div>
+  <p>ANDing the address with the mask gives the <b>network address</b>: 192.168.1.0. Two devices are on the same network if they give the same result. The mask 255.255.255.0 has 24 network bits, so it is often written <span class="mono">/24</span>, leaving 8 host bits.</p>
+  <div class="callout tip"><span class="k">How many hosts?</span><p>With h host bits there are 2<sup>h</sup> addresses. Two are reserved (the network address itself, and the broadcast address with all host bits 1), so 2<sup>h</sup> − 2 devices: 254 on a /24 network.</p></div>
+  <pre class="pc py" data-run data-t="Try it: find the network address">ip = "10.1.4.77"
+mask = "255.255.0.0"
+ip_parts = [int(p) for p in ip.split(".")]
+mask_parts = [int(p) for p in mask.split(".")]
+network = [str(a & m) for a, m in zip(ip_parts, mask_parts)]
+print(".".join(network))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-2-keys">
+<div class="theory airy">
+ <section>
+  <h2>Why encrypt?</h2>
+  <p class="lede">Data sent across a network passes through equipment that belongs to other people, and Wi-Fi can be picked up by anyone in range. Laptops and phones get lost. <b>Encryption</b> scrambles data so that, if it's intercepted or stolen, it can't be understood without the right <b>key</b>.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>Intercepted or stolen data is unreadable.</li><li>Keeps personal data, passwords and payments confidential.</li><li>Helps organisations meet data protection laws.</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>It does <b>not</b> stop data being intercepted, deleted or changed.</li><li>Lose the key and the data is lost too.</li><li>Encrypting and decrypting take processing time.</li><li>Criminals can use it too, e.g. ransomware.</li></ul></div>
+  </div>
+  <p><b>Plaintext</b> goes into the encryption algorithm with a key and comes out as <b>ciphertext</b>. Decryption reverses it.</p>
+ </section>
+ <section>
+  <h2>Symmetric encryption</h2>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 140" role="img" aria-label="Symmetric: plaintext is encrypted with the shared key, sent as ciphertext, and decrypted with the same shared key">
+   <defs><marker id="syA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="10" y="50" width="100" height="40" rx="8" class="b"/><text x="60" y="75" class="s c">plaintext</text>
+   <rect x="150" y="50" width="100" height="40" rx="8" class="b2"/><text x="200" y="75" class="s c">encrypt</text>
+   <rect x="290" y="50" width="100" height="40" rx="8" class="bw"/><text x="340" y="75" class="s c">ciphertext</text>
+   <rect x="430" y="50" width="100" height="40" rx="8" class="b2"/><text x="480" y="75" class="s c">decrypt</text>
+   <rect x="565" y="50" width="70" height="40" rx="8" class="b"/><text x="600" y="75" class="s c">plaintext</text>
+   <line x1="110" y1="70" x2="146" y2="70" class="l" marker-end="url(#syA)"/><line x1="250" y1="70" x2="286" y2="70" class="l" marker-end="url(#syA)"/><line x1="390" y1="70" x2="426" y2="70" class="l" marker-end="url(#syA)"/><line x1="530" y1="70" x2="561" y2="70" class="l" marker-end="url(#syA)"/>
+   <text x="200" y="30" class="ta s c">🔑 shared key</text><text x="480" y="30" class="ta s c">🔑 same shared key</text>
+   <line x1="200" y1="36" x2="200" y2="48" class="la"/><line x1="480" y1="36" x2="480" y2="48" class="la"/>
+  </svg></figure>
+  <p>The <b>same key</b> encrypts and decrypts. It's fast, but there's a catch: both sides must have the key <b>before</b> they can communicate securely. Sending the key across the network in the open would let an eavesdropper read everything. This is the <b>key exchange</b> problem.</p>
+ </section>
+ <section>
+  <h2>Asymmetric encryption</h2>
+  <p>Each person has a <b>key pair</b>. The <b>public key</b> is shared with anyone; the <b>private key</b> is kept secret. Data encrypted with someone's public key can <b>only</b> be decrypted with their private key.</p>
+  <p class="stepline"><b>1</b><span>Ben publishes his public key.</span></p>
+  <p class="stepline"><b>2</b><span>Ana encrypts her message with <b>Ben's public key</b> and sends it.</span></p>
+  <p class="stepline"><b>3</b><span>Only <b>Ben's private key</b> can decrypt it. Anyone who intercepts it, even with the public key, can't read it.</span></p>
+  <div class="callout"><span class="k">Key idea</span><p>No secret ever has to be sent, so key exchange is solved. But asymmetric encryption is much <b>slower</b>, so secure websites use it only to agree a <b>symmetric</b> key, then switch to fast symmetric encryption for the rest of the session.</p></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>You encrypt with the <b>receiver's public</b> key, not your own private key.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-2-ciphers">
+<div class="theory airy">
+ <section>
+  <h2>Monoalphabetic substitution</h2>
+  <p class="lede">In a <b>monoalphabetic substitution cipher</b>, every letter is replaced by another letter, and the replacement for each letter is always the same. The key is the mixed-up alphabet.</p>
+  <div class="tscroll"><table class="pvt mono subtab"><tr><th>Plain</th><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>H</td><td>I</td><td>J</td><td>K</td><td>L</td><td>M</td><td>N</td><td>O</td><td>P</td><td>Q</td><td>R</td><td>S</td><td>T</td><td>U</td><td>V</td><td>W</td><td>X</td><td>Y</td><td>Z</td></tr>
+   <tr><th>Cipher</th><td><b>Q</b></td><td><b>W</b></td><td><b>E</b></td><td><b>R</b></td><td><b>T</b></td><td><b>Y</b></td><td><b>U</b></td><td><b>I</b></td><td><b>O</b></td><td><b>P</b></td><td><b>A</b></td><td><b>S</b></td><td><b>D</b></td><td><b>F</b></td><td><b>G</b></td><td><b>H</b></td><td><b>J</b></td><td><b>K</b></td><td><b>L</b></td><td><b>Z</b></td><td><b>X</b></td><td><b>C</b></td><td><b>V</b></td><td><b>B</b></td><td><b>N</b></td><td><b>M</b></td></tr></table></div>
+  <p><b>Encrypt</b>: find each plaintext letter on the top row and write the letter below it. CACHE → <b>EQEIT</b>.<br><b>Decrypt</b>: find each ciphertext letter on the bottom row and write the letter above. LZQEA → <b>STACK</b>.</p>
+  <p>There are 26! (about 4 × 10<sup>26</sup>) possible keys, far too many to try one by one. But the cipher is still easy to break by <b>frequency analysis</b>: E is the most common letter in English, then T, A, O…, so the most common ciphertext letter probably stands for E.</p>
+ </section>
+ <section>
+  <h2>The Vernam cipher</h2>
+  <p>The <b>Vernam cipher</b> XORs each bit of the plaintext with the matching bit of a key called a <b>one-time pad</b>.</p>
+  <div class="facts3"><div><b>0 XOR 0</b><span>0</span></div><div><b>0 XOR 1 / 1 XOR 0</b><span>1</span></div><div><b>1 XOR 1</b><span>0</span></div></div>
+  <div class="tscroll"><table class="pvt mono"><tr><th></th><td>Character</td><td>Bits</td></tr>
+   <tr><th>Plaintext</th><td>H (72)</td><td>0100 1000</td></tr>
+   <tr><th>Key</th><td></td><td>1101 0110</td></tr>
+   <tr><th>XOR → ciphertext</th><td></td><td><b>1001 1110</b></td></tr>
+   <tr><th>Ciphertext XOR key</th><td><b>H</b></td><td>0100 1000</td></tr></table></div>
+  <p>XOR is its own inverse, so <b>decrypting is the same operation</b>: XOR the ciphertext with the same key and the plaintext comes back.</p>
+  <div class="callout"><span class="k">Key idea</span><h3>Perfect secrecy</h3><p>If the key is <b>truly random</b>, <b>at least as long as the message</b>, <b>kept secret</b> and <b>used only once</b>, every possible plaintext of that length is equally likely, so the ciphertext reveals nothing. It's the only cipher that's mathematically unbreakable.</p></div>
+  <p>The drawback is practical: a key as long as all the data must be shared securely in advance and never reused.</p>
+  <pre class="pc py" data-run data-t="Try it: the Vernam cipher">import random
+message = "CACHE"
+key = [random.randint(0, 255) for _ in message]        # one-time pad
+cipher = [ord(c) ^ k for c, k in zip(message, key)]
+print("cipher:", cipher)
+plain = "".join(chr(c ^ k) for c, k in zip(cipher, key))
+print("decrypted:", plain)</pre>
+ </section>
+</div>
+</template>

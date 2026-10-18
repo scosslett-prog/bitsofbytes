@@ -1,0 +1,121 @@
+<template id="th-a2-1-bases">
+<div class="theory airy">
+ <section>
+  <h2>Three number bases</h2>
+  <p class="lede">Computers store everything as <b>binary</b>, because their circuits have two states, on and off. People think in <b>denary</b>. Programmers often use <b>hexadecimal</b> as a short, readable way of writing binary.</p>
+  <div class="facts3"><div><b>Denary</b><span>base 10 · digits 0–9</span></div><div><b>Binary</b><span>base 2 · digits 0 and 1</span></div><div><b>Hexadecimal</b><span>base 16 · 0–9 and A–F</span></div></div>
+  <p>In every base, each place is worth the base times the place to its right. In 8-bit binary the place values are:</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Place value</th><td>128</td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr><tr><th>Bit</th><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td></tr></table></div>
+  <p>1011 0101 = 128 + 32 + 16 + 4 + 1 = <b>181</b>. The leftmost bit is the <b>most significant bit (MSB)</b>; the rightmost is the <b>least significant bit (LSB)</b>.</p>
+ </section>
+ <section>
+  <h2>Converting</h2>
+  <h3>Denary → binary</h3>
+  <p>Work from the left: if the place value fits into what's left, write 1 and subtract; otherwise write 0. For <b>200</b>: 128 fits (72 left), 64 fits (8 left), 32 no, 16 no, 8 fits (0 left), then 0s → <b>1100 1000</b>.</p>
+  <h3>Binary ↔ hexadecimal</h3>
+  <p>One hex digit stands for exactly <b>4 bits (a nibble)</b>. Split the binary into nibbles from the right and convert each one.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Binary</th><td>0011</td><td>1110</td></tr><tr><th>Denary</th><td>3</td><td>14</td></tr><tr><th>Hex</th><td><b>3</b></td><td><b>E</b></td></tr></table></div>
+  <h3>Hexadecimal → denary</h3>
+  <p>Hex place values are 256, 16, 1. So <b>3E</b> = 3 × 16 + 14 = <b>62</b>.</p>
+  <div class="callout tip"><span class="k">Why hexadecimal?</span><p>It's much <b>shorter</b> than binary (two hex digits per byte), so it's easier to read, write and remember with fewer mistakes, and it converts to binary directly. You'll see it in colour codes (#FF8800), MAC addresses and memory addresses.</p></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Hex doesn't use less memory: the computer still stores binary. Hex is only a way of <b>writing</b> it for people.</p></div>
+  <pre class="pc py" data-run data-t="Try it: conversions in Python">n = 181
+print(bin(n), hex(n))            # denary to binary and hex
+print(int("10110101", 2))        # binary to denary
+print(int("3E", 16))             # hex to denary
+print(format(200, "08b"))        # 8-bit binary with leading zeros</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-1-units">
+<div class="theory airy">
+ <section>
+  <h2>Bits, nibbles and bytes</h2>
+  <p class="lede">A <b>bit</b> (b) is one binary digit. Four bits make a <b>nibble</b> and eight bits make a <b>byte</b> (B). Note the case: a small <b>b</b> is bits, a capital <b>B</b> is bytes.</p>
+  <h3>How many states?</h3>
+  <p>Each extra bit <b>doubles</b> the number of patterns, so <b>n bits can represent 2<sup>n</sup> different states</b>. 1 bit gives 2, 4 bits give 16, 8 bits give 256, 16 bits give 65,536.</p>
+  <p>To store <b>m</b> different values, you need enough bits that 2<sup>n</sup> ≥ m. For 100 values, 2<sup>6</sup> = 64 is too few, 2<sup>7</sup> = 128 is enough: <b>7 bits</b>.</p>
+ </section>
+ <section>
+  <h2>Two kinds of prefix</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>IEC binary prefix</th><th>Value</th><th>SI decimal prefix</th><th>Value</th></tr>
+   <tr><td class="lbl">kibi (Ki)</td><td>2<sup>10</sup> = 1,024</td><td class="lbl">kilo (k)</td><td>10<sup>3</sup> = 1,000</td></tr>
+   <tr><td class="lbl">mebi (Mi)</td><td>2<sup>20</sup> = 1,048,576</td><td class="lbl">mega (M)</td><td>10<sup>6</sup></td></tr>
+   <tr><td class="lbl">gibi (Gi)</td><td>2<sup>30</sup></td><td class="lbl">giga (G)</td><td>10<sup>9</sup></td></tr>
+   <tr><td class="lbl">tebi (Ti)</td><td>2<sup>40</sup></td><td class="lbl">tera (T)</td><td>10<sup>12</sup></td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><p>Use <b>binary prefixes</b> (KiB, MiB, GiB) for <b>memory capacity and file sizes</b>. Use <b>decimal prefixes</b> (kbps, Mbps, Gbps) for <b>transmission speeds</b>. A GiB is about 7% bigger than a GB.</p></div>
+  <h3>Worked examples</h3>
+  <p class="stepline"><b>1</b><span>3 MiB in bytes: 3 × 1024 × 1024 = <b>3,145,728 bytes</b>.</span></p>
+  <p class="stepline"><b>2</b><span>4 GiB in MiB: 4 × 1024 = <b>4,096 MiB</b>.</span></p>
+  <p class="stepline"><b>3</b><span>20 Mbps in bits per second: 20 × 1,000,000 = <b>20,000,000 bps</b>.</span></p>
+  <div class="callout tip"><span class="k">Exam tip</span><p>Going to a <b>smaller</b> unit, multiply; going to a <b>bigger</b> unit, divide. Convert bytes to bits by × 8. Writing the expression out (e.g. <i>3 × 1024²</i>) earns marks even without a calculator.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-1-twos">
+<div class="theory airy">
+ <section>
+  <h2>Storing negative numbers</h2>
+  <p class="lede">Binary has no minus sign, so the sign has to be stored in the bits themselves. Almost every computer uses <b>two's complement</b>.</p>
+  <div class="callout"><span class="k">Key idea</span><h3>The MSB is negative</h3><p>In two's complement, the most significant bit has a <b>negative</b> place value. In 8 bits it is worth <b>−128</b>; the rest are worth what they normally are.</p></div>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Place value</th><td><b>−128</b></td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr><tr><th>Bit</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td></tr></table></div>
+  <p>1111 1011 = −128 + 64 + 32 + 16 + 8 + 2 + 1 = <b>−5</b>. If the MSB is 1 the number is negative; if it's 0 the number is positive and reads like ordinary binary.</p>
+  <div class="facts3"><div><b>0111 1111</b><span>+127, the largest</span></div><div><b>0000 0000</b><span>0</span></div><div><b>1000 0000</b><span>−128, the smallest</span></div></div>
+  <p>With n bits the range is <b>−2<sup>n−1</sup></b> to <b>2<sup>n−1</sup> − 1</b>: −128 to +127 in 8 bits.</p>
+ </section>
+ <section>
+  <h2>Negation: flip and add 1</h2>
+  <p>To change the sign of any two's complement number, <b>flip every bit, then add 1</b>. It works in both directions.</p>
+  <p class="stepline"><b>Step 1</b><span>Write +5 in 8 bits: 0000 0101.</span></p>
+  <p class="stepline"><b>Step 2</b><span>Flip every bit: 1111 1010.</span></p>
+  <p class="stepline"><b>Step 3</b><span>Add 1: <b>1111 1011</b> = −5.</span></p>
+  <div class="callout tip"><span class="k">A shortcut</span><p>Copy bits from the right up to and including the first 1, then flip all the rest. 0000 0<b>101</b> → 1111 1<b>011</b>.</p></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Don't forget to <b>pad to the full number of bits</b> before flipping. Flipping 101 gives 010, which is wrong; flipping 0000 0101 gives 1111 1010, which is right.</p></div>
+  <h3>Why two's complement?</h3>
+  <p>There is only <b>one zero</b>, and ordinary binary addition works for positive and negative numbers alike, so the ALU can subtract by adding the negative.</p>
+  <pre class="pc py" data-run data-t="Try it: 8-bit two's complement">def to_twos(n):
+    return format(n & 0xFF, "08b")     # keep the lowest 8 bits
+
+def from_twos(bits):
+    value = int(bits, 2)
+    return value - 256 if bits[0] == "1" else value
+
+print(to_twos(-5))
+print(from_twos("11111011"))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-1-fixed">
+<div class="theory airy">
+ <section>
+  <h2>Fractions in binary</h2>
+  <p class="lede">Place values carry on to the right of the point, halving each time: <b>½, ¼, ⅛, 1/16</b>… In <b>fixed-point binary</b>, the binary point is in a <b>fixed</b>, agreed position; it isn't stored.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Place value</th><td><b>−8</b></td><td>4</td><td>2</td><td>1</td><td>.</td><td>½</td><td>¼</td><td>⅛</td><td>1/16</td></tr><tr><th>Bit</th><td>0</td><td>1</td><td>0</td><td>1</td><td>.</td><td>1</td><td>0</td><td>0</td><td>0</td></tr></table></div>
+  <p>This is <b>signed</b> fixed point with 4 bits before the point and 4 after. The MSB is negative, as in two's complement. 0101.1000 = 4 + 1 + ½ = <b>5.5</b>.</p>
+ </section>
+ <section>
+  <h2>Converting</h2>
+  <h3>Binary → denary</h3>
+  <p>Add up the place values of the 1s. 1110.0100 = −8 + 4 + 2 + ¼ = <b>−1.75</b>.</p>
+  <h3>Denary → binary (positive)</h3>
+  <p>Split into the whole part and the fraction. For <b>2.375</b>: 2 = 0010 and 0.375 = ¼ + ⅛ = .0110, so <b>0010.0110</b>.</p>
+  <h3>Denary → binary (negative)</h3>
+  <p>Write the positive version, then <b>flip and add 1</b> across all the bits. For <b>−2.375</b>: 0010.0110 → 1101.1001 → <b>1101.1010</b>.</p>
+  <p>Check: −8 + 4 + 1 + ½ + ⅛ = −2.375 ✓</p>
+ </section>
+ <section>
+  <h2>Range and precision</h2>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Point moved right</h3><p>More whole-number bits: a <b>bigger range</b>, but <b>less precision</b>.</p></div>
+   <div class="keypts"><h3>Point moved left</h3><p>More fractional bits: <b>more precision</b>, but a <b>smaller range</b>.</p></div>
+  </div>
+  <p>Some values can't be stored exactly. 0.1 isn't a sum of halves, quarters, eighths…, so it can only be <b>approximated</b>. The gap between neighbouring values is the place value of the last bit (1/16 here).</p>
+  <div class="callout tip"><span class="k">Unit 3</span><p>Floating point, where the point can move, comes in Unit 3. Fixed point is simpler and faster, but its range is limited.</p></div>
+  <pre class="pc py" data-run data-t="Try it: 0.1 isn't exact">print(0.1 + 0.2)          # binary can't store 0.1 or 0.2 exactly
+print(0.5 + 0.25)         # halves and quarters are exact</pre>
+ </section>
+</div>
+</template>

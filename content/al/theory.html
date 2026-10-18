@@ -288,3 +288,1413 @@ while True:
  </section>
 </div>
 </template>
+
+<template id="th-a1-2-role">
+<div class="theory airy">
+ <section>
+  <h2>What the operating system does</h2>
+  <p class="lede">Without an operating system, every program would have to drive the hardware itself and fight other programs for the CPU and memory. The <b>operating system (OS)</b> sits between the hardware and the applications and <b>manages the computer's resources</b> for them.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 560 250" role="img" aria-label="Layers: the user at the top, then applications, then the operating system with its kernel, then the hardware">
+   <rect x="80" y="10" width="400" height="44" rx="10" class="b3"/><text x="280" y="38" class="t c">User</text>
+   <rect x="80" y="66" width="400" height="44" rx="10" class="bw"/><text x="280" y="94" class="t c">Applications (browser, IDE, games…)</text>
+   <rect x="80" y="122" width="400" height="60" rx="10" class="b2"/><text x="280" y="148" class="t c">Operating system</text><text x="280" y="168" class="s c">user interface · kernel · device drivers</text>
+   <rect x="80" y="194" width="400" height="44" rx="10" class="bg"/><text x="280" y="222" class="t c">Hardware (CPU, memory, devices)</text>
+  </svg><figcaption>The OS hides the hardware's complexity: applications ask the OS, and the OS deals with the hardware.</figcaption></figure>
+ </section>
+ <section>
+  <h2>The five main roles</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Role</th><th>What it involves</th></tr>
+   <tr><td class="lbl">User interface</td><td>Lets people use the computer. A <b>GUI</b> (windows, icons, menus, pointer) is easy to learn; a <b>command-line interface</b> is quicker for experts and can be <b>scripted</b> to automate tasks.</td></tr>
+   <tr><td class="lbl">User management</td><td>User <b>accounts</b>, logins and passwords, <b>access rights</b> to files and folders, and a separate area and settings for each user.</td></tr>
+   <tr><td class="lbl">Peripheral management</td><td>Communicates with devices using <b>device drivers</b>, and uses <b>buffers</b> (e.g. a print spool) so a fast CPU isn't held up by a slow device.</td></tr>
+   <tr><td class="lbl">Process management</td><td>Starts and ends processes, <b>schedules</b> them so they share the CPU, and handles <b>interrupts</b>.</td></tr>
+   <tr><td class="lbl">Memory management</td><td>Decides where programs and data go in RAM, keeps track of free memory, <b>protects</b> each process's memory, and uses <b>virtual memory</b> when RAM is full.</td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><p>All five roles come down to <b>sharing limited resources</b> (CPU time, memory, devices, files) between users and programs safely and efficiently.</p></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>Questions often describe a situation, e.g. "a student can't open a teacher's files". Name the role (<b>user management</b>) <b>and</b> say how the OS does it (<b>access rights</b> on each file).</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-2-multitasking">
+<div class="theory airy">
+ <section>
+  <h2>Multitasking</h2>
+  <p class="lede">You can stream music, download a file and type an essay at once, even on a single-core CPU. A core can only execute <b>one</b> instruction stream at a time, so how?</p>
+  <div class="callout"><span class="k">Key idea</span><h3>Time sharing</h3><p>The OS gives each process a short <b>time slice</b> of the CPU (a few milliseconds), then switches to the next. The switching is so fast that every process <b>appears</b> to run at the same time.</p></div>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 120" role="img" aria-label="Timeline: processes A, B and C take turns on the CPU in short slices, with small context switches between them">
+   <g><rect x="20" y="30" width="90" height="40" rx="4" class="bi"/><text x="65" y="56" class="t c">A</text>
+   <rect x="116" y="30" width="90" height="40" rx="4" class="bw"/><text x="161" y="56" class="t c">B</text>
+   <rect x="212" y="30" width="90" height="40" rx="4" class="bg"/><text x="257" y="56" class="t c">C</text>
+   <rect x="308" y="30" width="90" height="40" rx="4" class="bi"/><text x="353" y="56" class="t c">A</text>
+   <rect x="404" y="30" width="90" height="40" rx="4" class="bw"/><text x="449" y="56" class="t c">B</text>
+   <rect x="500" y="30" width="90" height="40" rx="4" class="bg"/><text x="545" y="56" class="t c">C</text></g>
+   <line x1="20" y1="90" x2="600" y2="90" class="l"/><text x="20" y="110" class="s">time →</text><text x="113" y="22" class="s c">switch</text><text x="209" y="22" class="s c">switch</text>
+  </svg><figcaption>Each block is one time slice. The narrow gaps are context switches.</figcaption></figure>
+  <h3>Context switching</h3>
+  <p>To pause a process and resume it later, the OS must remember exactly where it was. A <b>context switch</b> saves the running process's <b>context</b> (the contents of the PC, the other registers and the status flags) and loads the saved context of the next process. Context switching is pure <b>overhead</b>: no useful work happens while it's going on.</p>
+ </section>
+ <section>
+  <h2>Interrupts</h2>
+  <p>An <b>interrupt</b> is a signal to the CPU that something needs attention now. Interrupts are how a key press is noticed, how a printer says it's out of paper, and how the OS takes the CPU back when a time slice ends.</p>
+  <div class="ccards">
+   <div class="keypts"><h3>Hardware</h3><p>From a device: a key press, a disk transfer finishing, a power failure.</p></div>
+   <div class="keypts"><h3>Timer</h3><p>From the system clock: ends a time slice so the scheduler can switch processes.</p></div>
+   <div class="keypts"><h3>Software</h3><p>From a program: an error such as dividing by zero, or a request to the OS.</p></div>
+  </div>
+  <h3>How an interrupt is handled</h3>
+  <p class="stepline"><b>1</b><span>The device sets a bit in the <b>interrupt register</b>.</span></p>
+  <p class="stepline"><b>2</b><span>At the <b>end of each fetch-decode-execute cycle</b>, the CPU checks the interrupt register.</span></p>
+  <p class="stepline"><b>3</b><span>If an interrupt is waiting and its <b>priority is higher</b> than the current task, the CPU <b>saves its registers</b> (including the PC) <b>on the stack</b>.</span></p>
+  <p class="stepline"><b>4</b><span>The PC is loaded with the address of the matching <b>interrupt service routine (ISR)</b>, found in a table of ISR addresses (the interrupt vector table).</span></p>
+  <p class="stepline"><b>5</b><span>The ISR runs. A <b>higher</b>-priority interrupt can interrupt it; a lower one waits.</span></p>
+  <p class="stepline"><b>6</b><span>When the ISR ends, the saved registers are <b>popped</b> off the stack and the original task carries on exactly where it stopped.</span></p>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>The CPU does <b>not</b> stop mid-instruction. It finishes the current cycle first, then checks for interrupts.</p></div>
+  <div class="callout tip"><span class="k">Why the stack?</span><p>Interrupts can be <b>nested</b>. A stack is last in, first out, so the most recently interrupted task is the first one resumed.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-2-processes">
+<div class="theory airy">
+ <section>
+  <h2>Processes and their states</h2>
+  <p class="lede">A <b>process</b> is a program in execution: its code, its data and its current state (the registers, the PC). The OS tracks every process as it moves between five <b>states</b>.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 260" role="img" aria-label="Process states: new to ready (admitted), ready to running (scheduled), running to ready (time slice ends), running to blocked (waits for I/O), blocked to ready (I/O completes), running to terminated (finishes)">
+   <defs><marker id="psA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="10" y="30" width="100" height="44" rx="22" class="b3"/><text x="60" y="57" class="t c">New</text>
+   <rect x="200" y="30" width="110" height="44" rx="22" class="bw"/><text x="255" y="57" class="t c">Ready</text>
+   <rect x="420" y="30" width="110" height="44" rx="22" class="bi"/><text x="475" y="57" class="t c">Running</text>
+   <rect x="310" y="190" width="120" height="44" rx="22" class="bg"/><text x="370" y="217" class="t c">Blocked</text>
+   <rect x="530" y="190" width="105" height="44" rx="22" class="b3"/><text x="582" y="217" class="t c">Terminated</text>
+   <line x1="110" y1="52" x2="194" y2="52" class="l" marker-end="url(#psA)"/><text x="152" y="44" class="s c">admitted</text>
+   <path d="M310 42 C350 20, 380 20, 416 42" class="l" fill="none" marker-end="url(#psA)"/><text x="363" y="18" class="s c">scheduled</text>
+   <path d="M420 64 C380 86, 350 86, 314 64" class="l" fill="none" marker-end="url(#psA)"/><text x="363" y="100" class="s c">time slice ends</text>
+   <line x1="460" y1="74" x2="410" y2="186" class="l" marker-end="url(#psA)"/><text x="462" y="140" class="s">waits for I/O</text>
+   <line x1="335" y1="190" x2="265" y2="78" class="l" marker-end="url(#psA)"/><text x="200" y="140" class="s">I/O completes</text>
+   <line x1="500" y1="74" x2="570" y2="186" class="l" marker-end="url(#psA)"/><text x="560" y="130" class="s">finishes</text>
+  </svg><figcaption>A blocked process can't go straight to running: it goes back to the ready queue first.</figcaption></figure>
+ </section>
+ <section>
+  <h2>Scheduling algorithms</h2>
+  <p>The <b>scheduler</b> picks which ready process runs next. The aims are to keep the CPU busy, respond quickly to users, be fair, and get as much work done as possible.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Algorithm</th><th>How it works</th><th>Strengths</th><th>Weaknesses</th></tr>
+   <tr><td class="lbl">Round robin</td><td>Each process gets the same time slice in turn, then goes to the back of the queue</td><td>Fair; good response for interactive users</td><td>Many context switches; long jobs take a long time overall</td></tr>
+   <tr><td class="lbl">First-come, first-served</td><td>Runs processes to completion in arrival order</td><td>Simple; no starvation</td><td>Short jobs can be stuck behind a long one</td></tr>
+   <tr><td class="lbl">Shortest job first</td><td>Runs the process with the shortest burst time next</td><td>Lowest average waiting time</td><td>Burst times must be known; long jobs can <b>starve</b></td></tr>
+   <tr><td class="lbl">Multi-level queue</td><td>Separate queues by type or priority (e.g. system, interactive, batch), each with its own algorithm</td><td>Suits a mix of process types</td><td>Low-priority queues can starve; more complex</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Worked example</h2>
+  <p>Three processes arrive at time 0 in the order A, B, C, with burst times <b>A = 6</b>, <b>B = 2</b>, <b>C = 4</b>. Waiting time is how long a process waits before it starts.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>First-come, first-served</h3><p>Order A, B, C.<br>Waits: A 0, B 6, C 8.<br>Average = 14 ÷ 3 ≈ <b>4.67</b></p></div>
+   <div class="keypts"><h3>Shortest job first</h3><p>Order B, C, A.<br>Waits: B 0, C 2, A 6.<br>Average = 8 ÷ 3 ≈ <b>2.67</b></p></div>
+  </div>
+  <p>Round robin with a time slice of 2 runs A, B, C, A, C, A: B finishes at 4, C at 10 and A at 12.</p>
+  <pre class="pc py" data-run data-t="Try it: round robin">from collections import deque
+burst = {"A": 6, "B": 2, "C": 4}
+quantum = 2
+queue, time = deque(burst), 0
+while queue:
+    p = queue.popleft()
+    run = min(quantum, burst[p])
+    time = time + run
+    burst[p] = burst[p] - run
+    if burst[p] > 0:
+        queue.append(p)            # not finished: back of the queue
+    else:
+        print(p, "finishes at", time)</pre>
+  <p class="vfoot">Change the quantum to 1 or 6 and run it again. What happens when the time slice is longer than every job?</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a1-2-memory">
+<div class="theory airy">
+ <section>
+  <h2>Memory management</h2>
+  <p class="lede">Many processes share one RAM. The OS has to <b>track</b> which parts are free, <b>allocate</b> memory to processes, <b>protect</b> each process from the others, and cope when RAM runs out.</p>
+ </section>
+ <section>
+  <h2>Paging</h2>
+  <p>Memory is split into <b>fixed-size</b> blocks. A process is divided into <b>pages</b>, and physical memory into <b>frames</b> of the same size. Pages can go into <b>any free frames</b>, so a process doesn't need one continuous block. A <b>page table</b> records which frame each page is in.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 250" role="img" aria-label="Process pages 0 to 3 mapped through a page table into scattered frames of physical memory">
+   <defs><marker id="pgA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <text x="70" y="20" class="t c">Process</text>
+   <rect x="20" y="30" width="100" height="40" class="bi"/><text x="70" y="55" class="m c">page 0</text>
+   <rect x="20" y="70" width="100" height="40" class="bi"/><text x="70" y="95" class="m c">page 1</text>
+   <rect x="20" y="110" width="100" height="40" class="bi"/><text x="70" y="135" class="m c">page 2</text>
+   <rect x="20" y="150" width="100" height="40" class="bi"/><text x="70" y="175" class="m c">page 3</text>
+   <text x="260" y="20" class="t c">Page table</text>
+   <rect x="200" y="30" width="120" height="160" class="b"/>
+   <text x="260" y="55" class="m c">0 → frame 5</text><text x="260" y="95" class="m c">1 → frame 1</text><text x="260" y="135" class="m c">2 → frame 6</text><text x="260" y="175" class="m c">3 → frame 3</text>
+   <text x="510" y="20" class="t c">Physical memory</text>
+   <g><rect x="460" y="30" width="100" height="26" class="b3"/><text x="510" y="48" class="s c">0 · OS</text>
+   <rect x="460" y="56" width="100" height="26" class="bi"/><text x="510" y="74" class="s c">1 · page 1</text>
+   <rect x="460" y="82" width="100" height="26" class="bw"/><text x="510" y="100" class="s c">2 · other</text>
+   <rect x="460" y="108" width="100" height="26" class="bi"/><text x="510" y="126" class="s c">3 · page 3</text>
+   <rect x="460" y="134" width="100" height="26" class="b"/><text x="510" y="152" class="s c">4 · free</text>
+   <rect x="460" y="160" width="100" height="26" class="bi"/><text x="510" y="178" class="s c">5 · page 0</text>
+   <rect x="460" y="186" width="100" height="26" class="bi"/><text x="510" y="204" class="s c">6 · page 2</text>
+   <rect x="460" y="212" width="100" height="26" class="bw"/><text x="510" y="230" class="s c">7 · other</text></g>
+   <line x1="120" y1="110" x2="194" y2="110" class="l" marker-end="url(#pgA)"/><line x1="320" y1="110" x2="454" y2="110" class="l" marker-end="url(#pgA)"/>
+  </svg><figcaption>The pages of one process scattered across free frames.</figcaption></figure>
+ </section>
+ <section>
+  <h2>Segmentation</h2>
+  <p>A program is split into <b>variable-sized</b> blocks that match its <b>logical parts</b>: a code segment, a data segment, a stack segment, or one segment per module. Each segment can be given its own protection, e.g. code can be read and executed but not written.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Paging</th><th>Segmentation</th></tr>
+   <tr><td class="lbl">Block size</td><td>Fixed</td><td>Variable</td></tr>
+   <tr><td class="lbl">Based on</td><td>Physical division of memory</td><td>Logical structure of the program</td></tr>
+   <tr><td class="lbl">Benefit</td><td>Simple to fit into any free frames</td><td>Each part can be protected and shared sensibly</td></tr>
+   <tr><td class="lbl">Drawback</td><td>A page may split a routine in two; the last page is part empty</td><td>Gaps form between segments as they come and go</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Virtual memory</h2>
+  <p>When RAM is full, the OS uses part of <b>secondary storage</b> as if it were extra RAM. Pages that <b>haven't been used recently</b> are <b>swapped out</b> to disk, and swapped back in when they're needed.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>More programs can be open than RAM alone could hold.</li><li>A program bigger than RAM can still run.</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>Secondary storage is thousands of times slower than RAM.</li><li>If pages are swapped constantly, the computer spends more time swapping than working: <b>disk thrashing</b>. The fix is more RAM.</li></ul></div>
+  </div>
+ </section>
+ <section>
+  <h2>Stack frames</h2>
+  <p>Each time a subroutine is <b>called</b>, a <b>stack frame</b> is pushed onto the call stack. It holds the <b>return address</b> (where to carry on afterwards), the <b>parameters</b> and the <b>local variables</b>. When the subroutine <b>returns</b>, its frame is popped and the CPU jumps to the return address.</p>
+  <p>If too many frames are pushed, for example by recursion that never reaches its base case, the stack runs out of space: a <b>stack overflow</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: watch the stack grow">def countdown(n):
+    print("frame for n =", n)
+    if n > 0:
+        countdown(n - 1)        # pushes a new stack frame
+    print("returning from n =", n)
+
+countdown(3)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-1-bases">
+<div class="theory airy">
+ <section>
+  <h2>Three number bases</h2>
+  <p class="lede">Computers store everything as <b>binary</b>, because their circuits have two states, on and off. People think in <b>denary</b>. Programmers often use <b>hexadecimal</b> as a short, readable way of writing binary.</p>
+  <div class="facts3"><div><b>Denary</b><span>base 10 · digits 0–9</span></div><div><b>Binary</b><span>base 2 · digits 0 and 1</span></div><div><b>Hexadecimal</b><span>base 16 · 0–9 and A–F</span></div></div>
+  <p>In every base, each place is worth the base times the place to its right. In 8-bit binary the place values are:</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Place value</th><td>128</td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr><tr><th>Bit</th><td>1</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td></tr></table></div>
+  <p>1011 0101 = 128 + 32 + 16 + 4 + 1 = <b>181</b>. The leftmost bit is the <b>most significant bit (MSB)</b>; the rightmost is the <b>least significant bit (LSB)</b>.</p>
+ </section>
+ <section>
+  <h2>Converting</h2>
+  <h3>Denary → binary</h3>
+  <p>Work from the left: if the place value fits into what's left, write 1 and subtract; otherwise write 0. For <b>200</b>: 128 fits (72 left), 64 fits (8 left), 32 no, 16 no, 8 fits (0 left), then 0s → <b>1100 1000</b>.</p>
+  <h3>Binary ↔ hexadecimal</h3>
+  <p>One hex digit stands for exactly <b>4 bits (a nibble)</b>. Split the binary into nibbles from the right and convert each one.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Binary</th><td>0011</td><td>1110</td></tr><tr><th>Denary</th><td>3</td><td>14</td></tr><tr><th>Hex</th><td><b>3</b></td><td><b>E</b></td></tr></table></div>
+  <h3>Hexadecimal → denary</h3>
+  <p>Hex place values are 256, 16, 1. So <b>3E</b> = 3 × 16 + 14 = <b>62</b>.</p>
+  <div class="callout tip"><span class="k">Why hexadecimal?</span><p>It's much <b>shorter</b> than binary (two hex digits per byte), so it's easier to read, write and remember with fewer mistakes, and it converts to binary directly. You'll see it in colour codes (#FF8800), MAC addresses and memory addresses.</p></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Hex doesn't use less memory: the computer still stores binary. Hex is only a way of <b>writing</b> it for people.</p></div>
+  <pre class="pc py" data-run data-t="Try it: conversions in Python">n = 181
+print(bin(n), hex(n))            # denary to binary and hex
+print(int("10110101", 2))        # binary to denary
+print(int("3E", 16))             # hex to denary
+print(format(200, "08b"))        # 8-bit binary with leading zeros</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-1-units">
+<div class="theory airy">
+ <section>
+  <h2>Bits, nibbles and bytes</h2>
+  <p class="lede">A <b>bit</b> (b) is one binary digit. Four bits make a <b>nibble</b> and eight bits make a <b>byte</b> (B). Note the case: a small <b>b</b> is bits, a capital <b>B</b> is bytes.</p>
+  <h3>How many states?</h3>
+  <p>Each extra bit <b>doubles</b> the number of patterns, so <b>n bits can represent 2<sup>n</sup> different states</b>. 1 bit gives 2, 4 bits give 16, 8 bits give 256, 16 bits give 65,536.</p>
+  <p>To store <b>m</b> different values, you need enough bits that 2<sup>n</sup> ≥ m. For 100 values, 2<sup>6</sup> = 64 is too few, 2<sup>7</sup> = 128 is enough: <b>7 bits</b>.</p>
+ </section>
+ <section>
+  <h2>Two kinds of prefix</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>IEC binary prefix</th><th>Value</th><th>SI decimal prefix</th><th>Value</th></tr>
+   <tr><td class="lbl">kibi (Ki)</td><td>2<sup>10</sup> = 1,024</td><td class="lbl">kilo (k)</td><td>10<sup>3</sup> = 1,000</td></tr>
+   <tr><td class="lbl">mebi (Mi)</td><td>2<sup>20</sup> = 1,048,576</td><td class="lbl">mega (M)</td><td>10<sup>6</sup></td></tr>
+   <tr><td class="lbl">gibi (Gi)</td><td>2<sup>30</sup></td><td class="lbl">giga (G)</td><td>10<sup>9</sup></td></tr>
+   <tr><td class="lbl">tebi (Ti)</td><td>2<sup>40</sup></td><td class="lbl">tera (T)</td><td>10<sup>12</sup></td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><p>Use <b>binary prefixes</b> (KiB, MiB, GiB) for <b>memory capacity and file sizes</b>. Use <b>decimal prefixes</b> (kbps, Mbps, Gbps) for <b>transmission speeds</b>. A GiB is about 7% bigger than a GB.</p></div>
+  <h3>Worked examples</h3>
+  <p class="stepline"><b>1</b><span>3 MiB in bytes: 3 × 1024 × 1024 = <b>3,145,728 bytes</b>.</span></p>
+  <p class="stepline"><b>2</b><span>4 GiB in MiB: 4 × 1024 = <b>4,096 MiB</b>.</span></p>
+  <p class="stepline"><b>3</b><span>20 Mbps in bits per second: 20 × 1,000,000 = <b>20,000,000 bps</b>.</span></p>
+  <div class="callout tip"><span class="k">Exam tip</span><p>Going to a <b>smaller</b> unit, multiply; going to a <b>bigger</b> unit, divide. Convert bytes to bits by × 8. Writing the expression out (e.g. <i>3 × 1024²</i>) earns marks even without a calculator.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-1-twos">
+<div class="theory airy">
+ <section>
+  <h2>Storing negative numbers</h2>
+  <p class="lede">Binary has no minus sign, so the sign has to be stored in the bits themselves. Almost every computer uses <b>two's complement</b>.</p>
+  <div class="callout"><span class="k">Key idea</span><h3>The MSB is negative</h3><p>In two's complement, the most significant bit has a <b>negative</b> place value. In 8 bits it is worth <b>−128</b>; the rest are worth what they normally are.</p></div>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Place value</th><td><b>−128</b></td><td>64</td><td>32</td><td>16</td><td>8</td><td>4</td><td>2</td><td>1</td></tr><tr><th>Bit</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td></tr></table></div>
+  <p>1111 1011 = −128 + 64 + 32 + 16 + 8 + 2 + 1 = <b>−5</b>. If the MSB is 1 the number is negative; if it's 0 the number is positive and reads like ordinary binary.</p>
+  <div class="facts3"><div><b>0111 1111</b><span>+127, the largest</span></div><div><b>0000 0000</b><span>0</span></div><div><b>1000 0000</b><span>−128, the smallest</span></div></div>
+  <p>With n bits the range is <b>−2<sup>n−1</sup></b> to <b>2<sup>n−1</sup> − 1</b>: −128 to +127 in 8 bits.</p>
+ </section>
+ <section>
+  <h2>Negation: flip and add 1</h2>
+  <p>To change the sign of any two's complement number, <b>flip every bit, then add 1</b>. It works in both directions.</p>
+  <p class="stepline"><b>Step 1</b><span>Write +5 in 8 bits: 0000 0101.</span></p>
+  <p class="stepline"><b>Step 2</b><span>Flip every bit: 1111 1010.</span></p>
+  <p class="stepline"><b>Step 3</b><span>Add 1: <b>1111 1011</b> = −5.</span></p>
+  <div class="callout tip"><span class="k">A shortcut</span><p>Copy bits from the right up to and including the first 1, then flip all the rest. 0000 0<b>101</b> → 1111 1<b>011</b>.</p></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Don't forget to <b>pad to the full number of bits</b> before flipping. Flipping 101 gives 010, which is wrong; flipping 0000 0101 gives 1111 1010, which is right.</p></div>
+  <h3>Why two's complement?</h3>
+  <p>There is only <b>one zero</b>, and ordinary binary addition works for positive and negative numbers alike, so the ALU can subtract by adding the negative.</p>
+  <pre class="pc py" data-run data-t="Try it: 8-bit two's complement">def to_twos(n):
+    return format(n & 0xFF, "08b")     # keep the lowest 8 bits
+
+def from_twos(bits):
+    value = int(bits, 2)
+    return value - 256 if bits[0] == "1" else value
+
+print(to_twos(-5))
+print(from_twos("11111011"))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-1-fixed">
+<div class="theory airy">
+ <section>
+  <h2>Fractions in binary</h2>
+  <p class="lede">Place values carry on to the right of the point, halving each time: <b>½, ¼, ⅛, 1/16</b>… In <b>fixed-point binary</b>, the binary point is in a <b>fixed</b>, agreed position; it isn't stored.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Place value</th><td><b>−8</b></td><td>4</td><td>2</td><td>1</td><td>.</td><td>½</td><td>¼</td><td>⅛</td><td>1/16</td></tr><tr><th>Bit</th><td>0</td><td>1</td><td>0</td><td>1</td><td>.</td><td>1</td><td>0</td><td>0</td><td>0</td></tr></table></div>
+  <p>This is <b>signed</b> fixed point with 4 bits before the point and 4 after. The MSB is negative, as in two's complement. 0101.1000 = 4 + 1 + ½ = <b>5.5</b>.</p>
+ </section>
+ <section>
+  <h2>Converting</h2>
+  <h3>Binary → denary</h3>
+  <p>Add up the place values of the 1s. 1110.0100 = −8 + 4 + 2 + ¼ = <b>−1.75</b>.</p>
+  <h3>Denary → binary (positive)</h3>
+  <p>Split into the whole part and the fraction. For <b>2.375</b>: 2 = 0010 and 0.375 = ¼ + ⅛ = .0110, so <b>0010.0110</b>.</p>
+  <h3>Denary → binary (negative)</h3>
+  <p>Write the positive version, then <b>flip and add 1</b> across all the bits. For <b>−2.375</b>: 0010.0110 → 1101.1001 → <b>1101.1010</b>.</p>
+  <p>Check: −8 + 4 + 1 + ½ + ⅛ = −2.375 ✓</p>
+ </section>
+ <section>
+  <h2>Range and precision</h2>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Point moved right</h3><p>More whole-number bits: a <b>bigger range</b>, but <b>less precision</b>.</p></div>
+   <div class="keypts"><h3>Point moved left</h3><p>More fractional bits: <b>more precision</b>, but a <b>smaller range</b>.</p></div>
+  </div>
+  <p>Some values can't be stored exactly. 0.1 isn't a sum of halves, quarters, eighths…, so it can only be <b>approximated</b>. The gap between neighbouring values is the place value of the last bit (1/16 here).</p>
+  <div class="callout tip"><span class="k">Unit 3</span><p>Floating point, where the point can move, comes in Unit 3. Fixed point is simpler and faster, but its range is limited.</p></div>
+  <pre class="pc py" data-run data-t="Try it: 0.1 isn't exact">print(0.1 + 0.2)          # binary can't store 0.1 or 0.2 exactly
+print(0.5 + 0.25)         # halves and quarters are exact</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-2-addsub">
+<div class="theory airy">
+ <section>
+  <h2>Binary addition</h2>
+  <p class="lede">Binary addition works like column addition in denary, but you carry when a column reaches <b>2</b> instead of 10.</p>
+  <div class="facts3"><div><b>0 + 1</b><span>= 1</span></div><div><b>1 + 1</b><span>= 0 carry 1</span></div><div><b>1 + 1 + 1</b><span>= 1 carry 1</span></div></div>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Carry</th><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td>1</td><td></td><td></td></tr>
+   <tr><th></th><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+   <tr><th>+</th><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td></tr>
+   <tr><th>=</th><td><b>1</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>1</b></td></tr></table></div>
+  <p>106 + 23 = 129 → <b>1000 0001</b>. As unsigned binary that's right. As 8-bit two's complement it reads as −127: the answer has <b>overflowed</b> into the sign bit.</p>
+ </section>
+ <section>
+  <h2>Subtraction</h2>
+  <p>The ALU doesn't need a separate subtractor: <b>a − b = a + (−b)</b>. Negate b with two's complement (flip and add 1), then add.</p>
+  <p class="stepline"><b>Step 1</b><span>45 − 18. Write 18: 0001 0010.</span></p>
+  <p class="stepline"><b>Step 2</b><span>Negate: flip → 1110 1101, add 1 → 1110 1110 (−18).</span></p>
+  <p class="stepline"><b>Step 3</b><span>Add 0010 1101 + 1110 1110 = 1 0001 1011. <b>Ignore the carry out</b> of the 8th bit: <b>0001 1011</b> = 27 ✓</span></p>
+ </section>
+ <section>
+  <h2>Overflow and underflow</h2>
+  <div class="callout"><span class="k">Key idea</span><p><b>Overflow</b>: the result is too <b>large</b> to fit the bits available. <b>Underflow</b>: the result is too <b>small</b> to store, either too negative for the range, or (with fractions) closer to zero than the smallest value that can be represented.</p></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Situation</th><th>Sign of trouble</th></tr>
+   <tr><td class="lbl">Unsigned addition</td><td>A 1 is carried <b>out</b> of the MSB (result &gt; 255 in 8 bits)</td></tr>
+   <tr><td class="lbl">Two's complement addition</td><td>Two positives give a negative, or two negatives give a positive</td></tr>
+   <tr><td class="lbl">Adding a positive and a negative</td><td>Overflow <b>can't</b> happen</td></tr></table></div>
+  <p>The CPU records these in the <b>status register</b>: the <b>carry flag</b> (C) for a carry out of the MSB and the <b>overflow flag</b> (V) for signed overflow, so a program can detect them.</p>
+  <div class="callout warnbox"><span class="k">Why it matters</span><p>Overflow gives wrong answers silently. A counter can wrap from 255 to 0, or a score from +127 to −128. Programs avoid this by using more bits or checking ranges.</p></div>
+  <pre class="pc py" data-run data-t="Try it: an 8-bit register">reg = 250
+for i in range(8):
+    reg = (reg + 1) % 256        # only 8 bits are kept
+    print(reg)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-2-shifts">
+<div class="theory airy">
+ <section>
+  <h2>Shifts</h2>
+  <p class="lede">A shift moves every bit left or right by a number of places. Shifts are among the fastest operations an ALU does, so they're used for quick multiplying and dividing by powers of 2.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Shift</th><th>What happens</th><th>Example</th></tr>
+   <tr><td class="lbl">Logical left</td><td>Bits move left; 0s fill on the right. × 2 per place</td><td class="mono">0001 0110 → 0101 1000 (22 → 88)</td></tr>
+   <tr><td class="lbl">Logical right</td><td>Bits move right; 0s fill on the left. ÷ 2 per place (rounding down) for unsigned numbers</td><td class="mono">0110 1100 → 0000 1101 (108 → 13)</td></tr>
+   <tr><td class="lbl">Arithmetic right</td><td>Bits move right; the <b>sign bit is copied</b> in on the left, so signed numbers keep their sign</td><td class="mono">1110 0000 → 1111 1000 (−32 → −8)</td></tr></table></div>
+  <div class="callout warnbox"><span class="k">Watch out</span><p>Bits shifted off the end are <b>lost</b>. Shifting left can lose 1s off the top (overflow); shifting right loses any remainder.</p></div>
+ </section>
+ <section>
+  <h2>Bit masks</h2>
+  <p>A <b>mask</b> is a bit pattern combined with a value to pick out or change particular bits. This is how programs read and set individual flags in a status byte.</p>
+  <div class="ccards">
+   <div class="keypts"><h3>AND: clear or check</h3><p class="mono">1100 1010<br>AND 0000 1111<br>= 0000 1010</p><p>Mask 1 keeps a bit; mask 0 clears it. To <b>check</b> one bit, AND with a mask with just that bit set: a non-zero result means it was 1.</p></div>
+   <div class="keypts"><h3>OR: set</h3><p class="mono">1100 1010<br>OR 0000 0101<br>= 1100 1111</p><p>Mask 1 <b>sets</b> a bit to 1; mask 0 leaves it alone.</p></div>
+   <div class="keypts"><h3>XOR: toggle</h3><p class="mono">1100 1010<br>XOR 1111 0000<br>= 0011 1010</p><p>Mask 1 <b>flips</b> a bit; mask 0 leaves it alone.</p></div>
+  </div>
+  <h3>In Python</h3>
+  <p>Python's bitwise operators are <span class="mono">&amp;</span> (AND), <span class="mono">|</span> (OR), <span class="mono">^</span> (XOR), <span class="mono">&lt;&lt;</span> and <span class="mono">&gt;&gt;</span>. On negative integers, <span class="mono">&gt;&gt;</span> is an arithmetic shift.</p>
+  <pre class="pc py" data-run data-t="Try it: masks on a status byte">status = 0b1100_1010
+print(format(status & 0b0000_1111, "08b"))   # keep the low nibble
+print(format(status | 0b0000_0101, "08b"))   # set bits 0 and 2
+print(format(status ^ 0b1111_0000, "08b"))   # flip the high nibble
+if status & 0b0000_1000:                     # check bit 3
+    print("bit 3 is set")
+print(22 << 2, 108 >> 3, -32 >> 2)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a2-3-encoding">
+<div class="theory airy">
+ <section>
+  <h2>Characters as numbers</h2>
+  <p class="lede">To store text, every character is given a number, its <b>code</b>. A <b>character set</b> is the agreed list of characters and their codes. Sender and receiver must use the same one, or the text comes out as nonsense.</p>
+  <h3>ASCII</h3>
+  <p><b>ASCII</b> uses <b>7 bits</b>, so it has 2<sup>7</sup> = <b>128</b> codes: English capital and small letters, digits, punctuation and <b>control characters</b> such as line feed (10). Codes are in order, so 'A' = 65, 'B' = 66…, and 'a' = 97. Small letters are 32 more than capitals, and the digits '0' to '9' are 48 to 57.</p>
+  <h3>Extended ASCII</h3>
+  <p><b>Extended ASCII</b> uses all <b>8 bits</b> for 256 codes. The first 128 are ordinary ASCII; the other 128 depend on the <b>code page</b> (e.g. Western European accents or Cyrillic), so a file written with one code page can display wrongly with another.</p>
+ </section>
+ <section>
+  <h2>Unicode and UTF-8</h2>
+  <p><b>Unicode</b> gives every character in every writing system, plus symbols and emoji, its own <b>code point</b>, written in hex like U+0041 ('A') or U+20AC ('€'). There are over a million possible code points.</p>
+  <p><b>UTF-8</b> is the most common way of storing Unicode. It's <b>variable length</b>: 1 byte for ASCII characters (with the same codes as ASCII), and 2, 3 or 4 bytes for others.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>ASCII / extended ASCII</th><th>Unicode (UTF-8)</th></tr>
+   <tr><td class="lbl">Characters</td><td>128 / 256</td><td>Over a million possible</td></tr>
+   <tr><td class="lbl">Languages</td><td>English (plus one more set of symbols)</td><td>Every writing system, plus emoji</td></tr>
+   <tr><td class="lbl">Storage</td><td>1 byte per character</td><td>1 to 4 bytes per character</td></tr>
+   <tr><td class="lbl">Benefits</td><td>Simple; compact</td><td>One worldwide standard; UTF-8 is backwards compatible with ASCII</td></tr>
+   <tr><td class="lbl">Drawbacks</td><td>Can't represent most languages; code pages clash</td><td>Non-English text needs more bytes; processing variable-length characters is harder</td></tr></table></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>Comparing strings compares the codes, so 'Z' &lt; 'a' and '9' &lt; 'A' are both true. That's why sorting can put capitals before small letters.</p></div>
+  <pre class="pc py" data-run data-t="Try it: codes and bytes">print(ord("A"), ord("a"), ord("0"))
+print(chr(72) + chr(105))
+for ch in ["A", "é", "€", "😀"]:
+    print(ch, hex(ord(ch)), len(ch.encode("utf-8")), "bytes")</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-1-components">
+<div class="theory airy">
+ <section>
+  <h2>The hardware of a network</h2>
+  <p class="lede">A network needs hardware to connect each device, to move data around the local network, to reach other networks, and to keep unwanted traffic out.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 680 290" role="img" aria-label="A home network: laptops and a phone connect wirelessly to the access point, desktops connect by cable to the switch, all inside a home router that also contains a firewall, router and modem leading to the ISP and internet">
+   <rect x="170" y="40" width="340" height="200" rx="16" class="b3"/><text x="340" y="64" class="t c">Home router</text>
+   <rect x="190" y="80" width="140" height="44" rx="8" class="b"/><text x="260" y="107" class="c">Switch</text>
+   <rect x="190" y="140" width="140" height="44" rx="8" class="b"/><text x="260" y="167" class="c">Wireless AP</text>
+   <rect x="350" y="80" width="140" height="44" rx="8" class="bw"/><text x="420" y="107" class="c">Firewall</text>
+   <rect x="350" y="140" width="140" height="44" rx="8" class="b"/><text x="420" y="167" class="c">Router</text>
+   <rect x="350" y="192" width="140" height="36" rx="8" class="b"/><text x="420" y="215" class="c">Modem</text>
+   <rect x="20" y="70" width="100" height="40" rx="8" class="bi"/><text x="70" y="95" class="s c">Desktop (NIC)</text>
+   <rect x="20" y="130" width="100" height="40" rx="8" class="bi"/><text x="70" y="155" class="s c">Laptop</text>
+   <rect x="20" y="190" width="100" height="40" rx="8" class="bi"/><text x="70" y="215" class="s c">Phone</text>
+   <line x1="120" y1="90" x2="188" y2="100" class="l"/><text x="150" y="85" class="s c">copper</text>
+   <path d="M120 150 L188 160" class="ld"/><path d="M120 210 L188 170" class="ld"/><text x="152" y="200" class="s c">radio</text>
+   <rect x="560" y="120" width="105" height="64" rx="30" class="bg"/><text x="612" y="148" class="s c">ISP and</text><text x="612" y="166" class="s c">internet</text>
+   <line x1="490" y1="210" x2="558" y2="165" class="li"/><text x="540" y="222" class="ti s c">line / fibre</text>
+  </svg><figcaption>A home router is several network devices in one box.</figcaption></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Component</th><th>Purpose</th></tr>
+   <tr><td class="lbl">NIC</td><td>Connects one device to the network, wired or wireless. Each has a unique <b>MAC address</b>.</td></tr>
+   <tr><td class="lbl">Switch</td><td>Connects devices on a <b>local</b> network. It learns which MAC address is on which port and sends each frame <b>only</b> to its destination.</td></tr>
+   <tr><td class="lbl">Router</td><td>Connects <b>different networks</b> and forwards packets towards their destination using <b>IP addresses</b>.</td></tr>
+   <tr><td class="lbl">Modem</td><td><b>Modulates and demodulates</b>: converts between the computer's digital data and the signal used on the line to the internet service provider.</td></tr>
+   <tr><td class="lbl">Wireless access point</td><td>Lets wireless devices join a wired network using radio waves.</td></tr>
+   <tr><td class="lbl">Home router</td><td>A router, switch, wireless access point, modem and firewall combined in one device.</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Transmission media</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Copper cable</th><th>Fibre-optic cable</th><th>Wireless</th></tr>
+   <tr><td class="lbl">Signal</td><td>Electricity</td><td>Pulses of light</td><td>Radio waves</td></tr>
+   <tr><td class="lbl">Bandwidth</td><td>Good</td><td>Very high</td><td>Lower; shared between devices</td></tr>
+   <tr><td class="lbl">Range</td><td>Up to about 100 m</td><td>Many kilometres</td><td>Tens of metres; reduced by walls</td></tr>
+   <tr><td class="lbl">Interference</td><td>Electrical interference possible</td><td>None from electrical sources</td><td>Other networks, devices, walls</td></tr>
+   <tr><td class="lbl">Cost and fitting</td><td>Cheap, easy to fit</td><td>Expensive; fragile</td><td>No cables; devices can move</td></tr>
+   <tr><td class="lbl">Security</td><td>Must physically connect</td><td>Very hard to tap</td><td>Signal can be picked up by anyone in range, so it must be encrypted</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Firewalls</h2>
+  <p>A <b>firewall</b> checks traffic coming into and going out of a network against a set of <b>rules</b> (allowed addresses, ports and protocols) and blocks anything that breaks them.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Hardware firewall</h3><p>A separate device (or part of the router) between the network and the internet. It protects <b>every device</b> on the network and doesn't use their processing power.</p></div>
+   <div class="keypts"><h3>Software firewall</h3><p>A program on one computer. It protects <b>that device</b>, even on other networks, and can control which applications may use the network.</p></div>
+  </div>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-1-performance">
+<div class="theory airy">
+ <section>
+  <h2>How fast is a network?</h2>
+  <p class="lede">"Speed" means several different things. To compare connections, you need to know which one is being measured.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Term</th><th>Meaning</th><th>Unit</th></tr>
+   <tr><td class="lbl">Bandwidth</td><td>The <b>maximum</b> amount of data a connection can carry each second</td><td>bps, Mbps, Gbps</td></tr>
+   <tr><td class="lbl">Transfer rate</td><td>The amount of data <b>actually</b> transferred each second</td><td>bps, Mbps</td></tr>
+   <tr><td class="lbl">Latency</td><td>The <b>delay</b> between sending data and it arriving</td><td>milliseconds (ms)</td></tr>
+   <tr><td class="lbl">Range</td><td>How far the signal travels before it's too weak to use</td><td>metres, km</td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><p>Bandwidth is like the number of lanes on a motorway; latency is how long the journey takes. A connection can have high bandwidth and high latency (e.g. satellite), which is fine for downloads but bad for video calls and games.</p></div>
+  <p>The transfer rate is usually below the bandwidth because of <b>congestion</b> (other users), <b>interference</b>, <b>distance</b>, and extra data such as packet headers and error checking.</p>
+ </section>
+ <section>
+  <h2>Transfer time calculations</h2>
+  <div class="callout tip"><span class="k">Expression</span><p><b>time (s) = file size (bits) ÷ transfer rate (bits per second)</b><br>Rearranged: size = rate × time, and rate = size ÷ time.</p></div>
+  <h3>Worked example</h3>
+  <p>A 25 MB video is sent at 40 Mbps. How long does it take? (1 MB = 1,000,000 bytes)</p>
+  <p class="stepline"><b>Step 1</b><span>Convert the size to bits: 25 MB × 8 = 200 Mb (200,000,000 bits).</span></p>
+  <p class="stepline"><b>Step 2</b><span>Divide by the rate: 200 ÷ 40 = <b>5 seconds</b>.</span></p>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>File sizes are in <b>bytes</b>; transfer rates are in <b>bits</b>. Always multiply the file size by 8 first. Also check whether the question uses 1000 or 1024 for its prefixes.</p></div>
+  <pre class="pc py" data-run data-t="Try it: transfer time">def transfer_time(size_mb, rate_mbps):
+    bits = size_mb * 1_000_000 * 8
+    return bits / (rate_mbps * 1_000_000)
+
+print(transfer_time(25, 40), "seconds")
+print(transfer_time(4000, 100) / 60, "minutes for a 4 GB film")</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-1-addressing">
+<div class="theory airy">
+ <section>
+  <h2>Two kinds of address</h2>
+  <p class="lede">Every device on a network has a <b>MAC address</b>, fixed in its hardware, and an <b>IP address</b>, given to it by the network it joins.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>MAC address</th><th>IPv4 address</th><th>IPv6 address</th></tr>
+   <tr><td class="lbl">Size</td><td>48 bits</td><td>32 bits</td><td>128 bits</td></tr>
+   <tr><td class="lbl">Written as</td><td>6 pairs of hex digits<br><span class="mono">3C:22:FB:9A:01:7E</span></td><td>4 denary numbers, 0–255<br><span class="mono">192.168.1.20</span></td><td>8 groups of 4 hex digits<br><span class="mono">2001:0db8:85a3:0000:0000:8a2e:0370:7334</span></td></tr>
+   <tr><td class="lbl">Set by</td><td>The manufacturer</td><td colspan="2">The network (often automatically, by a DHCP server)</td></tr>
+   <tr><td class="lbl">Changes?</td><td>Normally fixed</td><td colspan="2">Can change when the device moves network</td></tr>
+   <tr><td class="lbl">Used for</td><td>Delivering frames <b>within</b> a local network</td><td colspan="2">Routing packets <b>between</b> networks</td></tr></table></div>
+  <p>IPv4 has 2<sup>32</sup> ≈ 4.3 billion addresses, which isn't enough for every device in the world. <b>IPv6</b>, with 2<sup>128</sup> addresses, solves that. IPv6 addresses can be shortened: leading zeros in a group can be left out, and one run of all-zero groups can be written as <span class="mono">::</span>.</p>
+ </section>
+ <section>
+  <h2>Network and host parts</h2>
+  <p>An IP address has two parts: the <b>network address</b>, shared by every device on that network, and the <b>host address</b>, which identifies one device. A <b>subnet mask</b> shows where the split is: 1s mark network bits, 0s mark host bits.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>IP address</th><td>192</td><td>168</td><td>1</td><td>20</td></tr><tr><th>Subnet mask</th><td>255</td><td>255</td><td>255</td><td>0</td></tr><tr><th>IP AND mask</th><td><b>192</b></td><td><b>168</b></td><td><b>1</b></td><td><b>0</b></td></tr></table></div>
+  <p>ANDing the address with the mask gives the <b>network address</b>: 192.168.1.0. Two devices are on the same network if they give the same result. The mask 255.255.255.0 has 24 network bits, so it is often written <span class="mono">/24</span>, leaving 8 host bits.</p>
+  <div class="callout tip"><span class="k">How many hosts?</span><p>With h host bits there are 2<sup>h</sup> addresses. Two are reserved (the network address itself, and the broadcast address with all host bits 1), so 2<sup>h</sup> − 2 devices: 254 on a /24 network.</p></div>
+  <pre class="pc py" data-run data-t="Try it: find the network address">ip = "10.1.4.77"
+mask = "255.255.0.0"
+ip_parts = [int(p) for p in ip.split(".")]
+mask_parts = [int(p) for p in mask.split(".")]
+network = [str(a & m) for a, m in zip(ip_parts, mask_parts)]
+print(".".join(network))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-2-keys">
+<div class="theory airy">
+ <section>
+  <h2>Why encrypt?</h2>
+  <p class="lede">Data sent across a network passes through equipment that belongs to other people, and Wi-Fi can be picked up by anyone in range. Laptops and phones get lost. <b>Encryption</b> scrambles data so that, if it's intercepted or stolen, it can't be understood without the right <b>key</b>.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>Intercepted or stolen data is unreadable.</li><li>Keeps personal data, passwords and payments confidential.</li><li>Helps organisations meet data protection laws.</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>It does <b>not</b> stop data being intercepted, deleted or changed.</li><li>Lose the key and the data is lost too.</li><li>Encrypting and decrypting take processing time.</li><li>Criminals can use it too, e.g. ransomware.</li></ul></div>
+  </div>
+  <p><b>Plaintext</b> goes into the encryption algorithm with a key and comes out as <b>ciphertext</b>. Decryption reverses it.</p>
+ </section>
+ <section>
+  <h2>Symmetric encryption</h2>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 140" role="img" aria-label="Symmetric: plaintext is encrypted with the shared key, sent as ciphertext, and decrypted with the same shared key">
+   <defs><marker id="syA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="10" y="50" width="100" height="40" rx="8" class="b"/><text x="60" y="75" class="s c">plaintext</text>
+   <rect x="150" y="50" width="100" height="40" rx="8" class="b2"/><text x="200" y="75" class="s c">encrypt</text>
+   <rect x="290" y="50" width="100" height="40" rx="8" class="bw"/><text x="340" y="75" class="s c">ciphertext</text>
+   <rect x="430" y="50" width="100" height="40" rx="8" class="b2"/><text x="480" y="75" class="s c">decrypt</text>
+   <rect x="565" y="50" width="70" height="40" rx="8" class="b"/><text x="600" y="75" class="s c">plaintext</text>
+   <line x1="110" y1="70" x2="146" y2="70" class="l" marker-end="url(#syA)"/><line x1="250" y1="70" x2="286" y2="70" class="l" marker-end="url(#syA)"/><line x1="390" y1="70" x2="426" y2="70" class="l" marker-end="url(#syA)"/><line x1="530" y1="70" x2="561" y2="70" class="l" marker-end="url(#syA)"/>
+   <text x="200" y="30" class="ta s c">🔑 shared key</text><text x="480" y="30" class="ta s c">🔑 same shared key</text>
+   <line x1="200" y1="36" x2="200" y2="48" class="la"/><line x1="480" y1="36" x2="480" y2="48" class="la"/>
+  </svg></figure>
+  <p>The <b>same key</b> encrypts and decrypts. It's fast, but there's a catch: both sides must have the key <b>before</b> they can communicate securely. Sending the key across the network in the open would let an eavesdropper read everything. This is the <b>key exchange</b> problem.</p>
+ </section>
+ <section>
+  <h2>Asymmetric encryption</h2>
+  <p>Each person has a <b>key pair</b>. The <b>public key</b> is shared with anyone; the <b>private key</b> is kept secret. Data encrypted with someone's public key can <b>only</b> be decrypted with their private key.</p>
+  <p class="stepline"><b>1</b><span>Ben publishes his public key.</span></p>
+  <p class="stepline"><b>2</b><span>Ana encrypts her message with <b>Ben's public key</b> and sends it.</span></p>
+  <p class="stepline"><b>3</b><span>Only <b>Ben's private key</b> can decrypt it. Anyone who intercepts it, even with the public key, can't read it.</span></p>
+  <div class="callout"><span class="k">Key idea</span><p>No secret ever has to be sent, so key exchange is solved. But asymmetric encryption is much <b>slower</b>, so secure websites use it only to agree a <b>symmetric</b> key, then switch to fast symmetric encryption for the rest of the session.</p></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>You encrypt with the <b>receiver's public</b> key, not your own private key.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a3-2-ciphers">
+<div class="theory airy">
+ <section>
+  <h2>Monoalphabetic substitution</h2>
+  <p class="lede">In a <b>monoalphabetic substitution cipher</b>, every letter is replaced by another letter, and the replacement for each letter is always the same. The key is the mixed-up alphabet.</p>
+  <div class="tscroll"><table class="pvt mono subtab"><tr><th>Plain</th><td>A</td><td>B</td><td>C</td><td>D</td><td>E</td><td>F</td><td>G</td><td>H</td><td>I</td><td>J</td><td>K</td><td>L</td><td>M</td><td>N</td><td>O</td><td>P</td><td>Q</td><td>R</td><td>S</td><td>T</td><td>U</td><td>V</td><td>W</td><td>X</td><td>Y</td><td>Z</td></tr>
+   <tr><th>Cipher</th><td><b>Q</b></td><td><b>W</b></td><td><b>E</b></td><td><b>R</b></td><td><b>T</b></td><td><b>Y</b></td><td><b>U</b></td><td><b>I</b></td><td><b>O</b></td><td><b>P</b></td><td><b>A</b></td><td><b>S</b></td><td><b>D</b></td><td><b>F</b></td><td><b>G</b></td><td><b>H</b></td><td><b>J</b></td><td><b>K</b></td><td><b>L</b></td><td><b>Z</b></td><td><b>X</b></td><td><b>C</b></td><td><b>V</b></td><td><b>B</b></td><td><b>N</b></td><td><b>M</b></td></tr></table></div>
+  <p><b>Encrypt</b>: find each plaintext letter on the top row and write the letter below it. CACHE → <b>EQEIT</b>.<br><b>Decrypt</b>: find each ciphertext letter on the bottom row and write the letter above. LZQEA → <b>STACK</b>.</p>
+  <p>There are 26! (about 4 × 10<sup>26</sup>) possible keys, far too many to try one by one. But the cipher is still easy to break by <b>frequency analysis</b>: E is the most common letter in English, then T, A, O…, so the most common ciphertext letter probably stands for E.</p>
+ </section>
+ <section>
+  <h2>The Vernam cipher</h2>
+  <p>The <b>Vernam cipher</b> XORs each bit of the plaintext with the matching bit of a key called a <b>one-time pad</b>.</p>
+  <div class="facts3"><div><b>0 XOR 0</b><span>0</span></div><div><b>0 XOR 1 / 1 XOR 0</b><span>1</span></div><div><b>1 XOR 1</b><span>0</span></div></div>
+  <div class="tscroll"><table class="pvt mono"><tr><th></th><td>Character</td><td>Bits</td></tr>
+   <tr><th>Plaintext</th><td>H (72)</td><td>0100 1000</td></tr>
+   <tr><th>Key</th><td></td><td>1101 0110</td></tr>
+   <tr><th>XOR → ciphertext</th><td></td><td><b>1001 1110</b></td></tr>
+   <tr><th>Ciphertext XOR key</th><td><b>H</b></td><td>0100 1000</td></tr></table></div>
+  <p>XOR is its own inverse, so <b>decrypting is the same operation</b>: XOR the ciphertext with the same key and the plaintext comes back.</p>
+  <div class="callout"><span class="k">Key idea</span><h3>Perfect secrecy</h3><p>If the key is <b>truly random</b>, <b>at least as long as the message</b>, <b>kept secret</b> and <b>used only once</b>, every possible plaintext of that length is equally likely, so the ciphertext reveals nothing. It's the only cipher that's mathematically unbreakable.</p></div>
+  <p>The drawback is practical: a key as long as all the data must be shared securely in advance and never reused.</p>
+  <pre class="pc py" data-run data-t="Try it: the Vernam cipher">import random
+message = "CACHE"
+key = [random.randint(0, 255) for _ in message]        # one-time pad
+cipher = [ord(c) ^ k for c, k in zip(message, key)]
+print("cipher:", cipher)
+plain = "".join(chr(c ^ k) for c, k in zip(cipher, key))
+print("decrypted:", plain)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a4-1-erm">
+<div class="theory airy">
+ <section>
+  <h2>Modelling data</h2>
+  <p class="lede">Before a database is built, its designer works out <b>what</b> needs storing and <b>how it's connected</b>. The <b>entity-relationship model</b> describes this using entities, attributes and relationships.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Term</th><th>Meaning</th><th>Example</th></tr>
+   <tr><td class="lbl">Entity</td><td>A thing about which data is stored; becomes a table</td><td>Student, Course</td></tr>
+   <tr><td class="lbl">Attribute</td><td>A property of an entity; becomes a column</td><td>Surname, DateOfBirth</td></tr>
+   <tr><td class="lbl">Primary key</td><td>Uniquely identifies each record</td><td>StudentID</td></tr>
+   <tr><td class="lbl">Foreign key</td><td>A primary key of another table, used to link to it</td><td>CourseID in Enrolment</td></tr>
+   <tr><td class="lbl">Composite key</td><td>A primary key made of two or more attributes together</td><td>(StudentID, CourseID)</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Relationships and ERDs</h2>
+  <p>In an <b>entity-relationship diagram</b>, each entity is a rectangle and each relationship a line. A <b>crow's foot</b> marks the "many" end.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 250" role="img" aria-label="ERD symbols: one-to-one is a plain line, one-to-many has a crow's foot at the many end, many-to-many has crow's feet at both ends">
+   <g><rect x="20" y="20" width="130" height="44" rx="4" class="b"/><text x="85" y="47" class="c">Country</text>
+   <rect x="300" y="20" width="130" height="44" rx="4" class="b"/><text x="365" y="47" class="c">Capital</text>
+   <line x1="150" y1="42" x2="300" y2="42" class="l"/><text x="500" y="47" class="t">one-to-one (1:1)</text></g>
+   <g><rect x="20" y="100" width="130" height="44" rx="4" class="b"/><text x="85" y="127" class="c">Customer</text>
+   <rect x="300" y="100" width="130" height="44" rx="4" class="b"/><text x="365" y="127" class="c">Order</text>
+   <line x1="150" y1="122" x2="300" y2="122" class="l"/><path d="M280 122 L300 110 M280 122 L300 134" class="l"/><text x="500" y="127" class="t">one-to-many (1:M)</text></g>
+   <g><rect x="20" y="180" width="130" height="44" rx="4" class="b"/><text x="85" y="207" class="c">Student</text>
+   <rect x="300" y="180" width="130" height="44" rx="4" class="b"/><text x="365" y="207" class="c">Course</text>
+   <line x1="150" y1="202" x2="300" y2="202" class="l"/><path d="M280 202 L300 190 M280 202 L300 214 M170 202 L150 190 M170 202 L150 214" class="l"/><text x="500" y="207" class="t">many-to-many (M:M)</text></g>
+  </svg><figcaption>Read each line both ways: one customer places many orders; each order belongs to one customer.</figcaption></figure>
+  <h3>Resolving many-to-many</h3>
+  <p>A relational database can't store an M:M relationship directly. Instead, a <b>link entity</b> is added between the two, with a <b>one-to-many</b> relationship from each side. Its primary key is usually a <b>composite key</b> of the two foreign keys.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 90" role="img" aria-label="Student one-to-many Enrolment many-to-one Course">
+   <rect x="20" y="22" width="130" height="44" rx="4" class="b"/><text x="85" y="49" class="c">Student</text>
+   <rect x="245" y="22" width="130" height="44" rx="4" class="bw"/><text x="310" y="49" class="c">Enrolment</text>
+   <rect x="470" y="22" width="130" height="44" rx="4" class="b"/><text x="535" y="49" class="c">Course</text>
+   <line x1="150" y1="44" x2="245" y2="44" class="l"/><path d="M225 44 L245 32 M225 44 L245 56" class="l"/>
+   <line x1="375" y1="44" x2="470" y2="44" class="l"/><path d="M395 44 L375 32 M395 44 L375 56" class="l"/>
+  </svg></figure>
+  <h3>Parenthetical notation</h3>
+  <p>Each entity is written as its name followed by its attributes in brackets. The primary key is <b>underlined</b>; foreign keys are marked, here with an asterisk.</p>
+  <div class="rtn">Student(<u>StudentID</u>, FirstName, Surname, DateOfBirth)<br>Course(<u>CourseID</u>, Title, Teacher)<br>Enrolment(<u>StudentID*</u>, <u>CourseID*</u>, DateJoined)</div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>The <b>foreign key always goes on the "many" side</b> of a 1:M relationship. Each order stores one CustomerID; a customer can't store a list of order numbers in one field.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a4-1-schema">
+<div class="theory airy">
+ <section>
+  <h2>The logical schema</h2>
+  <p class="lede">A <b>logical schema</b> describes how a database is organised: its tables, the attributes in each, their data types, the keys and the rules (constraints) the data must follow.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Formal term</th><th>Everyday term</th><th>Meaning</th></tr>
+   <tr><td class="lbl">Relation</td><td>Table</td><td>A set of records about one entity</td></tr>
+   <tr><td class="lbl">Tuple</td><td>Row / record</td><td>The data about one instance, e.g. one student</td></tr>
+   <tr><td class="lbl">Attribute</td><td>Column / field</td><td>One property, stored for every record</td></tr></table></div>
+  <div class="tscroll"><table class="pvt"><tr><th>StudentID</th><th>Surname</th><th>DateOfBirth</th><th>Mark</th><th>Boarder</th></tr>
+   <tr><td>S1041</td><td>Okafor</td><td>2009-03-14</td><td>72</td><td>True</td></tr>
+   <tr><td>S1042</td><td>Lindqvist</td><td>2008-11-02</td><td>65</td><td>False</td></tr></table></div>
+  <p>Each attribute has a <b>data type</b>: text (StudentID, Surname), date (DateOfBirth), integer (Mark), Boolean (Boarder), or real for values with decimals such as prices. Phone numbers are text: they can start with 0 and are never used in arithmetic.</p>
+ </section>
+ <section>
+  <h2>Integrity constraints</h2>
+  <p>Constraints stop bad data getting in, so the database stays <b>accurate and consistent</b>.</p>
+  <div class="ccards">
+   <div class="keypts"><h3>Entity integrity</h3><p>Every table has a primary key, and every primary key value is <b>unique</b> and <b>not null</b>.</p><p class="vfoot">Broken by: two students with ID S1041.</p></div>
+   <div class="keypts"><h3>Referential integrity</h3><p>Every foreign key value <b>matches a primary key</b> that exists in the linked table.</p><p class="vfoot">Broken by: an enrolment for course C99 that doesn't exist.</p></div>
+   <div class="keypts"><h3>Domain integrity</h3><p>Every value is the <b>right data type</b> and within the <b>allowed range or set</b>.</p><p class="vfoot">Broken by: a Mark of 140 when marks are 0–100.</p></div>
+  </div>
+  <div class="callout"><span class="k">Why use several tables?</span><p>Splitting data into linked tables means each fact is stored <b>once</b>. With one big table, a teacher's name might be typed in hundreds of rows; change it in one and miss another, and the data becomes <b>inconsistent</b>.</p></div>
+  <p class="vfoot">In Unit 2 you'll build and query these tables with SQLite from Python.</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a4-2-lists">
+<div class="theory airy">
+ <section>
+  <h2>Arrays and lists</h2>
+  <p class="lede">A <b>data structure</b> groups related data under one name. The simplest is an <b>array</b>: an ordered collection of items of the <b>same type</b>, each reached by its <b>index</b>.</p>
+  <p>Python doesn't have a separate array type for this course, so a <b>list</b> holding one type of data is used as an array. Indexes start at <b>0</b>, and negative indexes count from the end.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Index</th><td>0</td><td>1</td><td>2</td><td>3</td></tr><tr><th>temps</th><td>14</td><td>17</td><td>12</td><td>19</td></tr><tr><th>Negative index</th><td>−4</td><td>−3</td><td>−2</td><td>−1</td></tr></table></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operation</th><th>Python</th><th>Effect on [14, 17, 12, 19]</th></tr>
+   <tr><td class="lbl">Retrieve</td><td class="mono">temps[2]</td><td>12</td></tr>
+   <tr><td class="lbl">Update</td><td class="mono">temps[0] = 15</td><td>[15, 17, 12, 19]</td></tr>
+   <tr><td class="lbl">Insert at end</td><td class="mono">temps.append(20)</td><td>[14, 17, 12, 19, 20]</td></tr>
+   <tr><td class="lbl">Insert at position</td><td class="mono">temps.insert(1, 9)</td><td>[14, 9, 17, 12, 19]</td></tr>
+   <tr><td class="lbl">Delete by position</td><td class="mono">del temps[1]</td><td>[14, 12, 19]</td></tr>
+   <tr><td class="lbl">Remove last</td><td class="mono">temps.pop()</td><td>returns 19; [14, 17, 12]</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Two-dimensional arrays</h2>
+  <p>A <b>2D array</b> is an array of arrays, like a table. The first index chooses the <b>row</b>, the second the <b>column</b>: <span class="mono">grid[row][col]</span>.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th></th><th>col 0</th><th>col 1</th><th>col 2</th></tr><tr><th>row 0</th><td>3</td><td>1</td><td>4</td></tr><tr><th>row 1</th><td>1</td><td>5</td><td><b>9</b></td></tr></table></div>
+  <p><span class="mono">grid[1][2]</span> is 9. Every row has the same length; the course doesn't use "ragged" lists.</p>
+ </section>
+ <section>
+  <h2>Records</h2>
+  <p>A <b>record</b> groups related fields that can be <b>different types</b>, such as a student's name, age and whether they board. In Python, a record is a list of mixed values, and a table of records is a list of these lists.</p>
+  <pre class="pc py" data-run data-t="Try it: traverse records">students = [["Ana", 17, True],
+            ["Ben", 16, False],
+            ["Cai", 18, True]]
+for record in students:            # traverse every record
+    if record[2]:                  # field 2: boarder?
+        print(record[0], "is a boarder aged", record[1])</pre>
+  <div class="callout tip"><span class="k">Exam tip</span><p>When you trace code on a list, draw the list with its indexes and update it after each line. Off-by-one mistakes (using index 10 in a list of 10) cause <b>IndexError</b>.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a4-2-collections">
+<div class="theory airy">
+ <section>
+  <h2>Dictionaries</h2>
+  <p class="lede">A <b>dictionary</b> stores <b>key: value</b> pairs. Instead of a numbered position, each value is found by its <b>unique key</b>, which makes look-ups fast and code readable.</p>
+  <pre class="pc py" data-run data-t="Try it: a dictionary">stock = {"pen": 12, "ruler": 5}
+stock["rubber"] = 8                # insert
+stock["pen"] = stock["pen"] - 2    # update
+del stock["ruler"]                 # delete
+print(stock.get("glue", 0))        # retrieve, with a default
+for item, qty in stock.items():    # traverse
+    print(item, qty)</pre>
+  <p>Looking up a key that doesn't exist with <span class="mono">d[key]</span> raises a <b>KeyError</b>; <span class="mono">d.get(key, default)</span> returns the default instead.</p>
+ </section>
+ <section>
+  <h2>Tuples</h2>
+  <p>A <b>tuple</b> is an ordered collection like a list, but <b>immutable</b>: once made, its items can't be changed, added or removed. Trying raises a <b>TypeError</b>. Use a tuple for data that should stay fixed, such as a coordinate <span class="mono">(3, 4)</span> or an RGB colour. A tuple with one item needs a comma: <span class="mono">(5,)</span>.</p>
+ </section>
+ <section>
+  <h2>Sets</h2>
+  <p>A <b>set</b> is an <b>unordered</b> collection with <b>no duplicates</b>. Adding an item that's already there does nothing. Sets are ideal for membership tests (<span class="mono">x in s</span>) and for comparing groups.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operation</th><th>Operator</th><th>{1, 2, 3, 4} with {3, 4, 5}</th></tr>
+   <tr><td class="lbl">Union: in either</td><td class="mono">a | b</td><td>{1, 2, 3, 4, 5}</td></tr>
+   <tr><td class="lbl">Intersection: in both</td><td class="mono">a &amp; b</td><td>{3, 4}</td></tr>
+   <tr><td class="lbl">Difference: in a, not b</td><td class="mono">a - b</td><td>{1, 2}</td></tr>
+   <tr><td class="lbl">Symmetric difference: in one only</td><td class="mono">a ^ b</td><td>{1, 2, 5}</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Choosing a structure</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Structure</th><th>Ordered?</th><th>Changeable?</th><th>Duplicates?</th><th>Good for</th></tr>
+   <tr><td class="lbl">List / array</td><td>Yes</td><td>Yes</td><td>Yes</td><td>Sequences you add to, sort and loop through</td></tr>
+   <tr><td class="lbl">Tuple</td><td>Yes</td><td>No</td><td>Yes</td><td>Fixed groups of values</td></tr>
+   <tr><td class="lbl">Dictionary</td><td>By key</td><td>Yes</td><td>Keys unique</td><td>Looking values up by name</td></tr>
+   <tr><td class="lbl">Set</td><td>No</td><td>Yes</td><td>No</td><td>Membership and comparing groups</td></tr></table></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a4-3-stacks">
+<div class="theory airy">
+ <section>
+  <h2>Abstract data types</h2>
+  <p class="lede">An <b>abstract data type</b> is defined by <b>what you can do with it</b>, not how it's built. Stacks and queues are both ADTs: the same operations could be built with a list, an array or a linked list.</p>
+ </section>
+ <section>
+  <h2>The stack</h2>
+  <p>A <b>stack</b> is <b>last in, first out (LIFO)</b>. Items are added and removed at one end only, the <b>top</b>, like a pile of plates.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 220" role="img" aria-label="A stack before and after push(7) and pop(): the top pointer moves up on push and down on pop">
+   <g><text x="90" y="20" class="t c">start</text>
+   <rect x="50" y="150" width="80" height="34" class="bi"/><text x="90" y="172" class="m c">4</text>
+   <rect x="50" y="116" width="80" height="34" class="bi"/><text x="90" y="138" class="m c">9</text>
+   <rect x="50" y="82" width="80" height="34" class="b"/><rect x="50" y="48" width="80" height="34" class="b"/>
+   <text x="140" y="138" class="ta s">← top</text></g>
+   <g><text x="310" y="20" class="t c">push(7)</text>
+   <rect x="270" y="150" width="80" height="34" class="bi"/><text x="310" y="172" class="m c">4</text>
+   <rect x="270" y="116" width="80" height="34" class="bi"/><text x="310" y="138" class="m c">9</text>
+   <rect x="270" y="82" width="80" height="34" class="bw"/><text x="310" y="104" class="m c">7</text><rect x="270" y="48" width="80" height="34" class="b"/>
+   <text x="360" y="104" class="ta s">← top</text></g>
+   <g><text x="530" y="20" class="t c">pop() → 7</text>
+   <rect x="490" y="150" width="80" height="34" class="bi"/><text x="530" y="172" class="m c">4</text>
+   <rect x="490" y="116" width="80" height="34" class="bi"/><text x="530" y="138" class="m c">9</text>
+   <rect x="490" y="82" width="80" height="34" class="b"/><rect x="490" y="48" width="80" height="34" class="b"/>
+   <text x="580" y="138" class="ta s">← top</text></g>
+   <text x="310" y="210" class="s c">a stack of size 4, built in a fixed-length list</text>
+  </svg></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operation</th><th>What it does</th></tr>
+   <tr><td class="lbl">push(item)</td><td>If the stack isn't full, add 1 to the top pointer and store the item there. Otherwise: <b>stack overflow</b>.</td></tr>
+   <tr><td class="lbl">pop()</td><td>If the stack isn't empty, return the item at the top and subtract 1 from the top pointer. Otherwise: <b>stack underflow</b>.</td></tr>
+   <tr><td class="lbl">peek()</td><td>Return the top item without removing it.</td></tr>
+   <tr><td class="lbl">isEmpty() / isFull()</td><td>Check before popping / pushing.</td></tr>
+   <tr><td class="lbl">Search</td><td>Look at each item from the top down to the bottom.</td></tr></table></div>
+  <p>Uses: the <b>call stack</b> (return addresses and stack frames), <b>undo</b> in an editor, the back button in a browser, reversing data, and checking brackets match.</p>
+  <pre class="pc py" data-run data-t="Try it: a stack in a fixed-length list">SIZE = 4
+stack = [None] * SIZE
+top = -1                        # -1 means empty
+
+def push(item):
+    global top
+    if top == SIZE - 1:
+        print("Stack overflow")
+    else:
+        top = top + 1
+        stack[top] = item
+
+def pop():
+    global top
+    if top == -1:
+        print("Stack underflow")
+        return None
+    item = stack[top]
+    top = top - 1
+    return item
+
+push(4); push(9); push(7)
+print(pop(), pop())
+print("top is now", top)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a4-3-queues">
+<div class="theory airy">
+ <section>
+  <h2>The queue</h2>
+  <p class="lede">A <b>queue</b> is <b>first in, first out (FIFO)</b>. Items join at the <b>rear</b> and leave from the <b>front</b>, like people waiting at a till.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operation</th><th>What it does</th></tr>
+   <tr><td class="lbl">enqueue(item)</td><td>If the queue isn't full, move the rear pointer on and store the item there.</td></tr>
+   <tr><td class="lbl">dequeue()</td><td>If the queue isn't empty, return the item at the front and move the front pointer on.</td></tr>
+   <tr><td class="lbl">isEmpty() / isFull() / size()</td><td>Check the state of the queue.</td></tr>
+   <tr><td class="lbl">Search</td><td>Look at each item from the front to the rear.</td></tr></table></div>
+  <h3>Tracing a queue</h3>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Operation</th><th>[0]</th><th>[1]</th><th>[2]</th><th>[3]</th><th>front</th><th>rear</th><th>returns</th></tr>
+   <tr><td>start</td><td></td><td></td><td></td><td></td><td>0</td><td>−1</td><td></td></tr>
+   <tr><td>enqueue(4)</td><td>4</td><td></td><td></td><td></td><td>0</td><td>0</td><td></td></tr>
+   <tr><td>enqueue(9)</td><td>4</td><td>9</td><td></td><td></td><td>0</td><td>1</td><td></td></tr>
+   <tr><td>dequeue()</td><td>4</td><td>9</td><td></td><td></td><td>1</td><td>1</td><td>4</td></tr>
+   <tr><td>enqueue(2)</td><td>4</td><td>9</td><td>2</td><td></td><td>1</td><td>2</td><td></td></tr></table></div>
+  <p>The 4 is still in the array after it's dequeued, but it's outside the front-to-rear range, so it's no longer part of the queue.</p>
+ </section>
+ <section>
+  <h2>Linear and circular queues</h2>
+  <p>In a <b>linear queue</b> the front pointer only moves forward, so spaces at the start are never reused: the queue can be "full" while half the array is empty. A <b>circular queue</b> fixes this by letting the pointers <b>wrap round</b> to index 0, using <span class="mono">rear = (rear + 1) % SIZE</span>.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 560 120" role="img" aria-label="A circular queue of size 5: after index 4 the rear pointer wraps round to index 0">
+   <defs><marker id="cqA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <g><rect x="80" y="40" width="80" height="40" class="bw"/><text x="120" y="65" class="m c">[0] 6</text>
+   <rect x="160" y="40" width="80" height="40" class="b"/><text x="200" y="65" class="m c">[1]</text>
+   <rect x="240" y="40" width="80" height="40" class="bi"/><text x="280" y="65" class="m c">[2] 3</text>
+   <rect x="320" y="40" width="80" height="40" class="bi"/><text x="360" y="65" class="m c">[3] 8</text>
+   <rect x="400" y="40" width="80" height="40" class="bi"/><text x="440" y="65" class="m c">[4] 5</text></g>
+   <text x="280" y="100" class="ta s c">front</text><text x="120" y="100" class="ta s c">rear</text>
+   <path d="M440 38 C440 0, 120 0, 120 36" class="ld" marker-end="url(#cqA)"/><text x="280" y="16" class="s c">wraps round</text>
+  </svg></figure>
+  <p>Uses: <b>print queues</b>, <b>keyboard buffers</b>, processes waiting for the CPU (round robin), and data packets waiting to be sent: anywhere things must be handled <b>in the order they arrive</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: a circular queue">SIZE = 5
+q = [None] * SIZE
+front, rear, count = 0, -1, 0
+
+def enqueue(item):
+    global rear, count
+    if count == SIZE:
+        print("Queue full")
+        return
+    rear = (rear + 1) % SIZE       # wrap round
+    q[rear] = item
+    count = count + 1
+
+def dequeue():
+    global front, count
+    if count == 0:
+        print("Queue empty")
+        return None
+    item = q[front]
+    front = (front + 1) % SIZE
+    count = count - 1
+    return item
+
+for x in [3, 8, 5, 1, 7]:
+    enqueue(x)
+print(dequeue(), dequeue())
+enqueue(6)
+print(q, "front", front, "rear", rear)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-1-algorithms">
+<div class="theory airy">
+ <section>
+  <h2>What is an algorithm?</h2>
+  <p class="lede">An <b>algorithm</b> is a precise, ordered set of steps that solves a problem. The same algorithm can be written in <b>words</b>, drawn as a <b>flowchart</b>, or written as <b>code</b>. Exam questions ask you to read, complete and correct all three.</p>
+ </section>
+ <section>
+  <h2>Flowcharts</h2>
+  <div class="kpgrid2">
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 300 300" role="img" aria-label="Flowchart symbols: terminator, input/output, process, subprocess, decision">
+   <rect x="20" y="10" width="120" height="40" rx="20" class="b3"/><text x="80" y="35" class="s c">Start / Stop</text><text x="160" y="35" class="s">terminator</text>
+   <path d="M35 70 L145 70 L125 110 L15 110 Z" class="bw"/><text x="80" y="95" class="s c">INPUT x</text><text x="160" y="95" class="s">input / output</text>
+   <rect x="20" y="130" width="120" height="40" class="b"/><text x="80" y="155" class="s c">total ← total + x</text><text x="160" y="155" class="s">process</text>
+   <rect x="20" y="190" width="120" height="40" class="b"/><line x1="32" y1="190" x2="32" y2="230" class="l"/><line x1="128" y1="190" x2="128" y2="230" class="l"/><text x="80" y="215" class="s c">sortList</text><text x="160" y="215" class="s">subprocess</text>
+   <path d="M80 245 L140 270 L80 295 L20 270 Z" class="bi"/><text x="80" y="274" class="s c">x &gt; 0?</text><text x="160" y="274" class="s">decision</text>
+  </svg></figure>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 300 420" role="img" aria-label="Flowchart that inputs numbers until 0 is entered, then outputs the total">
+   <defs><marker id="fcA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="90" y="5" width="110" height="34" rx="17" class="b3"/><text x="145" y="27" class="s c">Start</text>
+   <rect x="80" y="60" width="130" height="34" class="b"/><text x="145" y="82" class="s c">total ← 0</text>
+   <path d="M95 115 L205 115 L190 149 L80 149 Z" class="bw"/><text x="143" y="137" class="s c">INPUT x</text>
+   <path d="M145 170 L205 200 L145 230 L85 200 Z" class="bi"/><text x="145" y="204" class="s c">x = 0?</text>
+   <rect x="80" y="260" width="130" height="34" class="b"/><text x="145" y="282" class="s c">total ← total + x</text>
+   <path d="M225 300 L285 300 L272 334 L212 334 Z" class="bw"/><text x="248" y="322" class="s c">OUTPUT</text>
+   <rect x="215" y="370" width="70" height="34" rx="17" class="b3"/><text x="250" y="392" class="s c">Stop</text>
+   <line x1="145" y1="39" x2="145" y2="56" class="l" marker-end="url(#fcA)"/><line x1="145" y1="94" x2="145" y2="111" class="l" marker-end="url(#fcA)"/><line x1="145" y1="149" x2="145" y2="166" class="l" marker-end="url(#fcA)"/>
+   <line x1="145" y1="230" x2="145" y2="256" class="l" marker-end="url(#fcA)"/><text x="155" y="248" class="s">No</text>
+   <path d="M80 277 L40 277 L40 132 L84 132" class="l" fill="none" marker-end="url(#fcA)"/>
+   <path d="M205 200 L250 200 L250 296" class="l" fill="none" marker-end="url(#fcA)"/><text x="220" y="192" class="s">Yes</text>
+   <line x1="250" y1="334" x2="250" y2="366" class="l" marker-end="url(#fcA)"/>
+  </svg></figure>
+  </div>
+  <p>The flowchart on the right adds numbers until 0 is entered, then outputs the total. The arrow from the process back to the input makes a <b>loop</b>; the decision decides when it ends.</p>
+ </section>
+ <section>
+  <h2>Finding and correcting errors</h2>
+  <p>A <b>logic error</b> lets a program run but produces the wrong result. Common causes:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Error</th><th>Example</th></tr>
+   <tr><td class="lbl">Wrong comparison</td><td><span class="mono">&lt;</span> instead of <span class="mono">&gt;</span>, or <span class="mono">&gt;</span> instead of <span class="mono">&gt;=</span></td></tr>
+   <tr><td class="lbl">Off by one</td><td><span class="mono">range(1, 10)</span> when 10 should be included</td></tr>
+   <tr><td class="lbl">Wrong starting value</td><td>finding a maximum starting from 0 when all values could be negative</td></tr>
+   <tr><td class="lbl">Wrong place</td><td>resetting a total inside the loop instead of before it</td></tr>
+   <tr><td class="lbl">Loop never ends</td><td>a <span class="mono">while</span> condition whose variable never changes</td></tr></table></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>To correct an algorithm, give the <b>line</b> and the <b>corrected code</b>, not just a description of the problem.</p></div>
+ </section>
+ <section>
+  <h2>Efficiency</h2>
+  <p>Two correct algorithms can need very different amounts of <b>time</b> (number of steps) and <b>memory</b>. What matters is how the work <b>grows</b> as the input gets bigger:</p>
+  <div class="facts3"><div><b>Linear</b><span>double the data → double the work (e.g. linear search)</span></div><div><b>Quadratic</b><span>double the data → 4× the work (e.g. bubble sort)</span></div><div><b>Logarithmic</b><span>double the data → one more step (e.g. binary search)</span></div></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-1-trace">
+<div class="theory airy">
+ <section>
+  <h2>Trace tables</h2>
+  <p class="lede">A <b>trace table</b> follows an algorithm line by line, recording each variable whenever it changes. It's how you find out what code does, and where it goes wrong, without a computer: a <b>dry run</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: the code being traced" data-stdin="">n = 4721
+total = 0
+while n &gt; 0:
+    total = total + n % 10
+    n = n // 10
+print(total)</pre>
+  <div class="tscroll"><table class="pvt mono"><tr><th>n</th><th>n &gt; 0?</th><th>n % 10</th><th>total</th><th>output</th></tr>
+   <tr><td>4721</td><td></td><td></td><td>0</td><td></td></tr>
+   <tr><td></td><td>True</td><td>1</td><td>1</td><td></td></tr>
+   <tr><td>472</td><td>True</td><td>2</td><td>3</td><td></td></tr>
+   <tr><td>47</td><td>True</td><td>7</td><td>10</td><td></td></tr>
+   <tr><td>4</td><td>True</td><td>4</td><td>14</td><td></td></tr>
+   <tr><td>0</td><td>False</td><td></td><td></td><td>14</td></tr></table></div>
+  <p>The algorithm adds up the digits of n. <span class="mono">n % 10</span> gives the last digit and <span class="mono">n // 10</span> removes it.</p>
+  <div class="callout tip"><span class="k">How to trace</span><p>Give each variable a column, plus one for conditions and one for output. Move down a row when a value changes. Only write a value when it's <b>assigned</b>; a blank means "unchanged".</p></div>
+ </section>
+ <section>
+  <h2>Useful operators</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operator</th><th>Meaning</th><th>17 and 5</th></tr>
+   <tr><td class="mono">/</td><td>division (always a real number)</td><td>3.4</td></tr>
+   <tr><td class="mono">//</td><td>integer division (whole number part)</td><td>3</td></tr>
+   <tr><td class="mono">%</td><td>modulus (remainder)</td><td>2</td></tr>
+   <tr><td class="mono">**</td><td>exponent</td><td>1419857</td></tr></table></div>
+  <h3>Loops</h3>
+  <p>A <b>count-controlled</b> loop (<span class="mono">for i in range(start, stop, step)</span>) runs a set number of times: <span class="mono">stop</span> is <b>not</b> included, so <span class="mono">range(2, 9, 3)</span> gives 2, 5, 8. A <b>condition-controlled</b> loop (<span class="mono">while</span>) runs as long as its condition is true, and might not run at all.</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-1-recursion">
+<div class="theory airy">
+ <section>
+  <h2>Recursion</h2>
+  <p class="lede">A <b>recursive</b> subroutine solves a problem by calling <b>itself</b> on a smaller version of the same problem, until the problem is small enough to answer directly.</p>
+  <div class="callout"><span class="k">Key idea</span><p>Every recursive subroutine needs:</p><ul><li>a <b>base case</b>, which returns an answer without calling itself, and</li><li>a <b>general case</b>, which calls itself with a smaller input, moving towards the base case.</li></ul></div>
+  <pre class="pc py" data-run data-t="Try it: factorial">def factorial(n):
+    if n &lt;= 1:              # base case
+        return 1
+    return n * factorial(n - 1)   # general case
+
+print(factorial(4))</pre>
+ </section>
+ <section>
+  <h2>Tracing recursion</h2>
+  <p>Each call waits for the one it made to return. The calls build up on the <b>call stack</b> until the base case is reached, then <b>unwind</b> in reverse order.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 620 230" role="img" aria-label="factorial(4) calls factorial(3), which calls factorial(2), then factorial(1) returns 1; the results unwind: 2, 6, 24">
+   <defs><marker id="rcA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="20" y="10" width="180" height="36" rx="6" class="b"/><text x="110" y="33" class="m c">factorial(4)</text>
+   <rect x="70" y="62" width="180" height="36" rx="6" class="b"/><text x="160" y="85" class="m c">factorial(3)</text>
+   <rect x="120" y="114" width="180" height="36" rx="6" class="b"/><text x="210" y="137" class="m c">factorial(2)</text>
+   <rect x="170" y="166" width="180" height="36" rx="6" class="bw"/><text x="260" y="189" class="m c">factorial(1) base</text>
+   <path d="M40 46 L40 80 L66 80" class="l" fill="none" marker-end="url(#rcA)"/><path d="M90 98 L90 132 L116 132" class="l" fill="none" marker-end="url(#rcA)"/><path d="M140 150 L140 184 L166 184" class="l" fill="none" marker-end="url(#rcA)"/>
+   <text x="390" y="189" class="ta m">returns 1</text><text x="340" y="137" class="ta m">returns 2 × 1 = 2</text><text x="290" y="85" class="ta m">returns 3 × 2 = 6</text><text x="240" y="33" class="ta m">returns 4 × 6 = 24</text>
+  </svg><figcaption>Calls go down to the base case; answers come back up.</figcaption></figure>
+  <div class="callout warnbox"><span class="k">Watch out</span><p>With no base case, or one that's never reached, the calls never stop. Each one adds a <b>stack frame</b>, until the stack runs out of space: a <b>stack overflow</b>. Python stops it with a RecursionError.</p></div>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>Natural and short for problems that are defined in terms of themselves (trees, nested folders, divide and conquer).</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>Every call uses a stack frame, so it needs more memory than a loop.</li><li>Can be slower and harder to trace.</li></ul></div>
+  </div>
+  <pre class="pc py" data-run data-t="Try it: where does print go?">def show(n):
+    if n &gt; 0:
+        print("down", n)
+        show(n - 1)
+        print("up", n)      # runs as the calls unwind
+
+show(3)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-2-searching">
+<div class="theory airy">
+ <section>
+  <h2>Linear search</h2>
+  <p class="lede">A <b>linear search</b> checks each item in turn, from the start, until it finds the target or reaches the end. It works on <b>any</b> list, sorted or not.</p>
+  <p>On a list of n items it makes up to <b>n comparisons</b>. If the list is <b>sorted</b>, it can stop early as soon as it passes the place where the target would be.</p>
+ </section>
+ <section>
+  <h2>Binary search</h2>
+  <p>A <b>binary search</b> only works on a <b>sorted</b> list. It checks the <b>middle</b> item; if that isn't the target, it throws away the half that can't contain it, and repeats on the other half.</p>
+  <p>Search for <b>23</b>:</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>index</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td></tr><tr><th>value</th><td>2</td><td>5</td><td>8</td><td>12</td><td>16</td><td>23</td><td>38</td><td>56</td><td>72</td></tr></table></div>
+  <div class="tscroll"><table class="pvt mono"><tr><th>low</th><th>high</th><th>mid = (low + high) // 2</th><th>value at mid</th><th>action</th></tr>
+   <tr><td>0</td><td>8</td><td>4</td><td>16</td><td>23 &gt; 16 → low = 5</td></tr>
+   <tr><td>5</td><td>8</td><td>6</td><td>38</td><td>23 &lt; 38 → high = 5</td></tr>
+   <tr><td>5</td><td>5</td><td>5</td><td>23</td><td>found at index 5</td></tr></table></div>
+  <p>If <b>low</b> ever passes <b>high</b>, the range is empty and the target isn't in the list.</p>
+  <div class="callout"><span class="k">Key idea</span><p>Each comparison <b>halves</b> what's left. 1,000 items need at most about 10 comparisons (2<sup>10</sup> = 1024); a million need about 20. A linear search could need a million.</p></div>
+  <h3>Recursive binary search</h3>
+  <p>The same algorithm can call itself on the half that's left. The base cases are "found" and "range empty".</p>
+  <pre class="pc py" data-run data-t="Try it: recursive binary search">def search(items, target, low, high):
+    if low &gt; high:
+        return -1                      # base case: not found
+    mid = (low + high) // 2
+    print("checking", items[mid])
+    if items[mid] == target:
+        return mid                     # base case: found
+    if items[mid] &lt; target:
+        return search(items, target, mid + 1, high)
+    return search(items, target, low, mid - 1)
+
+data = [2, 5, 8, 12, 16, 23, 38, 56, 72]
+print(search(data, 23, 0, len(data) - 1))</pre>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Linear</th><th>Binary</th></tr>
+   <tr><td class="lbl">Needs sorted data?</td><td>No</td><td>Yes</td></tr>
+   <tr><td class="lbl">Worst case, n items</td><td>n comparisons</td><td>about log₂ n comparisons</td></tr>
+   <tr><td class="lbl">Best for</td><td>Small or unsorted lists</td><td>Large sorted lists</td></tr></table></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-2-bubble">
+<div class="theory airy">
+ <section>
+  <h2>Bubble sort</h2>
+  <p class="lede">A <b>bubble sort</b> passes through the list comparing each <b>pair of neighbours</b>, swapping them if they're in the wrong order. After each pass, the largest remaining item has "bubbled" to its final place at the end.</p>
+  <h3>The first pass on 5, 1, 4, 2, 8</h3>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Compare</th><th>Swap?</th><th>List</th></tr>
+   <tr><td>5 and 1</td><td>yes</td><td><b>1, 5</b>, 4, 2, 8</td></tr>
+   <tr><td>5 and 4</td><td>yes</td><td>1, <b>4, 5</b>, 2, 8</td></tr>
+   <tr><td>5 and 2</td><td>yes</td><td>1, 4, <b>2, 5</b>, 8</td></tr>
+   <tr><td>5 and 8</td><td>no</td><td>1, 4, 2, <b>5, 8</b></td></tr></table></div>
+  <p>Pass 2 gives 1, 2, 4, 5, 8. Pass 3 makes <b>no swaps</b>, so the list must be sorted and the algorithm stops.</p>
+  <div class="callout"><span class="k">Key idea</span><p>An improved bubble sort uses a <b>swapped</b> flag. If a whole pass makes no swaps, it stops early. A list of n items needs at most n − 1 passes, each with up to n − 1 comparisons.</p></div>
+  <pre class="pc py" data-run data-t="Try it: bubble sort, pass by pass">items = [5, 1, 4, 2, 8]
+swapped = True
+p = 0
+while swapped:
+    swapped = False
+    for i in range(len(items) - 1):
+        if items[i] &gt; items[i + 1]:
+            items[i], items[i + 1] = items[i + 1], items[i]
+            swapped = True
+    p = p + 1
+    print("after pass", p, items)</pre>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Benefits</h3><ul><li>Simple to understand and code.</li><li>Sorts in place, needing no extra list.</li><li>Fast on lists that are already nearly sorted (with the flag).</li></ul></div>
+   <div class="keypts"><h3>Drawbacks</h3><ul><li>Very slow on large lists: the work grows with the <b>square</b> of the size.</li><li>Worst case: a list in reverse order.</li></ul></div>
+  </div>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-2-insertion">
+<div class="theory airy">
+ <section>
+  <h2>Insertion sort</h2>
+  <p class="lede">An <b>insertion sort</b> builds a <b>sorted part</b> at the start of the list. At first only the first item is in it. Each pass takes the next item and <b>inserts</b> it into the right place in the sorted part, shifting larger items one place right.</p>
+  <h3>Sorting 7, 3, 5, 1</h3>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Pass</th><th>Current item</th><th>List afterwards (sorted part in bold)</th></tr>
+   <tr><td>start</td><td></td><td><b>7</b>, 3, 5, 1</td></tr>
+   <tr><td>1</td><td>3</td><td><b>3, 7</b>, 5, 1</td></tr>
+   <tr><td>2</td><td>5</td><td><b>3, 5, 7</b>, 1</td></tr>
+   <tr><td>3</td><td>1</td><td><b>1, 3, 5, 7</b></td></tr></table></div>
+  <p>A list of n items always takes <b>n − 1 passes</b>. After pass p, the first p + 1 items are sorted (but not necessarily in their final places).</p>
+  <pre class="pc py" data-run data-t="Try it: insertion sort">items = [7, 3, 5, 1]
+for i in range(1, len(items)):
+    current = items[i]
+    j = i - 1
+    while j &gt;= 0 and items[j] &gt; current:
+        items[j + 1] = items[j]     # shift right
+        j = j - 1
+    items[j + 1] = current          # insert
+    print("after pass", i, items)</pre>
+ </section>
+ <section>
+  <h2>Comparing the two sorts</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Bubble sort</th><th>Insertion sort</th></tr>
+   <tr><td class="lbl">Method</td><td>Swap neighbours, pass after pass</td><td>Insert each item into a growing sorted part</td></tr>
+   <tr><td class="lbl">After pass 1</td><td>Largest item is at the end</td><td>First two items are in order</td></tr>
+   <tr><td class="lbl">Already sorted list</td><td>One pass (with the flag)</td><td>n − 1 passes, each with one comparison</td></tr>
+   <tr><td class="lbl">Reverse-ordered list</td><td>Slowest case</td><td>Slowest case</td></tr>
+   <tr><td class="lbl">Large random lists</td><td colspan="2">Both slow: the work grows with the square of the size. Unit 4 covers faster sorts (merge and quick sort).</td></tr></table></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>When asked for the list "after the second pass", write out the <b>whole list</b> each time, not just the items that moved.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-3-expressions">
+<div class="theory airy">
+ <section>
+  <h2>Boolean logic</h2>
+  <p class="lede">A <b>Boolean expression</b> evaluates to true (1) or false (0). Programs use them in every <span class="mono">if</span> and <span class="mono">while</span>; CPUs are built from circuits that compute them.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operator</th><th>Notation</th><th>True when…</th></tr>
+   <tr><td class="lbl">AND</td><td class="mono">A.B</td><td>both inputs are true</td></tr>
+   <tr><td class="lbl">OR</td><td class="mono">A+B</td><td>at least one input is true</td></tr>
+   <tr><td class="lbl">NOT</td><td class="mono">A̅</td><td>the input is false</td></tr>
+   <tr><td class="lbl">XOR</td><td class="mono">A ⊕ B</td><td>exactly one input is true (the inputs differ)</td></tr>
+   <tr><td class="lbl">NAND</td><td class="mono"><span style="text-decoration:overline">A.B</span></td><td>not both are true</td></tr>
+   <tr><td class="lbl">NOR</td><td class="mono"><span style="text-decoration:overline">A+B</span></td><td>neither is true</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Order of precedence</h2>
+  <p>Like BIDMAS in maths, Boolean operators have an order: <b>brackets</b> first, then <b>NOT</b>, then <b>AND</b>, then <b>OR</b>. So <span class="mono">A OR B AND C</span> means <span class="mono">A OR (B AND C)</span>. When in doubt, add brackets.</p>
+  <h3>Worked example</h3>
+  <p>A = 1, B = 0, C = 1. Evaluate <span class="mono">NOT A OR B AND C</span>.</p>
+  <p class="stepline"><b>1</b><span>NOT first: NOT A = 0.</span></p>
+  <p class="stepline"><b>2</b><span>AND next: B AND C = 0 AND 1 = 0.</span></p>
+  <p class="stepline"><b>3</b><span>OR last: 0 OR 0 = <b>0</b>.</span></p>
+ </section>
+ <section>
+  <h2>Writing expressions from a problem</h2>
+  <p>A greenhouse fan (F) turns on when it's hot (H) and the door (D) is shut, or when the humidity alarm (M) is on: <b>F = (H AND NOT D) OR M</b>, or in symbols <span class="mono">F = H.D̅ + M</span>, where D is 1 when the door is open.</p>
+  <pre class="pc py" data-run data-t="Try it: Boolean expressions in Python">hot, door_open, humid = True, False, False
+fan = (hot and not door_open) or humid
+print(fan)
+a, b = True, True
+print(a != b)          # XOR of two Booleans
+print(not (a and b))   # NAND</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-3-truthtables">
+<div class="theory airy">
+ <section>
+  <h2>Truth tables</h2>
+  <p class="lede">A <b>truth table</b> lists every possible combination of inputs and the output for each. With n inputs there are <b>2<sup>n</sup> rows</b>. Count up in binary to make sure you include every one.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>A</th><th>B</th><th>AND</th><th>OR</th><th>XOR</th><th>NAND</th><th>NOR</th></tr>
+   <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>1</td></tr>
+   <tr><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+   <tr><td>1</td><td>0</td><td>0</td><td>1</td><td>1</td><td>1</td><td>0</td></tr>
+   <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td>0</td><td>0</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Longer expressions</h2>
+  <p>Add a column for each part of the expression, working inside brackets first. For <b>(A AND B) OR NOT C</b>:</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>A</th><th>B</th><th>C</th><th>A AND B</th><th>NOT C</th><th>Output</th></tr>
+   <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td><b>1</b></td></tr>
+   <tr><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td><td><b>0</b></td></tr>
+   <tr><td>0</td><td>1</td><td>0</td><td>0</td><td>1</td><td><b>1</b></td></tr>
+   <tr><td>0</td><td>1</td><td>1</td><td>0</td><td>0</td><td><b>0</b></td></tr>
+   <tr><td>1</td><td>0</td><td>0</td><td>0</td><td>1</td><td><b>1</b></td></tr>
+   <tr><td>1</td><td>0</td><td>1</td><td>0</td><td>0</td><td><b>0</b></td></tr>
+   <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td><b>1</b></td></tr>
+   <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td><b>1</b></td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><h3>Equivalent expressions</h3><p>Two expressions are <b>equivalent</b> if their output columns match in every row. De Morgan's laws are a famous pair: <b>NOT (A AND B) = NOT A OR NOT B</b>, and <b>NOT (A OR B) = NOT A AND NOT B</b>.</p></div>
+  <pre class="pc py" data-run data-t="Try it: print a truth table">print("A B C | out")
+for a in (0, 1):
+    for b in (0, 1):
+        for c in (0, 1):
+            out = (a and b) or not c
+            print(a, b, c, "|", int(out))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a5-4-paradigms">
+<div class="theory airy">
+ <section>
+  <h2>Programming paradigms</h2>
+  <p class="lede">A <b>programming paradigm</b> is a style of programming: a way of thinking about how a problem is described to the computer. Some languages support several paradigms.</p>
+ </section>
+ <section>
+  <h2>Procedural programming</h2>
+  <p><b>Procedural</b> programs are a sequence of <b>instructions</b> that say exactly <b>how</b> to solve a problem, step by step, changing the values of variables as they go. Code is organised into <b>procedures and functions</b> (subroutines) that can be called and reused. Python, used as in this course, is procedural.</p>
+  <pre class="pc py" data-run data-t="Try it: a procedural solution">def average(marks):
+    total = 0
+    for m in marks:
+        total = total + m
+    return total / len(marks)
+
+students = {"Ana": [72, 65], "Ben": [58, 81], "Cai": [90, 77]}
+for name, marks in students.items():
+    if average(marks) &gt; 70:
+        print(name)</pre>
+ </section>
+ <section>
+  <h2>Declarative programming</h2>
+  <p><b>Declarative</b> programs describe <b>what</b> result is wanted, not how to get it. The language (or system) works out the steps.</p>
+  <div class="ccards">
+   <div class="keypts"><h3>SQL</h3><p class="mono">SELECT Name FROM Student<br>WHERE Average &gt; 70;</p><p>You state which data you want; the database management system decides how to find it.</p></div>
+   <div class="keypts"><h3>Logic programming (Prolog)</h3><p class="mono">parent(ana, ben).<br>parent(ben, cai).<br>grandparent(X, Z) :-<br>&nbsp;&nbsp;parent(X, Y), parent(Y, Z).</p><p>You state <b>facts</b> and <b>rules</b>; a query such as <span class="mono">grandparent(ana, Who)</span> is answered from them.</p></div>
+  </div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Procedural</th><th>Declarative</th></tr>
+   <tr><td class="lbl">Describes</td><td>How: the steps</td><td>What: the result</td></tr>
+   <tr><td class="lbl">Examples</td><td>Python, C, BASIC</td><td>SQL, Prolog</td></tr>
+   <tr><td class="lbl">Benefits</td><td>Precise control; easy to follow the order of execution</td><td>Short, readable code; the system optimises how</td></tr>
+   <tr><td class="lbl">Drawbacks</td><td>More code; the programmer must get every step right</td><td>Less control over how it's done; suited to particular kinds of problem</td></tr></table></div>
+  <p class="vfoot">Unit 3 adds object-oriented and functional programming.</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a6-1-bigdata">
+<div class="theory airy">
+ <section>
+  <h2>What makes data "big"?</h2>
+  <p class="lede">Every card payment, phone location ping, video upload and sensor reading is data. <b>Big data</b> describes data sets so large, fast-arriving or varied that ordinary software on a single computer can't store or process them in a useful time.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>The five Vs</th><th>Meaning</th><th>Example</th></tr>
+   <tr><td class="lbl">Volume</td><td>The <b>amount</b> of data</td><td>A streaming service storing petabytes of viewing history</td></tr>
+   <tr><td class="lbl">Velocity</td><td>The <b>speed</b> at which data arrives and must be processed</td><td>Thousands of payments a second checked for fraud as they happen</td></tr>
+   <tr><td class="lbl">Variety</td><td>The range of <b>types and formats</b>, much of it unstructured</td><td>Text, images, video, GPS traces and sensor logs together</td></tr>
+   <tr><td class="lbl">Veracity</td><td>How <b>accurate and trustworthy</b> it is</td><td>Social media posts that may be false, biased or written by bots</td></tr>
+   <tr><td class="lbl">Value</td><td>The useful <b>insight</b> it can give</td><td>Predicting which products will sell out next week</td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><p>Much big data is <b>unstructured</b>: it doesn't fit the fixed rows and columns of a relational table. That, plus its size and speed, is why new kinds of infrastructure are needed.</p></div>
+ </section>
+ <section>
+  <h2>The infrastructure for big data</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Stage</th><th>What's needed</th></tr>
+   <tr><td class="lbl">Collecting</td><td>Sensors, apps, websites and APIs that capture data continuously</td></tr>
+   <tr><td class="lbl">Storing</td><td>Many networked servers (often in the cloud), with data spread and copied across them so it isn't lost if one fails</td></tr>
+   <tr><td class="lbl">Processing</td><td><b>Distributed processing</b>: the work is split so many machines process parts of the data at the same time</td></tr>
+   <tr><td class="lbl">Analysing</td><td>Statistical and machine learning tools to find patterns and make predictions</td></tr>
+   <tr><td class="lbl">Networking</td><td>Fast, high-bandwidth networks to move data between collectors, servers and users</td></tr>
+   <tr><td class="lbl">Securing</td><td>Encryption, access control and monitoring, since big data often includes personal information</td></tr></table></div>
+  <div class="callout warnbox"><span class="k">Think about</span><p>Big data raises questions about <b>privacy</b> (what's collected and who sees it), <b>consent</b>, and decisions being made about people from patterns that may be <b>biased</b>.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a6-1-datascience">
+<div class="theory airy">
+ <section>
+  <h2>The data science process</h2>
+  <p class="lede"><b>Data science</b> uses programming and statistics to turn raw data into useful information. Most projects follow the same stages.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 90" role="img" aria-label="Collect, then store, then clean, then analyse, then visualise">
+   <defs><marker id="dsA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="5" y="25" width="105" height="40" rx="8" class="b"/><text x="57" y="50" class="s c">Collect</text>
+   <rect x="135" y="25" width="105" height="40" rx="8" class="b"/><text x="187" y="50" class="s c">Store</text>
+   <rect x="265" y="25" width="105" height="40" rx="8" class="bw"/><text x="317" y="50" class="s c">Clean</text>
+   <rect x="395" y="25" width="105" height="40" rx="8" class="b"/><text x="447" y="50" class="s c">Analyse</text>
+   <rect x="525" y="25" width="110" height="40" rx="8" class="bi"/><text x="580" y="50" class="s c">Visualise</text>
+   <line x1="110" y1="45" x2="131" y2="45" class="l" marker-end="url(#dsA)"/><line x1="240" y1="45" x2="261" y2="45" class="l" marker-end="url(#dsA)"/><line x1="370" y1="45" x2="391" y2="45" class="l" marker-end="url(#dsA)"/><line x1="500" y1="45" x2="521" y2="45" class="l" marker-end="url(#dsA)"/>
+  </svg></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Stage</th><th>Tools and techniques</th></tr>
+   <tr><td class="lbl">Collection</td><td>Sensors, online forms, transaction records, public data sets, <b>APIs</b>, and <b>web scraping</b> (a program that downloads pages and extracts data from them; it should respect the site's terms and not overload it).</td></tr>
+   <tr><td class="lbl">Storage</td><td>Files (CSV, JSON), databases, and distributed storage for very large data.</td></tr>
+   <tr><td class="lbl">Cleaning</td><td>Removing <b>duplicates</b>, handling <b>missing values</b>, fixing <b>errors</b> and impossible values, making <b>formats consistent</b> (dates, capitals, units), and investigating <b>outliers</b>.</td></tr>
+   <tr><td class="lbl">Analysis</td><td>Summary statistics (mean, median, range), grouping and counting, finding trends and correlations, machine learning.</td></tr>
+   <tr><td class="lbl">Visualisation</td><td>Line graphs for change over time, bar charts to compare categories, scatter graphs for relationships, maps for location data, dashboards.</td></tr></table></div>
+  <div class="callout tip"><span class="k">Garbage in, garbage out</span><p>Cleaning often takes the most time, but analysis of dirty data gives wrong conclusions, however clever the analysis.</p></div>
+  <pre class="pc py" data-run data-t="Try it: clean, analyse, summarise">raw = ["14.2", "15.1", "", "16.4", "15.1", "error", "13.9"]
+clean = []
+for r in raw:
+    try:
+        clean.append(float(r))     # skip blanks and errors
+    except ValueError:
+        pass
+print("readings kept:", len(clean))
+print("mean:", round(sum(clean) / len(clean), 2))
+print("range:", max(clean) - min(clean))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a6-2-ai">
+<div class="theory airy">
+ <section>
+  <h2>Narrow, general and super AI</h2>
+  <p class="lede"><b>Artificial intelligence</b> is the ability of computer systems to do tasks that normally need human intelligence: recognising images and speech, understanding language, making decisions.</p>
+  <div class="ccards">
+   <div class="keypts"><h3>Narrow AI</h3><p>Does <b>one task</b> (or a narrow range) very well: face unlock, film recommendations, spam filters, chess engines, chatbots. <b>All AI in use today is narrow.</b></p></div>
+   <div class="keypts"><h3>General AI</h3><p><b>Hypothetical.</b> Would understand, learn and apply knowledge across <b>any</b> task, as flexibly as a person.</p></div>
+   <div class="keypts"><h3>Super AI</h3><p><b>Hypothetical.</b> Would be more capable than humans in <b>every</b> area, raising big questions about control and safety.</p></div>
+  </div>
+ </section>
+ <section>
+  <h2>Machine learning</h2>
+  <p>Traditional programs follow rules written by people. In <b>machine learning</b>, the system <b>learns patterns from data</b> and uses them to make predictions or decisions about new data.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 210" role="img" aria-label="Supervised learning: labelled training data trains a model which predicts labels for new data. Unsupervised learning: unlabelled data is grouped into clusters">
+   <defs><marker id="mlA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <text x="10" y="20" class="h">Supervised</text>
+   <rect x="10" y="32" width="160" height="56" rx="8" class="bw"/><text x="90" y="56" class="s c">emails + labels</text><text x="90" y="74" class="s c">spam / not spam</text>
+   <rect x="240" y="40" width="110" height="40" rx="8" class="b2"/><text x="295" y="65" class="s c">train model</text>
+   <rect x="420" y="32" width="200" height="56" rx="8" class="bi"/><text x="520" y="56" class="s c">new email →</text><text x="520" y="74" class="s c">predicted: spam</text>
+   <line x1="170" y1="60" x2="236" y2="60" class="l" marker-end="url(#mlA)"/><line x1="350" y1="60" x2="416" y2="60" class="l" marker-end="url(#mlA)"/>
+   <text x="10" y="125" class="h">Unsupervised</text>
+   <rect x="10" y="137" width="160" height="56" rx="8" class="bw"/><text x="90" y="161" class="s c">shopping data</text><text x="90" y="179" class="s c">no labels</text>
+   <rect x="240" y="145" width="110" height="40" rx="8" class="b2"/><text x="295" y="170" class="s c">find patterns</text>
+   <line x1="170" y1="165" x2="236" y2="165" class="l" marker-end="url(#mlA)"/><line x1="350" y1="165" x2="416" y2="165" class="l" marker-end="url(#mlA)"/>
+   <g class="li"><circle cx="440" cy="150" r="7" class="bi"/><circle cx="455" cy="168" r="7" class="bi"/><circle cx="438" cy="180" r="7" class="bi"/></g>
+   <g><circle cx="520" cy="148" r="7" class="bw"/><circle cx="536" cy="160" r="7" class="bw"/><circle cx="518" cy="172" r="7" class="bw"/></g>
+   <g><circle cx="590" cy="170" r="7" class="bg"/><circle cx="605" cy="185" r="7" class="bg"/><circle cx="585" cy="190" r="7" class="bg"/></g>
+  </svg><figcaption>Supervised learning predicts labels; unsupervised learning finds groups nobody defined.</figcaption></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Supervised learning</th><th>Unsupervised learning</th></tr>
+   <tr><td class="lbl">Training data</td><td><b>Labelled</b>: inputs with the correct answers</td><td><b>Unlabelled</b>: inputs only</td></tr>
+   <tr><td class="lbl">Goal</td><td>Predict the label (classification) or a value (regression) for new data</td><td>Discover structure, e.g. <b>clusters</b> of similar items</td></tr>
+   <tr><td class="lbl">Examples</td><td>Spam filters, diagnosing from scans, predicting house prices</td><td>Grouping customers, spotting unusual transactions, organising photos</td></tr>
+   <tr><td class="lbl">Drawback</td><td>Labelling lots of data takes time and money</td><td>The groups found may be hard to interpret</td></tr></table></div>
+  <div class="callout warnbox"><span class="k">Bias</span><p>A model is only as good as its data. If the training data under-represents a group, or contains past unfair decisions, the model will repeat them. That's why models are tested on <b>unseen</b> data and checked for fairness.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a6-2-llm">
+<div class="theory airy">
+ <section>
+  <h2>Large language models</h2>
+  <p class="lede">A <b>large language model (LLM)</b> is a machine learning model trained on a huge amount of text. It breaks text into <b>tokens</b> (words or parts of words) and generates a reply by repeatedly <b>predicting a likely next token</b>, given everything before it.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 120" role="img" aria-label="The prompt and context go into the model, which predicts the next token, adds it, and repeats">
+   <defs><marker id="lmA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="currentColor"/></marker></defs>
+   <rect x="10" y="30" width="200" height="50" rx="8" class="bw"/><text x="110" y="52" class="s c">context: prompt, chat so far,</text><text x="110" y="68" class="s c">documents supplied</text>
+   <rect x="260" y="30" width="120" height="50" rx="8" class="b2"/><text x="320" y="60" class="s c">LLM</text>
+   <rect x="430" y="30" width="200" height="50" rx="8" class="bi"/><text x="530" y="52" class="s c">next token, e.g.</text><text x="530" y="68" class="m c">"bus"</text>
+   <line x1="210" y1="55" x2="256" y2="55" class="l" marker-end="url(#lmA)"/><line x1="380" y1="55" x2="426" y2="55" class="l" marker-end="url(#lmA)"/>
+   <path d="M530 80 C530 112, 110 112, 110 84" class="ld" marker-end="url(#lmA)"/><text x="320" y="114" class="s c">added to the context; repeat</text>
+  </svg></figure>
+ </section>
+ <section>
+  <h2>Strengths and limits</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Issue</th><th>What it means</th><th>What helps</th></tr>
+   <tr><td class="lbl">Context</td><td>The model can only use what's in its <b>context window</b>: its training plus the prompt, conversation and documents given.</td><td>Clear, specific prompts with the relevant information included</td></tr>
+   <tr><td class="lbl">Accuracy</td><td>Output is <b>plausible</b>, not guaranteed true. Models can <b>hallucinate</b>: invent facts, quotes or references fluently.</td><td>Check important facts against reliable sources</td></tr>
+   <tr><td class="lbl">Knowledge limits</td><td>Training data stops at a <b>knowledge cut-off</b>, and some topics are poorly covered.</td><td>Supply up-to-date information, or use tools such as search</td></tr>
+   <tr><td class="lbl">Bias and subjectivity</td><td>The training text contains opinions, stereotypes and imbalances, which can appear in output.</td><td>Critical reading; testing and adjusting models; varied training data</td></tr></table></div>
+  <div class="callout"><span class="k">Key idea</span><p>An LLM predicts language; it doesn't look facts up in a database. That's why it can explain things well and still be confidently wrong.</p></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>For "explain a limitation" questions, give the limitation <b>and</b> its consequence, e.g. <i>the training data has a cut-off, <b>so</b> it may give out-of-date answers about recent events</i>.</p></div>
+  <pre class="pc py" data-run data-t="Try it: a (very) small language model">import random
+text = "the cpu fetches the instruction the cpu decodes the instruction the cpu executes it"
+words = text.split()
+nxt = {}
+for a, b in zip(words, words[1:]):
+    nxt.setdefault(a, []).append(b)     # which words followed each word
+word, out = "the", ["the"]
+for _ in range(8):
+    if word not in nxt:
+        break
+    word = random.choice(nxt[word])     # predict a likely next word
+    out.append(word)
+print(" ".join(out))</pre>
+  <p class="vfoot">Real LLMs use neural networks with billions of parameters instead of a table, but the idea of predicting the next token is the same.</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a6-3-ide">
+<div class="theory airy">
+ <section>
+  <h2>Integrated development environments</h2>
+  <p class="lede">An <b>IDE</b> brings together everything needed to write, run, test and debug programs in one application. You'll use one throughout Units 2 and 4.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Feature</th><th>How it helps</th></tr>
+   <tr><td class="lbl">Text editor</td><td>Syntax highlighting, line numbers, auto-indentation and bracket matching make code easier to read and write.</td></tr>
+   <tr><td class="lbl">Autocomplete</td><td>Suggests keywords, variable and function names as you type: faster, with fewer spelling mistakes.</td></tr>
+   <tr><td class="lbl">Syntax checker</td><td>Underlines code that breaks the language rules (a missing colon or bracket) before you run it.</td></tr>
+   <tr><td class="lbl">Run / console</td><td>Runs the program and shows output and error messages, with the line number where an error happened.</td></tr>
+   <tr><td class="lbl">Debugger</td><td>Runs the program in a controlled way to find logic and runtime errors (below).</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Debugging</h2>
+  <div class="ccards">
+   <div class="keypts"><h3>Breakpoints</h3><p>Mark a line; the program pauses when it gets there, so you can look at its state at exactly that point.</p></div>
+   <div class="keypts"><h3>Stepping</h3><p>Run one line at a time. <b>Step into</b> goes inside a called function; <b>step over</b> runs the function as a single step; <b>step out</b> finishes the current function.</p></div>
+   <div class="keypts"><h3>Memory inspection</h3><p>See the current values of variables (a watch list), and sometimes the call stack and memory, while paused.</p></div>
+  </div>
+  <div class="callout"><span class="k">Key idea</span><p>A debugger is an automatic trace table. Instead of working the values out by hand, you watch them change and spot the line where they first go wrong.</p></div>
+  <pre class="pc py" data-run data-t="Try it: find the bug by printing values">def average(nums):
+    total = 0
+    for n in nums:
+        total = total + n
+        print("n =", n, "total =", total)   # a 'poor man's debugger'
+    return total / len(nums) + 1          # bug: why + 1?
+
+print(average([4, 6, 8]))</pre>
+  <p class="vfoot">Printing values works, but a debugger's breakpoints and watches do the same job without changing the code.</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a6-3-collab">
+<div class="theory airy">
+ <section>
+  <h2>Version control systems</h2>
+  <p class="lede">A <b>version control system</b> (such as Git) records every change made to a project's files, who made it and why. It's essential when several people work on the same code, and useful even when you work alone.</p>
+  <figure class="dgfig"><svg class="dg" viewBox="0 0 640 140" role="img" aria-label="Commits on the main branch; a feature branch splits off, has its own commits, and is merged back">
+   <line x1="30" y1="40" x2="610" y2="40" class="l"/><text x="20" y="25" class="s">main</text>
+   <circle cx="60" cy="40" r="10" class="b2"/><circle cx="160" cy="40" r="10" class="b2"/><circle cx="400" cy="40" r="10" class="b2"/><circle cx="560" cy="40" r="12" class="bi"/>
+   <path d="M160 40 C200 100, 220 100, 260 100 L420 100 C470 100, 510 60, 560 40" class="la" fill="none"/><text x="230" y="125" class="ta s">feature branch</text>
+   <circle cx="260" cy="100" r="10" class="bw"/><circle cx="340" cy="100" r="10" class="bw"/><circle cx="420" cy="100" r="10" class="bw"/>
+   <text x="560" y="72" class="s c">merge</text><text x="60" y="68" class="s c">commit</text>
+  </svg></figure>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Idea</th><th>Meaning</th></tr>
+   <tr><td class="lbl">Repository</td><td>The project's files plus their full history</td></tr>
+   <tr><td class="lbl">Commit</td><td>A saved snapshot of changes, with a message saying what changed and why</td></tr>
+   <tr><td class="lbl">Branch</td><td>A separate line of development, so a feature can be built without breaking the main code</td></tr>
+   <tr><td class="lbl">Merge</td><td>Combining a branch's changes into another branch; a <b>conflict</b> happens if both changed the same lines</td></tr></table></div>
+  <p><b>Benefits:</b> roll back to any earlier version; see exactly what changed when a bug appeared; many people can work at once; the history documents the project.</p>
+ </section>
+ <section>
+  <h2>Open-source technologies</h2>
+  <p><b>Open-source</b> software publishes its source code under a licence that lets anyone view, change and share it. Python, Linux, Firefox and SQLite are examples. <b>Proprietary</b> software keeps its code private; users buy a licence to use it.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Open source: benefits</h3><ul><li>Usually free to use.</li><li>Anyone can inspect it for security problems and fix bugs.</li><li>Can be adapted to your needs.</li></ul></div>
+   <div class="keypts"><h3>Open source: drawbacks</h3><ul><li>No guaranteed support or updates.</li><li>Documentation can be patchy.</li><li>Licences may require changes to be shared too.</li></ul></div>
+  </div>
+ </section>
+ <section>
+  <h2>Application programming interfaces</h2>
+  <p>An <b>API</b> is a published set of functions and rules that lets one program use another's features or data, without knowing how it works inside. A weather app gets forecasts from a weather service's API; a Python program uses the <span class="mono">sqlite3</span> API to work with a database (Unit 2).</p>
+  <pre class="pc py" data-run data-t="Try it: using an API (sqlite3)">import sqlite3
+db = sqlite3.connect(":memory:")                 # the API hides how the database works
+db.execute("CREATE TABLE Student (Name TEXT, Age INTEGER)")
+db.executemany("INSERT INTO Student VALUES (?, ?)", [("Ana", 17), ("Ben", 16)])
+for row in db.execute("SELECT Name FROM Student WHERE Age &gt; 16"):
+    print(row[0])</pre>
+ </section>
+</div>
+</template>
