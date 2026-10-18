@@ -107,6 +107,14 @@ Supabase sends the emails; Resend delivers them (Supabase's built-in sender only
 5. **Supabase → Authentication → Rate Limits:** raise **emails per hour** (e.g. 100).
 6. **Supabase → Authentication → URL Configuration:** the Redirect URLs must include the site (`https://<domain>/**`) and `http://localhost:5173/**`.
 
+## Search engines and analytics
+
+**Search:** `npm run build` runs `scripts/prerender.mjs` after Vite. It gives every public page its own address (`/paper-1`, `/topic/1-1`, `/lesson/1-1-binary`, `/exam-questions`, `/flash-cards`, `/pricing`, `/dashboard-preview`) and writes a real HTML page for each, with its own title, description, social preview (`public/og.png`), structured data (Course, LearningResource, breadcrumbs) and a readable outline of the page. It also writes `sitemap.xml`, `robots.txt` and `404.html`. Paid lesson text is never included. When someone opens one of those addresses, the app shows the matching page (`pathToRoute` in `src/main.js`), and `public/app/10-seo.js` keeps the title, description and canonical address right as people move around. The site address comes from Netlify's `URL` (or `SITE_URL`). If the step fails it only prints a warning, so it can't stop a deploy.
+
+After going live (and again after moving to your own domain): in **Google Search Console** add the site, verify it, and submit `https://<your site>/sitemap.xml`.
+
+**Google Analytics 4:** set the measurement ID (`G-…`) as `GA_ID` in `src/main.js` (or `VITE_GA_ID` in the host's environment variables). Visitors are asked first; nothing loads until they choose **Allow**, and **Cookie settings** in the footer lets them change their mind. Page views are sent with the clean addresses above; signed-in pages are grouped without any ids.
+
 ## Sign in with Google
 
 The code is in place. The **Continue with Google** button appears by itself once the Google provider is switched on in Supabase (step 3):

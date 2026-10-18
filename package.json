@@ -6,7 +6,7 @@
   "description": "Bits of Bytes: Cambridge IGCSE Computer Science 0478 course site",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "upload-content": "node scripts/upload-content.mjs"
   },

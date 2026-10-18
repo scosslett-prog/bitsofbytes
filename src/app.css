@@ -352,3 +352,11 @@ footer .flink{color:var(--muted)}
 .haud.tch li::before{background:var(--p2-soft);border-color:var(--p2)}
 .haud li span{color:var(--muted);font-size:.93rem}
 .haud .tbb{margin-top:auto}
+
+/* ---------- analytics consent ---------- */
+#gabar{position:fixed;left:max(16px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));z-index:70;max-width:min(440px,calc(100vw - 32px));
+  background:var(--surface);color:var(--ink);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:0 12px 36px rgba(0,0,0,.18);display:flex;flex-direction:column;gap:10px}
+#gabar p{margin:0;font-size:.92rem;line-height:1.5}
+#gabar .tbb{justify-content:flex-end}
+@media (prefers-reduced-motion:no-preference){#gabar{animation:tspring .45s cubic-bezier(.2,.9,.3,1.2) both}}
+.flinks{display:flex;gap:16px;flex-wrap:wrap}
