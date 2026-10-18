@@ -36,7 +36,7 @@ export function createSchool(api, getUser) {
       cls = ids.length ? await selIn('classes', 'id', ids) : [];
     }
     for (const c of cls) classes[c.id] = { id: c.id, name: c.name, teacher: c.teacher_id, code: c.join_code, students: [], invites: [], created: ms(c.created_at),
-      restrict: !!c.restrict_lessons, released: c.released_lessons || [] };
+      restrict: !!c.restrict_lessons, released: c.released_lessons || [], leaderboard: c.leaderboard !== false };
     for (const m of mem) { const c = classes[m.class_id]; if (c && !c.students.includes(m.student_id)) c.students.push(m.student_id); }
     for (const i of inv) { const c = classes[i.class_id]; if (c && !c.invites.includes(i.email)) c.invites.push(i.email); }
     if (!teach) { const m = mem[0]; if (m && classes[m.class_id]) users[u.id].cls = m.class_id; }
@@ -88,7 +88,7 @@ export function createSchool(api, getUser) {
     try {
       const rows = await selIn('user_progress', 'user_id', need, { select: 'user_id,kind,key,data,updated_at', order: [['user_id'], ['kind'], ['key']] });
       const P = {}, last = {};
-      for (const id of need) { P[id] = { lessons: {}, scores: {}, acts: {}, ex: {} }; last[id] = 0; }
+      for (const id of need) { P[id] = { lessons: {}, scores: {}, acts: {}, ex: {}, tz: {}, pts: {} }; last[id] = 0; }
       for (const r of rows) { if (P[r.user_id][r.kind]) P[r.user_id][r.kind][r.key] = r.data; last[r.user_id] = Math.max(last[r.user_id], ms(r.updated_at)); }
       Object.assign(SC.prog, P); Object.assign(SC.progLast, last);
     } finally { need.forEach((id) => progLoading.delete(id)); }
@@ -106,6 +106,8 @@ export function createSchool(api, getUser) {
     createClass: async (name) => (await db.insert('classes', [{ teacher_id: me(), name }]))[0].id,
     renameClass: (c, name) => db.update('classes', { name }, { eq: { id: c } }),
     deleteClass: (c) => db.delete('classes', { eq: { id: c } }),
+    setLeaderboard: (c, on) => db.update('classes', { leaderboard: on }, { eq: { id: c } }),
+    leaderboard: (c) => db.rpc('class_leaderboard', { c }),
     setAccess: (c, restrict, released) => db.update('classes', { restrict_lessons: restrict, released_lessons: released }, { eq: { id: c } }),
     invite: (c, emails) => (emails.length ? db.insert('class_invites', emails.map((email) => ({ class_id: c, email }))) : null),
     uninvite: (c, email) => db.delete('class_invites', { eq: { class_id: c, email } }),

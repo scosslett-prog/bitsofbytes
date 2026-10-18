@@ -33,7 +33,7 @@ function nav(route){
   <a href="#exams"${on("exam")}>Exam questions</a>
   ${isTeacher()?`<a href="#teacher"${route==="teacher"||route.startsWith("class-")?' class="on"':""}>My classes</a>`:myClass()?`<a href="#todo"${on("todo")}>To-do${todoCount()?` <span class="tbadge" aria-label="${todoCount()} to do">${todoCount()}</span>`:""}</a>`:""}
   ${isTeacher()?"":`<a href="#dashboard"${on("dashboard")}${S.user?"":' title="See example student and teacher dashboards"'}>${S.user?"Dashboard":"Dashboard preview"}</a>`}${S.user?"":`<a href="#pricing"${on("pricing")}>Pricing</a>`}
-  ${S.user?userMenu(route):`<a href="#login"${on("login")}>Sign in</a><a class="btn primary small" href="#register">Register</a>`}`;
+  ${S.user?(typeof rwNav==="function"?rwNav(route):"")+userMenu(route):`<a href="#login"${on("login")}>Sign in</a><a class="btn primary small" href="#register">Register</a>`}`;
 }
 
 /* views */
@@ -147,10 +147,10 @@ function lesson(l){
     ${tabbed&&!document.getElementById("th-"+l.id)?`<p class="vfoot" style="margin-top:12px">Try it out on the <a href="#l-${l.id}" data-tab="practice">Practice</a> tab.</p>`:""}
    </div>
    ${tabbed?`<div id="pane-practice"${TAB!=="practice"?" hidden":""}><div class="tool" id="tool"></div></div>`:""}
-   <div style="margin-top:28px">${next?"":`<div class="endcta" style="margin-bottom:18px"><span><b>That's the last lesson in ${t.code}.</b> Finish with the key vocabulary test.</span><a class="btn primary small" href="#t-${t.id}">Go to vocabulary test</a></div>`}
+   <div style="margin-top:28px">${next?"":`<div class="endcta" style="margin-bottom:18px"><span><b>That's the last lesson in ${t.code}.</b> See how the whole section is going, and practise it.</span><a class="btn primary small" href="#t-${t.id}">Back to ${t.code}</a></div>`}
    <nav class="pager">${prev?`<a href="#l-${prev.id}"><small>← Lesson ${prev.n}</small><b>${prev.title}</b></a>`:`<a href="#t-${t.id}"><small>← Section overview</small><b>${t.code} ${t.title}</b></a>`}${next?`<a class="next" href="#l-${next.id}"><small>Lesson ${next.n} →</small><b>${next.title}</b></a>`:""}</nav></div>
   </div>
-  <aside class="lside${l.acts||l.v?" multi":""}"><div class="check" id="lcheck"></div>${l.v?`<div class="check" id="vocab"></div>`:""}${(l.acts||[]).map(a=>`<div class="check" id="act-${a.id}"></div>`).join("")}<div class="check" id="fclesson" data-fcw="l-${l.id}"></div><div class="check" id="exlesson"></div></aside></div></div>`;
+  <aside class="lside${l.acts||l.v?" multi":""}"><div class="check" id="lcheck"></div>${l.v?`<div class="check" id="vocab"></div>`:""}${(l.acts||[]).map(a=>`<div class="check" id="act-${a.id}"></div>`).join("")}<div class="check" id="fclesson" data-fcw="l-${l.id}"></div><div class="check" id="tzcard"></div><div class="check" id="exlesson"></div></aside></div></div>`;
 }
 
 /* folded lesson sidebar (trial): each card shows a one-line summary until it's opened */
@@ -159,6 +159,7 @@ function foldMeta(l,id){const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
   if(id==="lcheck"){const s=S.lessons[l.id],ok=qcPassed(l);return {st:ok?"ok":s?"part":"",t:s?`${ok?"Passed":"Not passed yet"} · best ${s.best}% · ${pl(s.attempts,"attempt")}`:"Not started"}}
   if(id==="vocab"){const v=S.scores["lv-"+l.id];return {st:v?"ok":"",t:v?`Done · best ${v.best}% · ${pl(v.attempts,"attempt")}`:"Not started"}}
   if(id.startsWith("act-")){const s=actStats(S.acts[l.id+"-"+id.slice(4)]);return {st:s?"ok":"",t:s?`Done · best ${s.best}% · ${pl(s.attempts,"attempt")}`:"Not started"}}
+  if(id==="tzcard"){const b=tzBest(l.id);return {st:tzDone(l.id)?"ok":"",t:tzDone(l.id)?`Solved · best ${b}%`:"Bonus puzzle"}}
   if(id==="exlesson"){const st=exLessonStats([l.id]);return {st:st.n&&st.att===st.n?"ok":st.att?"part":"",t:st.att?`${st.att} of ${st.n} questions tried · ${st.b}/${st.m} marks`:"Not started"}}
   return {st:"fo",t:"Optional practice"}}
 function foldDecorate(el,l){const h=el.querySelector(":scope > .vhead");if(!h)return;const id=el.id,open=FOLDST[l.id+":"+id]===true;
@@ -3944,6 +3945,7 @@ function dashboard(){
   <p>${lessonsDone?`You've completed ${lessonsDone} of ${ALL_LESSONS.length} lessons.`:ALL_LESSONS.some(l=>lessonParts(l).started)?`You've made a start. Finish a lesson's tasks to complete it.`:`Start with any lesson and take its quick check. Your scores appear here.`}</p></div>
   <div class="dgrid">
    ${schoolPanel()}
+   ${typeof rwPanel==="function"&&!teacher?rwPanel():""}
    <div class="panel" style="${accent(1)}"><span class="eyebrow">Paper 1 · Computer Systems</span><div class="stat">${avg(1)}<small>%</small></div><div class="bar"><i style="width:${avg(1)}%"></i></div><span class="sub">Average completion across all tasks, units 1–6</span></div>
    <div class="panel" style="${accent(2)}"><span class="eyebrow">Paper 2 · Algorithms, Programming & Logic</span><div class="stat">${avg(2)}<small>%</small></div><div class="bar"><i style="width:${avg(2)}%"></i></div><span class="sub">Average completion across all tasks, units 7–10</span></div>
    <div class="panel" style="${accent(1)}"><span class="eyebrow">Lessons complete</span><div class="stat">${lessonsDone}<small> / ${ALL_LESSONS.length}</small></div><div class="bar"><i style="width:${lessonsDone/ALL_LESSONS.length*100}%"></i></div>${nextLesson?`<a class="btn small" style="align-self:flex-start" href="#l-${nextLesson.id}">Next: ${nextLesson.title}</a>`:`<span class="sub">All available lessons complete</span>`}</div>

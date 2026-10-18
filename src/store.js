@@ -11,7 +11,7 @@ const MERGE_KEY = 'bob-merge-guest';     // set at sign-in when this browser has
 const JOIN_KEY = 'bob-pending-join';     // a class code typed at sign-up, used at first sign-in
 const AFTER_KEY = 'bob-after-login';     // choose a landing page after signing in
 const ROLE_KEY = 'bob-pending-role';     // "teacher" chosen before signing up with Google
-const KINDS = ['lessons', 'scores', 'acts', 'ex'];
+const KINDS = ['lessons', 'scores', 'acts', 'ex', 'tz', 'pts'];
 const NOT_STATE = new Set(['user', 'account', 'asgAns', ...KINDS]);
 
 const ls = {

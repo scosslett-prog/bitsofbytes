@@ -20,8 +20,9 @@ function renderRoute(r){
     if(!LQ||LQ.id!==t.id){LQ=null;TAB="theory"}
     if(AQ&&!AQ.key.startsWith(t.id+"-"))AQ=null;if(AQ)AQ.focus=false;
     if(Q&&Q.id!=="lv-"+t.id)Q=null;
-    app.innerHTML=lesson(t);foldInit(t);groupSteps(app);initWidgets(app);lcheck(t);if(t.v)vocab(lvt(t));(t.acts||[]).forEach(a=>actCard(t,a));{const lid=t.id;fcWidget($("#fclesson"),{lids:()=>[lid],fixed:true});exLessonCard(t)}if(t.tool)TOOLS[t.tool]($("#tool"))}
+    app.innerHTML=lesson(t);foldInit(t);groupSteps(app);initWidgets(app);lcheck(t);if(t.v)vocab(lvt(t));(t.acts||[]).forEach(a=>actCard(t,a));{const lid=t.id;fcWidget($("#fclesson"),{lids:()=>[lid],fixed:true});exLessonCard(t);tzCard(t)}if(t.tool)TOOLS[t.tool]($("#tool"))}
   else if(r==="dashboard")app.innerHTML=dashboard();
+  else if(r==="rewards"){app.innerHTML=rewardsPage();rwFillLb()}
   else if(r==="flashcards"){app.innerHTML=fcPage();fcPageInit()}
   else if(r==="exams"){app.innerHTML=exPage();exDraw()}
   else if(r==="exam-insights")app.innerHTML=exInsights();

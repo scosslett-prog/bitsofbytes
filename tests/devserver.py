@@ -51,6 +51,7 @@ RPC = {  # name: (kind, [(arg, type)])
     'admin_site': ('scalar', []), 'admin_set_payments': ('void', [('on_', 'boolean')]),
     'admin_put_content': ('scalar', [('kind', 'text'), ('rows', 'jsonb')]),
     'admin_finish_content': ('void', [('theory_ids', 'text[]'), ('paper_ids', 'text[]'), ('question_ids', 'text[]')]),
+    'class_leaderboard': ('set', [('c', 'uuid')]),
     'reassign': ('scalar', [('a', 'uuid'), ('students', 'uuid[]'), ('due', 'date'), ('note', 'text'), ('prev', 'jsonb')]),
 }
 def argsql(a, ty):

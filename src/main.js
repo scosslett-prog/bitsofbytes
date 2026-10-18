@@ -11,7 +11,7 @@ import { createContent, forgetContent } from './content.js';
 
 const ENV = import.meta.env || {};
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : String(Date.now());
-const APP = ['01-content.js', '02-core.js', '03-exams.js', '04-school.js', '05-account.js', '06-extra-activities.js', '07-router.js', '08-reading.js', '09-demo.js', '10-seo.js'];
+const APP = ['01-content.js', '02-core.js', '03-exams.js', '04-school.js', '05-account.js', '06-extra-activities.js', '06p-tarsia-pairs.js', '06q-tarsia.js', '06r-rewards.js', '07-router.js', '08-reading.js', '09-demo.js', '10-seo.js'];
 /* Google Analytics 4 measurement ID (it's public). Analytics only load after a visitor agrees. */
 const GA_ID = ENV.VITE_GA_ID || 'G-TBRKMHE7BF';
 
