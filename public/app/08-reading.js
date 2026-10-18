@@ -74,3 +74,14 @@ new MutationObserver(()=>{rdNtSetup();rdFPART=null;const p=document.getElementBy
 new MutationObserver(rdTick).observe(document.documentElement,{attributes:true,attributeFilter:["class"]});
 document.addEventListener("click",e=>{if(e.target.closest("[data-tab]"))setTimeout(()=>rdFUpdate(true),0)});
 rdNtSetup();rdFUpdate(true);
+
+/* ---------- the menu on small screens: folded behind a menu button ---------- */
+{const nav=document.querySelector(".nav"),btn=document.getElementById("menubtn");
+  const set=open=>{if(!nav||!btn)return;nav.classList.toggle("open",open);btn.setAttribute("aria-expanded",String(open));btn.setAttribute("aria-label",open?"Close menu":"Open menu")};
+  if(btn)btn.addEventListener("click",()=>set(!nav.classList.contains("open")));
+  addEventListener("hashchange",()=>set(false));
+  document.addEventListener("keydown",e=>{if(e.key==="Escape"&&nav.classList.contains("open")){set(false);btn.focus()}});
+  document.addEventListener("click",e=>{if(!nav.classList.contains("open"))return;
+    if(!e.target.closest(".nav"))return set(false);
+    const a=e.target.closest("#links a");if(a&&!a.closest("[data-um]"))set(false)});
+  addEventListener("resize",()=>{if(innerWidth>900)set(false)})}

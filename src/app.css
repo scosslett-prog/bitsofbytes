@@ -360,3 +360,26 @@ footer .flink{color:var(--muted)}
 #gabar .tbb{justify-content:flex-end}
 @media (prefers-reduced-motion:no-preference){#gabar{animation:tspring .45s cubic-bezier(.2,.9,.3,1.2) both}}
 .flinks{display:flex;gap:16px;flex-wrap:wrap}
+
+/* ---------- menu button on small screens ---------- */
+.menubtn{display:none}
+@media (max-width:900px){
+  .nav .wrap{flex-wrap:nowrap;gap:12px}
+  .menubtn{display:inline-flex;flex-direction:column;justify-content:center;gap:5px;width:44px;height:44px;margin-left:auto;padding:0 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;flex:none}
+  .menubtn span{display:block;height:2px;border-radius:2px;background:var(--ink);transition:transform .25s ease,opacity .2s ease}
+  .nav.open .menubtn span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+  .nav.open .menubtn span:nth-child(2){opacity:0}
+  .nav.open .menubtn span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+  .menubtn:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+  .navtitle{flex:1 1 0}
+  .nav:not(.hastitle) .navtitle{flex:1 1 0}
+  .links{display:none}
+  .nav.open .links{display:flex;position:absolute;left:0;right:0;top:100%;flex-direction:column;align-items:stretch;gap:2px;margin:0;
+    padding:10px 16px 18px;background:var(--surface);border-bottom:1px solid var(--line);box-shadow:0 16px 30px rgba(0,0,0,.12);max-height:calc(100vh - 70px);overflow:auto}
+  .nav.open .links>a{padding:12px 12px;font-size:1.02rem}
+  .nav.open .links>a.btn{justify-content:center;margin-top:6px}
+  .nav.open .umenu{margin:6px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+  .nav.open .umenu .udrop{position:static;min-width:0;max-width:none;box-shadow:none;margin-top:8px;animation:none}
+}
+@media (max-width:900px) and (prefers-reduced-motion:no-preference){.nav.open .links{animation:menudrop .22s ease both}}
+@keyframes menudrop{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
