@@ -11,7 +11,7 @@ import { createContent, forgetContent } from './content.js';
 
 const ENV = import.meta.env || {};
 const BUILD = typeof __BUILD__ !== 'undefined' ? __BUILD__ : String(Date.now());
-const APP = ['01-content.js', '02-core.js', '03-exams.js', '04-school.js', '05-account.js', '06-extra-activities.js', '07-router.js'];
+const APP = ['01-content.js', '02-core.js', '03-exams.js', '04-school.js', '05-account.js', '06-extra-activities.js', '07-router.js', '08-reading.js'];
 
 /* The live project's address and publishable key. Both are public (every visitor's browser has
    them); what each account can do is enforced by the database. .env.local or the host's

@@ -246,3 +246,31 @@ footer .flink{color:var(--muted)}
 .linkbtn:disabled{color:var(--muted,#5b6770);cursor:default;text-decoration:none}
 .resend{display:flex;flex-direction:column;gap:6px;margin:4px 0 8px}
 .resend p{margin:0}
+
+/* ---------- page title shrinking into the menu bar (08-reading.js sets --p from 0 to 1 as it scrolls away) ---------- */
+.ntsrc{transform-origin:left bottom;transform:translateY(calc(var(--p,0) * 10px)) scale(calc(1 - var(--p,0) * .35));opacity:calc(1 - var(--p,0) * .9);will-change:transform,opacity}
+.navtitle{flex:1 1 0;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:none;padding:0;margin:0;font:700 1.02rem/1.2 var(--display);color:var(--ink);text-align:left;cursor:pointer;
+  opacity:clamp(0,calc((var(--p,0) - .3) * 1.6),1);transform-origin:left center;transform:translateY(calc((1 - var(--p,0)) * 8px)) scale(calc(.85 + var(--p,0) * .15));transition:opacity .12s linear,transform .12s linear;visibility:hidden;pointer-events:none}
+.navtitle::before{content:"";flex:none;width:1.5px;height:20px;background:var(--line);border-radius:2px}
+.navtitle span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.navtitle.on{visibility:visible;pointer-events:auto}
+.navtitle:hover span{text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line)}
+@media (max-width:560px){.nav.hastitle .logo span{display:none}.navtitle{font-size:.92rem}}
+@media (prefers-reduced-motion:reduce){.ntsrc{transform:none}.navtitle{transform:none;transition:none}}
+
+/* ---------- focus mode: one part of a lesson at a time ---------- */
+:root{--veil:rgba(20,30,34,.42)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--veil:rgba(0,0,0,.58)}}
+:root[data-theme="dark"]{--veil:rgba(0,0,0,.58)}
+#fspot{position:absolute;top:0;left:0;width:0;height:0;z-index:9;pointer-events:none;border-radius:16px;box-shadow:0 0 0 200vmax var(--veil);outline:2px solid color-mix(in srgb,var(--accent,var(--p1)) 55%,transparent);outline-offset:-2px;
+  opacity:0;transition:top .5s cubic-bezier(.22,.8,.25,1),left .5s cubic-bezier(.22,.8,.25,1),width .5s cubic-bezier(.22,.8,.25,1),height .5s cubic-bezier(.22,.8,.25,1),opacity .3s ease}
+#fspot.on{opacity:1}
+#fspot.jump{transition:opacity .3s ease}
+#focusbtn{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:30;display:flex;align-items:center;gap:8px;padding:10px 16px 10px 13px;border-radius:999px;
+  border:1.5px solid var(--line);background:var(--surface);color:var(--ink);font:700 .95rem/1 var(--body);cursor:pointer;box-shadow:0 6px 20px rgba(0,0,0,.14);transition:background .2s,color .2s,border-color .2s,transform .15s}
+#focusbtn:hover{transform:translateY(-1px)}
+#focusbtn:focus-visible{outline:3px solid var(--info);outline-offset:2px}
+#focusbtn.on{background:var(--p1);border-color:var(--p1);color:var(--surface)}
+#focusbtn.paused{background:var(--surface);color:var(--muted);border-style:dashed;border-color:var(--p1)}
+@media (prefers-reduced-motion:reduce){#fspot{transition:opacity .2s}#focusbtn{transition:none}}
+@media print{#fspot,#focusbtn{display:none}}
