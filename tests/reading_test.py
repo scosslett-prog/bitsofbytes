@@ -22,4 +22,8 @@ with sync_playwright() as p:
     print('btn hidden off lesson', not pg.is_visible('#focusbtn'), 'spot off', not pg.evaluate('document.querySelector("#fspot").classList.contains("on")'))
     pg.set_viewport_size({'width':390,'height':800});pg.evaluate('location.hash="l-1-2-charsets"');pg.wait_for_timeout(500);pg.evaluate('scrollTo(0,500)');pg.wait_for_timeout(700)
     pg.screenshot(path=f'{SC}/focus_m.png');print('no h-scroll', pg.evaluate('document.documentElement.scrollWidth<=innerWidth+1'))
+    pg.set_viewport_size({'width':1280,'height':800});pg.evaluate('location.hash="l-4-1-software"');pg.wait_for_timeout(500)
+    pg.evaluate('scrollTo(0,document.documentElement.scrollHeight)');pg.wait_for_timeout(800)
+    last=pg.evaluate('[...document.querySelectorAll("#pane-theory .theory > section")].pop().querySelector("h2").textContent')
+    print('bottom of page focuses the last part', pg.evaluate('document.querySelector(".fcur h2").textContent')==last)
     print('errors', errs)

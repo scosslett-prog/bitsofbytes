@@ -1,6 +1,13 @@
 /* router */
 function render(){
-  let r=(location.hash||"#home").slice(1)||"home";
+  const r=(location.hash||"#home").slice(1)||"home";
+  /* visitors who aren't signed in see example dashboards (09-demo.js) */
+  const d=typeof demoView==="function"?demoView(r):null;
+  if(!d){renderRoute(r);if(typeof demoAfter==="function")demoAfter(r,null);return}
+  demoIn(d.view);try{renderRoute(d.route)}finally{demoOut()}
+  demoAfter(r,d);
+}
+function renderRoute(r){
   if(r==="signout"){BOB.signOut();return}
   const app=$("#app");let t=null;
   if(r==="home")app.innerHTML=home();

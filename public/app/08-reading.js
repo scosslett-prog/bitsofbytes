@@ -25,6 +25,7 @@ function rdNtSetup(){if(!rdNT)return;if(rdNTH){rdNTH.classList.remove("ntsrc");r
    One "Part" of a lesson at a time: everything else is covered with a light grey veil, and the
    spotlight glides to the next part as the reader scrolls. The switch stays in the corner of the
    screen. While an activity is open the spotlight steps aside, and comes back when it closes. */
+let rdFPin=null,rdFPinY=0;
 let rdFOCUS=(()=>{try{return localStorage.getItem("bob-focus")==="1"}catch(e){return false}})(),rdFPART=null;
 const rdFBTN=(()=>{const b=document.createElement("button");b.type="button";b.id="focusbtn";b.hidden=true;
   b.innerHTML=`<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="currentColor"/><path d="M4 8V5.5A1.5 1.5 0 0 1 5.5 4H8M16 4h2.5A1.5 1.5 0 0 1 20 5.5V8M20 16v2.5a1.5 1.5 0 0 1-1.5 1.5H16M8 20H5.5A1.5 1.5 0 0 1 4 18.5V16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg><span>Focus</span>`;
@@ -34,7 +35,11 @@ const rdFBTN=(()=>{const b=document.createElement("button");b.type="button";b.id
 const rdSPOT=(()=>{const d=document.createElement("div");d.id="fspot";d.setAttribute("aria-hidden","true");document.body.append(d);return d})();
 const rdFParts=()=>{const p=document.getElementById("pane-theory");return p&&!p.hidden?[...p.querySelectorAll(".theory > section")]:[]};
 /* the part crossing a line 40% of the way down the screen */
-function rdFCurrent(){const ps=rdFParts();if(!ps.length)return null;const line=innerHeight*0.4;
+function rdFCurrent(){const ps=rdFParts();if(!ps.length)return null;
+  /* the line slides down the screen near the bottom of the page, so short last parts still get their turn */
+  const left=document.documentElement.scrollHeight-(scrollY+innerHeight),near=innerHeight*0.6,t=Math.max(0,Math.min(1,1-left/near));
+  const line=innerHeight*(0.4+0.55*t*t);
+  if(rdFPin&&document.body.contains(rdFPin)&&Math.abs(scrollY-rdFPinY)<60)return rdFPin;rdFPin=null;
   let best=ps[0];for(const s of ps){if(s.getBoundingClientRect().top<=line)best=s;else break}return best}
 function rdFScrollTo(s){const nav=document.querySelector(".nav").getBoundingClientRect().bottom,top=s.getBoundingClientRect().top+scrollY-nav-28;
   if(top<scrollY||s.getBoundingClientRect().top>innerHeight*0.4)window.scrollTo({top,behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}
@@ -54,6 +59,11 @@ function rdFUpdate(instant){
   Object.assign(rdSPOT.style,{top:(r.top+scrollY-pad)+"px",left:(r.left+scrollX-pad)+"px",width:(r.width+pad*2)+"px",height:(r.height+pad*2)+"px"});
   rdSPOT.classList.add("on");rdFPART=s;
   if(rdSPOT.classList.contains("jump"))requestAnimationFrame(()=>requestAnimationFrame(()=>rdSPOT.classList.remove("jump")))}
+
+/* clicking a dimmed part moves the spotlight to it */
+document.addEventListener("click",e=>{if(!document.documentElement.classList.contains("focusing"))return;
+  const s=e.target.closest("#pane-theory .theory > section");if(!s||s===rdFPART)return;
+  rdFPin=s;rdFPinY=scrollY;rdFUpdate(false);if(s.getBoundingClientRect().top<0||s.getBoundingClientRect().bottom>innerHeight)rdFScrollTo(s),rdFPinY=-1e9});
 
 /* ---------- keep both up to date ---------- */
 let rdRA=0;const rdTick=()=>{if(rdRA)return;rdRA=requestAnimationFrame(()=>{rdRA=0;rdNtUpdate();rdFUpdate(false)})};
