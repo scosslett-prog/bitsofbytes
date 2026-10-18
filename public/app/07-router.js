@@ -86,7 +86,7 @@ document.addEventListener("click",e=>{
         else{actAnswer(l,ac,AQ.paint.join(","));return}}
       actCard(l,ac);refreshStepper(l);return}
     if(a==="lstart")lstart(l);
-    else if(a==="lpick"&&LQ.picked==null){LQ.picked=+b.dataset.i;if(LQ.items[LQ.k].opts[LQ.picked]===LQ.items[LQ.k].a)LQ.right++}
+    else if(a==="lpick"&&LQ.picked==null){LQ.picked=+b.dataset.i;LQ.items[LQ.k].given=LQ.items[LQ.k].opts[LQ.picked];if(LQ.items[LQ.k].opts[LQ.picked]===LQ.items[LQ.k].a)LQ.right++}
     else if(a==="lnext"){LQ.k++;LQ.picked=null;if(LQ.k>=LQ.items.length){lfinish(l);
       document.querySelectorAll(".stepper a").forEach((x,i)=>x.classList.toggle("done",done(l.topic.lessons[i])))}}
     lcheck(l);return}

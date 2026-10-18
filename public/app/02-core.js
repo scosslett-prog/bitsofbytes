@@ -32,7 +32,7 @@ function nav(route){
   <a href="#flashcards"${on("flashcards")}>Flash cards</a>
   <a href="#exams"${on("exam")}>Exam questions</a>
   ${isTeacher()?`<a href="#teacher"${route==="teacher"||route.startsWith("class-")?' class="on"':""}>My classes</a>`:myClass()?`<a href="#todo"${on("todo")}>To-do${todoCount()?` <span class="tbadge" aria-label="${todoCount()} to do">${todoCount()}</span>`:""}</a>`:""}
-  <a href="#dashboard"${on("dashboard")}>Dashboard</a>${S.user?"":`<a href="#pricing"${on("pricing")}>Pricing</a>`}
+  <a href="#dashboard"${on("dashboard")}${S.user?"":' title="See example student and teacher dashboards"'}>${S.user?"Dashboard":"Dashboard preview"}</a>${S.user?"":`<a href="#pricing"${on("pricing")}>Pricing</a>`}
   ${S.user?userMenu(route):`<a href="#login"${on("login")}>Sign in</a><a class="btn primary small" href="#register">Register</a>`}`;
 }
 
@@ -2613,7 +2613,8 @@ function actFinish(){const n=AQ.res.filter(Boolean).length,t=AQ.items.length;let
 
 function lstart(l){LQ={id:l.id,k:0,right:0,picked:null,items:shuffle(l.q).map(([q,a,...w])=>({q,a,opts:shuffle([a,...w])}))}}
 function lfinish(l){const pct=Math.round(LQ.right/LQ.items.length*100),o=S.lessons[l.id];
-  S.lessons[l.id]={best:Math.max(pct,o?o.best:0),last:pct,attempts:(o?o.attempts:0)+1,date:new Date().toISOString()};save()}
+  /* qs: the latest try question by question (question, answer, what was chosen), for the teacher's view */
+  S.lessons[l.id]={best:Math.max(pct,o?o.best:0),last:pct,attempts:(o?o.attempts:0)+1,date:new Date().toISOString(),qs:LQ.items.map(it=>({q:it.q,a:it.a,g:it.given==null?null:it.given}))};save()}
 
 /* wrap each "Step n" line and the examples under it in its own block */
 function groupSteps(root){

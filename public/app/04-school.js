@@ -183,7 +183,7 @@ function classAssign(c){
      ${lessonAsgInsights(a,st)}
      <div class="tchips">${ls.map(l=>`<a class="chip none" href="#l-${l.id}">${l.topic.code} · ${esc(l.title)}</a>`).join("")}</div>
      ${st.length?`${reBar(a)}<div class="tscroll"><table class="table ttab"><thead><tr>${selHead(a,st)}<th>Student</th><th>Status</th><th>Score</th>${ls.map((l,i)=>`<th title="${esc(l.title)}">L${i+1}</th>`).join("")}<th></th></tr></thead><tbody>
-      ${st.map(({s,r})=>`<tr>${selBox(a,s)}<td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?r.score+"%":"–"}</td>${r.per.map(x=>`<td class="tck" title="${esc(x.l.title)}: ${x.ok?"complete":x.started?x.pct+"%":"not started"}">${x.ok?`<span class="tick">✓</span>`:x.started?`<span class="sub">${x.pct}%</span>`:`<span class="sub">·</span>`}</td>`).join("")}<td>${reBtn(a,s)}</td></tr>`).join("")}</tbody></table></div>
+      ${st.map(({s,r})=>`<tr>${selBox(a,s)}<td><b>${esc(s.name)}</b></td><td>${stChip(r)}</td><td class="mono">${r.started||r.complete?r.score+"%":"–"}</td>${r.per.map(x=>`<td class="tck" title="${esc(x.l.title)}: ${x.ok?"complete":x.started?x.pct+"%":"not started"}">${x.ok?`<span class="tick">✓</span>`:x.started?`<span class="sub">${x.pct}%</span>`:`<span class="sub">·</span>`}</td>`).join("")}<td><div class="tbb tnowrap">${r.started||r.complete?`<button class="btn small" data-tc="rev" data-a="${a.id}" data-v="${s.id}">View answers</button>`:""}${reBtn(a,s)}</div></td></tr>`).join("")}</tbody></table></div>
       <p class="sub" style="margin:0">Class average score ${sc}%. Score is ${a.mode==="qc"?"the best quick check result":"completion across all the lesson's tasks"}, averaged over the lessons.</p>`:`<p class="sub">No students in this class yet.</p>`}
      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn small" data-tc="delasg" data-v="${a.id}">Delete assignment</button></div></div></details>`}).join(""):`<p class="sub">No assignments yet.</p>`;
   const anim=TV.spring;TV.spring=false;
@@ -358,7 +358,7 @@ function tdCard(a,r,c,line,right,body){const k="td-"+a.id;
    <div class="todob"><span class="sub">Set by ${esc(teacherOf(c).name)} on ${new Date(a.set).toLocaleDateString("en-GB",{day:"numeric",month:"short"})}</span>${body}</div></details>`}
 
 /* review a student's answers (teacher, or the student themselves) */
-function revOverlay(){if(!TV.rev)return "";const a=SC.asg[TV.rev.a];if(!a)return "";const teach=isTeacher();
+function revOverlay(){if(!TV.rev)return "";const a=SC.asg[TV.rev.a];if(!a)return "";if(a.kind!=="exam")return lessonRevOverlay(a);const teach=isTeacher();
   const c=SC.classes[a.cls],studs=teach&&c?studentsOf(c).filter(s=>{const x=asgStatus(a,s.id);return x.started||x.complete}):[];
   const i=studs.findIndex(s=>s.id===TV.rev.e),st=SC.users[TV.rev.e]||{name:"Student"},r=asgStatus(a,TV.rev.e);
   const ans=subOf(a.id,TV.rev.e)||{ans:{}};ans.ans=ans.ans||{};
@@ -465,7 +465,7 @@ function lessonAsgInsights(a,st){if(!st.length)return "";
     ${tile("Average score",avg+"%",a.mode==="qc"?"best quick check":"completion of tasks")}
     ${best?tile("Strongest lesson",best.pct+"%",`L${best.i+1} · ${esc(best.l.title)}`):""}
     ${worst?tile("Weakest lesson",worst.pct+"%",`L${worst.i+1} · ${esc(worst.l.title)}`):""}</div>
-   ${ns.length?`<p class="tinote">Not started yet: ${ns.map(x=>esc(x.s.name)).join(", ")}.</p>`:""}</div>`}
+   ${ns.length?`<p class="tinote">Not started yet: ${ns.map(x=>esc(x.s.name)).join(", ")}.</p>`:""}${lessonQInsights(a,st)}</div>`}
 
 function examAsgInsights(a,st){const qs=a.qids.map(id=>EXQ.find(q=>q.id===id)).filter(Boolean);if(!st.length||!qs.length)return "";
   const went=st.filter(x=>x.r.started||x.r.complete);
@@ -617,3 +617,49 @@ document.addEventListener("submit",e=>{if(e.target.id!=="buyForm")return;e.preve
   BOB.pay.checkout("licences",n).catch(err=>{b.disabled=false;b.textContent="Buy licences";x.textContent=err.message;x.hidden=false})});
 document.addEventListener("click",e=>{const b=e.target.closest('[data-pay="portal"]');if(!b)return;b.disabled=true;
   BOB.pay.portal().catch(err=>{b.disabled=false;alert(err.message)})});
+
+/* ---------- lesson assignments: each student's answers, and the questions the class found easiest and hardest ---------- */
+const stripTags=h=>String(h==null?"":h).replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim();
+const firstSpan=h=>{const m=String(h).match(/^\s*<span[^>]*>([\s\S]*?)<\/span>/);return stripTags(m?m[1]:h)};
+const asThey=h=>String(h).replace(/\bYou (wrote|answered|put|said|chose|painted)\b/g,"They $1").replace(/\byou\b(?= (wrote|answered|put|said|chose))/g,"they");
+/* a student's latest quick check (question by question, when recorded) and activity tries for each lesson */
+function lessonAnswers(a,id){const p=progOf(id)||{},L=p.lessons||{},A=p.acts||{};
+  return a.lessons.map(lid=>{const l=ALL_LESSONS.find(x=>x.id===lid);if(!l)return null;
+    return {l,qc:L[lid],acts:(l.acts||[]).map(ac=>({ac,s:actStats(A[lid+"-"+ac.id]),T:ACT_TYPES[ac.type||ac.gen]}))}}).filter(Boolean)}
+function lessonQInsights(a,st){const Q={},M={};
+  st.forEach(({s})=>lessonAnswers(a,s.id).forEach(({l,qc,acts})=>{
+    if(qc&&qc.qs)qc.qs.forEach(x=>{const k=l.id+"|"+x.q,o=Q[k]||(Q[k]={l,q:x.q,a:x.a,n:0,ok:0,wrong:{}});o.n++;if(x.g===x.a)o.ok++;else if(x.g!=null)o.wrong[x.g]=(o.wrong[x.g]||0)+1});
+    acts.forEach(({ac,s:as,T})=>{const h=as&&as.hist[as.hist.length-1];if(!h||!T)return;const seen=new Set();
+      (h.wrong||[]).forEach(w=>{let lab="";try{lab=firstSpan(T.review(w))}catch(e){}if(!lab||seen.has(lab))return;seen.add(lab);const k=l.id+"|"+ac.id+"|"+lab;(M[k]=M[k]||{l,ac,lab,n:0}).n++})})}));
+  const qs=Object.values(Q).filter(o=>o.n>=2),pct=o=>Math.round(o.ok/o.n*100),L=o=>`L${a.lessons.indexOf(o.l.id)+1}`;
+  if(!qs.length&&!Object.keys(M).length)return `<p class="tinote">Question-by-question results appear here as students take the quick checks and activities.</p>`;
+  const best=[...qs].sort((x,y)=>pct(y)-pct(x)||y.n-x.n).slice(0,3),worst=[...qs].filter(o=>pct(o)<100).sort((x,y)=>pct(x)-pct(y)||y.n-x.n).slice(0,3);
+  const topWrong=o=>{const e=Object.entries(o.wrong).sort((x,y)=>y[1]-x[1])[0];return e?` · most common wrong answer <span class="mono">“${esc(e[0])}”</span> (${e[1]})`:""};
+  const cls=v=>v>=80?"tgood":v>=50?"tpart":"tbad";
+  const li=(o,good)=>`<li><div class="tqrow"><span>${esc(o.q)}</span><b class="${cls(pct(o))}">${pct(o)}%</b></div><span class="sub">${L(o)} quick check · ${o.ok} of ${o.n} right${good?"":` · answer <b>${esc(o.a)}</b>${topWrong(o)}`}</span></li>`;
+  const am=Object.values(M).sort((x,y)=>y.n-x.n).slice(0,4);
+  return `<div class="tqins">
+   ${best.length?`<div><span class="eyebrow">Best answered</span><ul>${best.map(o=>li(o,true)).join("")}</ul></div>`:""}
+   ${worst.length?`<div><span class="eyebrow">Most often wrong</span><ul>${worst.map(o=>li(o,false)).join("")}</ul></div>`:""}
+   ${am.length?`<div class="tqwide"><span class="eyebrow">Common activity mistakes · latest tries</span><ul>${am.map(o=>`<li><div class="tqrow"><span>${esc(o.lab)}</span><b class="tbad">${plural(o.n,"student")}</b></div><span class="sub">${L(o)} · ${esc(o.ac.title)}${o.ac.desc?` · ${esc(o.ac.desc.split(" · ")[0])}`:""}</span></li>`).join("")}</ul></div>`:""}
+   <p class="sub tqwide" style="margin:0">From each student's latest quick check and activity tries. Open <b>View answers</b> to see one student's answers.</p></div>`}
+function lessonRevOverlay(a){const teach=isTeacher(),c=SC.classes[a.cls],who=teach?"They":"You";
+  const studs=teach&&c?studentsOf(c).filter(s=>{const x=asgStatus(a,s.id);return x.started||x.complete}):[];
+  const i=studs.findIndex(s=>s.id===TV.rev.e),st=SC.users[TV.rev.e]||{name:"Student"},r=asgStatus(a,TV.rev.e);
+  const nav=teach&&studs.length>1?`<div class="tbb">${i>0?`<button class="btn small" data-tc="revnav" data-v="${studs[i-1].id}">← ${esc(studs[i-1].name.split(" ")[0])}</button>`:""}${i<studs.length-1?`<button class="btn small" data-tc="revnav" data-v="${studs[i+1].id}">${esc(studs[i+1].name.split(" ")[0])} →</button>`:""}</div>`:"";
+  const body=lessonAnswers(a,TV.rev.e).map(({l,qc,acts},k)=>{
+    const nr=qc&&qc.qs?qc.qs.filter(x=>x.g===x.a).length:0;
+    const qcH=!qc?`<p class="sub">Quick check not taken yet.</p>`:qc.qs?`<ol class="trql">${qc.qs.map(x=>{const ok=x.g===x.a;
+      return `<li class="${ok?"ok":"no"}"><span class="trqm" aria-label="${ok?"Right":"Wrong"}">${ok?"✓":"✗"}</span><div><span>${esc(x.q)}</span><span class="sub">${x.g==null?"Not answered":`${who} answered <b>${esc(x.g)}</b>`}${ok?"":` · answer <b>${esc(x.a)}</b>`}</span></div></li>`}).join("")}</ol>`
+      :`<p class="sub">Best ${qc.best}% · latest ${qc.last}%. Answers question by question are kept from the next time ${teach?"they take":"you take"} it.</p>`;
+    const actH=acts.map(({ac,s,T})=>{if(!s)return `<div class="tract"><div class="tqrow"><b>${esc(ac.title)}</b><span class="sub">Not started</span></div></div>`;
+      const h=s.hist[s.hist.length-1],W=(h&&h.wrong)||[];
+      return `<div class="tract"><div class="tqrow"><b>${esc(ac.title)}${ac.desc?` <span class="sub">${esc(ac.desc.split(" · ")[0])}</span>`:""}</b><span class="mono">${s.lastN}/${s.qn} latest · best ${s.bestN}/${s.qn}</span></div>
+       ${W.length?`<div class="mistakes">${W.map(w=>{let x="";try{x=T.review(w)}catch(e){}return x?`<p>${teach?asThey(x):x}</p>`:""}).join("")}</div>`:s.lastN<s.qn?`<p class="sub" style="margin:0">${s.qn-s.lastN} wrong; the details of this try weren't recorded.</p>`:`<p class="msg ok" style="margin:0">No mistakes in the latest try.</p>`}</div>`}).join("");
+    return `<h3 class="trqn">Lesson ${k+1} · ${esc(l.title)}</h3><article class="trq">
+     <div class="exhead"><span class="exsrc">Quick check${qc?` · ${qc.attempts} ${qc.attempts===1?"try":"tries"} · best ${qc.best}%`:""}</span>${qc?`<span class="trm ${qc.last>=75?"tgood":qc.last>=50?"tpart":"tbad"}">${qc.qs?`${nr} / ${qc.qs.length}`:qc.last+"%"}</span>`:""}</div>
+     ${qcH}${acts.length?`<span class="exsrc trsub">Activities · mistakes in the latest try</span>${actH}`:""}</article>`}).join("");
+  return `<div class="trev" role="dialog" aria-modal="true" aria-label="Answers for ${esc(teach?st.name:"you")}"><div class="trevp">
+   <div class="trevh"><div><span class="eyebrow">${esc(a.title)}</span><h2>${teach?esc(st.name):"Your answers"}</h2><span class="sub">${r.score}% · ${r.nOk} of ${r.per.length} lesson${r.per.length===1?"":"s"} complete</span></div>
+    <div class="tbb">${nav}<button class="btn primary small" data-tc="revclose">Close</button></div></div>
+   <div class="trevb">${body}</div></div></div>`}
