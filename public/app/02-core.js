@@ -87,14 +87,42 @@ function topic(t){
    <div>
     <div class="block goals"><div class="eyebrow">By the end of this section you should be able to</div><ul class="obj${t.lessons?" num":""}">${t.obj.map((o,i)=>`<li${t.lessons?` data-n="${t.code}.${i+1}"`:""}>${esc(o)}</li>`).join("")}</ul></div>
     ${t.lessons?`<div class="block"><div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px"><div class="eyebrow">Lessons</div><span class="prog">${doneCount(t)} of ${t.lessons.length} complete</span></div>
-     <ol class="steps">${t.lessons.map(l=>`<li class="step${done(l)?" done":""}"><a href="#l-${l.id}"><span class="dot">${done(l)?"✓":l.n}</span><span><b>${l.title}</b><span class="covers">${l.covers.map(c=>`<span>${t.code}.${c}</span>`).join("")}${l.tool?`<span>Practice tool</span>`:""}${l.v?`<span>Key vocab${S.scores["lv-"+l.id]?`: ${S.scores["lv-"+l.id].best}%`:""}</span>`:""}${(l.acts||[]).map(a=>{const s=S.acts[l.id+"-"+a.id];return `<span>${a.title}${s&&s.hist?`: ${Math.round(s.correct/s.total*100)}%`:""}</span>`}).join("")}</span></span>${lchip(l)}</a></li>`).join("")}</ol>
-     <p class="vfoot">A lesson is complete when you've passed its quick check and tried its key vocabulary test and every activity. When you've worked through them all, take the section's key vocabulary test.</p></div>`
+     <ol class="steps">${t.lessons.map(l=>`<li class="step${done(l)?" done":""}"><a href="#l-${l.id}"><span class="dot">${done(l)?"✓":l.n}</span><span><b>${l.title}</b><span class="covers">${l.covers.map(c=>`<span>${t.code}.${c}</span>`).join("")}${l.tool?`<span class="ctask">Practice tool</span>`:""}${l.v?`<span class="ctask">Key vocab${S.scores["lv-"+l.id]?`: ${S.scores["lv-"+l.id].best}%`:""}</span>`:""}${(l.acts||[]).map(a=>{const s=S.acts[l.id+"-"+a.id];return `<span class="ctask">${a.title}${s&&s.hist?`: ${Math.round(s.correct/s.total*100)}%`:""}</span>`}).join("")}</span></span>${lchip(l)}</a></li>`).join("")}</ol>
+     <p class="vfoot">A lesson is complete when you've passed its quick check and tried its key vocabulary test and every activity.</p></div>`
     :`<div class="block"><div class="eyebrow">Lessons</div><div class="placeholder"><h3>Lessons coming soon</h3><p>This section will be split into short lessons, each with theory, practice and a quick check.</p></div></div>`}
     <nav class="pager">${prev?`<a href="#t-${prev.id}"><small>← Previous · ${prev.code}</small><b>${prev.title}</b></a>`:""}${next?`<a class="next" href="#t-${next.id}"><small>Next · ${next.code} →</small><b>${next.title}</b></a>`:""}</nav>
    </div>
-   <aside class="vocab" id="vocab"></aside>
+   ${t.lessons?`<aside class="vocab secp" id="secp" aria-label="This section">${secPanel(t)}</aside>`:`<aside class="vocab" id="vocab"></aside>`}
   </div></div>`;
 }
+
+/* the section page's side panel: progress, where to pick up, and practice for just this section.
+   (Each lesson has its own key vocabulary test, so the section no longer has one.) */
+function secPanel(t){const p=t.ch.paper,lids=t.lessons.map(l=>l.id),teach=isTeacher();
+  const nEx=exPool(lids).length,nFc=fcPool(lids,"pre").length;
+  let top="";
+  if(!teach){const st=secStatus(t),lv=lvOf(st.pct,st.started),nd=doneCount(t),nx=t.lessons.find(l=>!done(l));
+    top=`<div class="secst"><div class="stat">${st.pct}<small>%</small></div><span class="sub">across every task in this section's lessons</span></div>
+    <div class="bar"><i style="width:${st.pct}%"></i></div>
+    <p class="sub" style="margin:0">${nd} of ${t.lessons.length} lessons complete</p>
+    ${nx?`<a class="btn primary secnext" href="#l-${nx.id}"><small>${nd||st.started?"Next up":"Start here"} · Lesson ${nx.n}</small><b>${esc(nx.title)}</b></a>`
+      :`<p class="secdone">✓ Every lesson in this section is complete. Keep it fresh with the practice below.</p>`}`}
+  const prac=[nEx?`<a class="seclink" href="#exams" data-secex="${t.id}"><b>Past paper questions</b><small>${plural(nEx,"question")} on this section</small></a>`:"",
+    nFc?`<a class="seclink" href="#flashcards" data-secfc="${t.id}"><b>Flash cards</b><small>${plural(nFc,"card")} on this section</small></a>`:""].join("");
+  let hw="";
+  if(teach){const cls=tClasses(S.user.id);
+    hw=`<div class="secblk"><span class="eyebrow">Set as homework</span>${cls.length?`
+     ${cls.length>1?`<label class="sub">Class <select id="sechwcls">${cls.map(c=>`<option value="${c.id}">${esc(c.name)}</option>`).join("")}</select></label>`:`<span class="sub">For ${esc(cls[0].name)}</span>`}
+     <div class="tbb"><button class="btn small" data-sethw="lessons" data-t="${t.id}" data-cls="${cls[0].id}">The ${plural(t.lessons.length,"lesson")}</button>${nEx?`<button class="btn small" data-sethw="exam" data-t="${t.id}" data-cls="${cls[0].id}">Exam questions</button>`:""}</div>`
+     :`<span class="sub">Create a class in <a href="#teacher">My classes</a> first.</span>`}</div>`}
+  return `<div class="vhead"><h3>This section</h3>${teach?"":`<span class="chip ${CLS[lvOf(secStatus(t).pct,secStatus(t).started)]}">${LBL[lvOf(secStatus(t).pct,secStatus(t).started)]}</span>`}</div>
+  <div class="vbody">${top}${prac?`<div class="secblk"><span class="eyebrow">Practise this section</span>${prac}</div>`:""}${hw}</div>`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-secex],[data-secfc],[data-sethw]");if(!b)return;
+  if(b.dataset.secex){const t=TOPICS.find(x=>x.id===b.dataset.secex),p=t.ch.paper;EX.paper=p;S.exPaper=p;EX.sel[p]=new Set(t.lessons.map(l=>l.id).filter(id=>exPool([id]).length));EX.mode="setup";return}
+  if(b.dataset.secfc){const t=TOPICS.find(x=>x.id===b.dataset.secfc);FCPAGE.sel=new Set(t.lessons.map(l=>l.id));return}
+  const t=TOPICS.find(x=>x.id===b.dataset.t),sel=$("#sechwcls"),cid=sel?sel.value:b.dataset.cls,k=b.dataset.sethw;
+  TV.form={...newForm(),kind:k,title:`${t.code} ${t.title}${k==="exam"?": exam questions":""}`,lessons:k==="lessons"?t.lessons.map(l=>l.id):[],papers:[t.ch.paper],topics:[t.id]};
+  TV.tab="assign";TV.newOpen=true;TV.spring=true;location.hash="class-"+cid});
 
 /* lesson pages */
 function lchip(l){const lp=lessonParts(l),n=lp.parts.filter(p=>p.done).length,t=lp.parts.length;
@@ -3913,7 +3941,7 @@ function dashboard(){
   const teacher=u&&u.role==="teacher";
   return `${!u?`<div class="proto" style="margin-bottom:18px"><span>You're viewing the dashboard as a guest. <a href="#register">Register</a> or <a href="#login">sign in</a> to keep your progress.</span></div>`:""}
   <div class="phead" style="padding-bottom:20px"><div class="eyebrow">${teacher?"Teacher dashboard":"Student dashboard"}</div><h1>${u?`Hello, ${esc(u.name.split(" ")[0])}`:"Your progress"}</h1>
-  <p>${attempted.length?`You've tested yourself on ${attempted.length} of ${TOPICS.length} topics.`:`Start with any topic and take its vocabulary test. Your scores appear here.`}</p></div>
+  <p>${lessonsDone?`You've completed ${lessonsDone} of ${ALL_LESSONS.length} lessons.`:ALL_LESSONS.some(l=>lessonParts(l).started)?`You've made a start. Finish a lesson's tasks to complete it.`:`Start with any lesson and take its quick check. Your scores appear here.`}</p></div>
   <div class="dgrid">
    ${schoolPanel()}
    <div class="panel" style="${accent(1)}"><span class="eyebrow">Paper 1 · Computer Systems</span><div class="stat">${avg(1)}<small>%</small></div><div class="bar"><i style="width:${avg(1)}%"></i></div><span class="sub">Average completion across all tasks, units 1–6</span></div>
