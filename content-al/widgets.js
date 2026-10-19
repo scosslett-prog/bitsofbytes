@@ -936,3 +936,214 @@ ALW.git=function(el){let W=600,C,head,br,n,log;const reset=()=>{C=[{id:1,b:"main
     if(a==="merge"){if(!br.feature)log="There's no feature branch to merge.";else{n++;C.push({id:n,b:"main",msg:"Merge feature",par:[br.main,br.feature],merge:true});br.main=n;delete br.feature;head="main";log=`<b>Merged.</b> The feature's changes are combined into main in a merge commit. If both branches had changed the same lines, there would be a <b>merge conflict</b> for a person to sort out.`}}
     if(a==="revert"){const cur=C.find(c=>c.id===br.main),prev=cur.par[0];if(!prev)log="There's nothing earlier to roll back to.";else{n++;C.push({id:n,b:"main",msg:`Roll back to ${prev}`,par:[br.main],revert:true});br.main=n;head="main";log=`Something broke, so main was rolled back to the state of commit ${prev}. The history keeps every commit, so nothing is lost.`}}
     draw()});alResp(el,w=>{W=w;draw()})};
+
+/* refactoring walk-through: data-ex picks the example; changed lines are highlighted at each stage */
+const AL_REFACTOR={
+ clean:{t:"Try it: cleaning up code",s:"refactoring",st:[
+  ["Messy but working",`def f(l):
+ c=0
+ for i in l:
+  if i>=40:c=c+1
+ return c/len(l)*100
+print(f([35,62,48,20,71]))`,"This works, and prints 60.0, but it's hard to read: one-space indents, cramped operators, two statements on one line, and names that say nothing."],
+  ["Consistent layout",`def f(l):
+    c = 0
+    for i in l:
+        if i >= 40:
+            c = c + 1
+    return c / len(l) * 100
+
+print(f([35, 62, 48, 20, 71]))`,"Four-space indents, spaces around operators and after commas, one statement per line, and a blank line between the function and the main program. Nothing about what it does has changed."],
+  ["Meaningful identifiers",`def pass_rate(marks):
+    passes = 0
+    for mark in marks:
+        if mark >= 40:
+            passes = passes + 1
+    return passes / len(marks) * 100
+
+print(pass_rate([35, 62, 48, 20, 71]))`,"<b>f</b>, <b>l</b>, <b>c</b> and <b>i</b> become pass_rate, marks, passes and mark. Now the code explains itself: a reader can see what it's for without tracing it."],
+  ["A named constant",`PASS_MARK = 40
+
+def pass_rate(marks):
+    passes = 0
+    for mark in marks:
+        if mark >= PASS_MARK:
+            passes = passes + 1
+    return passes / len(marks) * 100
+
+print(pass_rate([35, 62, 48, 20, 71]))`,"The 'magic number' 40 becomes the constant PASS_MARK, in capitals to show it shouldn't change. If the pass mark changes, there's one place to edit, and the condition now reads like English."],
+  ["Comments and a guard",`PASS_MARK = 40
+
+def pass_rate(marks):
+    """Return the percentage of marks at or above PASS_MARK."""
+    if len(marks) == 0:     # avoid dividing by zero
+        return 0
+    passes = 0
+    for mark in marks:
+        if mark >= PASS_MARK:
+            passes = passes + 1
+    return passes / len(marks) * 100
+
+print(pass_rate([35, 62, 48, 20, 71]))`,"A docstring says what the function returns, and a <b>guard clause</b> deals with an empty list, which would have crashed with ZeroDivisionError. Comments explain <i>why</i>, not what each line does."]]},
+ guard:{t:"Try it: flattening nested ifs",s:"guard clauses",st:[
+  ["Deeply nested",`def withdraw(balance, amount):
+    if amount > 0:
+        if amount <= balance:
+            if amount <= 500:
+                balance = balance - amount
+                print("Done")
+            else:
+                print("Over the daily limit")
+        else:
+            print("Not enough money")
+    else:
+        print("Invalid amount")
+    return balance`,"Three levels of nesting. The real work is buried in the middle, and each error message is far from the check that causes it."],
+  ["First guard clause",`def withdraw(balance, amount):
+    if amount <= 0:
+        print("Invalid amount")
+        return balance
+    if amount <= balance:
+        if amount <= 500:
+            balance = balance - amount
+            print("Done")
+        else:
+            print("Over the daily limit")
+    else:
+        print("Not enough money")
+    return balance`,"Reverse the first condition and leave the function straight away. This is a <b>guard clause</b>: the invalid case is handled and dealt with at the top."],
+  ["All guard clauses",`def withdraw(balance, amount):
+    if amount <= 0:
+        print("Invalid amount")
+        return balance
+    if amount > balance:
+        print("Not enough money")
+        return balance
+    if amount > 500:
+        print("Over the daily limit")
+        return balance
+    balance = balance - amount
+    print("Done")
+    return balance`,"Every check is now a guard with its message next to it. No nesting at all: the normal path runs straight down the bottom of the function."],
+  ["Named constant",`DAILY_LIMIT = 500
+
+def withdraw(balance, amount):
+    if amount <= 0:
+        print("Invalid amount")
+        return balance
+    if amount > balance:
+        print("Not enough money")
+        return balance
+    if amount > DAILY_LIMIT:
+        print("Over the daily limit")
+        return balance
+    balance = balance - amount
+    print("Done")
+    return balance`,"Finally the magic number 500 becomes DAILY_LIMIT. The behaviour is identical to the first version: refactoring changes the structure, never the result."]]},
+ modular:{t:"Try it: making code modular",s:"decomposition",st:[
+  ["One long block",`marks = []
+for i in range(3):
+    marks.append(int(input("Mark: ")))
+total = 0
+for m in marks:
+    total = total + m
+avg = total / len(marks)
+print("Average:", round(avg, 1))
+if avg >= 50:
+    print("Pass")
+else:
+    print("Fail")`,"Input, processing and output are all mixed together. None of it can be reused or tested on its own."],
+  ["Extract a function",`def mean(values):
+    total = 0
+    for v in values:
+        total = total + v
+    return total / len(values)
+
+marks = []
+for i in range(3):
+    marks.append(int(input("Mark: ")))
+avg = mean(marks)
+print("Average:", round(avg, 1))
+if avg >= 50:
+    print("Pass")
+else:
+    print("Fail")`,"The calculation becomes a <b>function</b>. It takes a parameter, returns a value, and uses only local variables, so it has <b>no side effects</b> and can be tested by itself: mean([2, 4]) should be 3.0."],
+  ["Separate input and output",`def mean(values):
+    total = 0
+    for v in values:
+        total = total + v
+    return total / len(values)
+
+def get_marks(n):
+    marks = []
+    for i in range(n):
+        marks.append(int(input("Mark: ")))
+    return marks
+
+def report(avg):
+    print("Average:", round(avg, 1))
+    print("Pass" if avg >= 50 else "Fail")
+
+marks = get_marks(3)
+report(mean(marks))`,"Input and output get their own subprograms. This is <b>separation of concerns</b>: each part has one job. get_marks(3) is also <b>generalised</b>, since it works for any number of marks."],
+  ["The main program",`PASS_MARK = 50
+
+def mean(values):
+    total = 0
+    for v in values:
+        total = total + v
+    return total / len(values)
+
+def get_marks(n):
+    marks = []
+    for i in range(n):
+        marks.append(int(input("Mark: ")))
+    return marks
+
+def report(avg):
+    print("Average:", round(avg, 1))
+    print("Pass" if avg >= PASS_MARK else "Fail")
+
+def main():
+    marks = get_marks(3)
+    report(mean(marks))
+
+main()`,"A main() procedure reads like a summary of the program. Each function could be changed, or replaced with a library function such as statistics.mean, without touching the others."]]}};
+ALW.refactor=function(el){const X=AL_REFACTOR[el.dataset.ex||"clean"]||AL_REFACTOR.clean,S=X.st;
+  el.innerHTML=alH(X.t,X.s)+`<div class="alctl alrftabs" data-tabs>${S.map(([n],i)=>`<button class="btn small" data-k="${i}">${i+1}. ${n}</button>`).join("")}</div><div class="alcode" data-code></div><p class="almsg" data-m></p><div class="alctl" data-ctl></div>`;
+  const esc2=s=>s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const go=k=>{const cur=S[k][1].split("\n"),prev=k?new Set(S[k-1][1].split("\n")):null;
+    el.querySelector("[data-code]").innerHTML=cur.map((l,i)=>`<div class="${prev&&!prev.has(l)&&l.trim()?"cur":""}"><i>${i+1}</i>${esc2(l)}</div>`).join("");
+    el.querySelector("[data-m]").innerHTML=`<b>${S[k][0]}.</b> ${S[k][2]}${k?` <span class="alnote">Highlighted lines changed.</span>`:""}`;
+    el.querySelectorAll("[data-k]").forEach(b=>b.classList.toggle("primary",+b.dataset.k===k))};
+  const st=alStepper(el.querySelector("[data-ctl]"),S.length,go,{ms:3500,label:(k,n)=>`Stage ${k+1} of ${n}`});
+  el.querySelector("[data-tabs]").addEventListener("click",e=>{const b=e.target.closest("[data-k]");if(b)st.set(+b.dataset.k)})};
+
+/* boundary value analysis: build a test plan for a range check */
+ALW.bva=function(el){const P=[["age","Age","whole number from 11 to 18",11,18],["mark","Mark","whole number from 0 to 100",0,100],["qty","Quantity","whole number from 1 to 12",1,12]];
+  let p=P[0],rows=[],W=600;
+  el.innerHTML=alH("Try it: choosing test data","boundary value analysis")+`<div class="alctl">${alSeg("bv",P.map(x=>[x[0],x[1]]),p[0])}</div><p class="alnote" data-q></p><div data-svg></div><div class="alctl" data-ch></div><div class="tscroll"><table class="altab" style="font-family:inherit" data-t></table></div><p class="almsg" data-m></p>`;
+  const kind=v=>{if(typeof v==="string")return["Erroneous","Rejected",v===""+(p[3]+0.5)?"not a whole number":"wrong type of data"];const [lo,hi]=[p[3],p[4]];
+    if(v===lo||v===hi)return["Boundary","Accepted","the "+(v===lo?"smallest":"largest")+" valid value"];
+    if(v===lo-1||v===hi+1)return["Boundary","Rejected","just outside the range"];
+    if(v>lo&&v<hi)return["Normal","Accepted","a typical valid value"];return["Erroneous","Rejected","well outside the range"]};
+  const chips=()=>{const [lo,hi]=[p[3],p[4]],mid=Math.round((lo+hi)/2);return[lo-5,lo-1,lo,lo+1,mid,hi-1,hi,hi+1,hi+10,"ten",""+(lo+0.5)]};
+  const draw=()=>{const [lo,hi]=[p[3],p[4]],a=lo-6,b=hi+11,x=v=>30+(v-a)/(b-a)*(W-60),Y=46;
+    el.querySelector("[data-q]").innerHTML=`Validation rule: <b>${p[1]}</b> must be a ${p[2]}. Click values to add them to the test plan.`;
+    const pts=rows.filter(r=>typeof r.v==="number");
+    el.querySelector("[data-svg]").innerHTML=`<svg class="dg" viewBox="0 0 ${W} 90" role="img" aria-label="Number line of the valid range">
+     <line x1="20" y1="${Y}" x2="${W-20}" y2="${Y}" class="l"/>
+     <rect x="${x(lo)}" y="${Y-10}" width="${x(hi)-x(lo)}" height="20" rx="4" class="bg" style="opacity:.55"/>
+     <text x="${x(lo)}" y="${Y+30}" class="s c">${lo}</text><text x="${x(hi)}" y="${Y+30}" class="s c">${hi}</text>
+     <text x="${(x(lo)+x(hi))/2}" y="${Y-16}" class="s c">valid</text>
+     ${pts.map(r=>{const k=kind(r.v)[0];return `<circle cx="${x(Math.max(a,Math.min(b,r.v)))}" cy="${Y}" r="6" class="${k==="Normal"?"bi":k==="Boundary"?"b2":"bw"}"/>`}).join("")}</svg>`;
+    el.querySelector("[data-ch]").innerHTML=chips().map(c=>`<button class="btn small${rows.some(r=>String(r.v)===String(c))?" primary":""}" data-v="${c}">${typeof c==="string"?`"${c}"`:c}</button>`).join("")+`<button class="btn small" data-all>Fill the whole plan</button><button class="btn small" data-rs>↺ Clear</button>`;
+    el.querySelector("[data-t]").innerHTML=`<tr><th>Test data</th><th>Type</th><th>Expected${W>=480?" result":""}</th>${W>=480?"<th>Reason</th>":""}</tr>`+(rows.length?rows.map(r=>{const k=kind(r.v);return `<tr><td class="mono">${typeof r.v==="string"?`"${r.v}"`:r.v}</td><td>${k[0]}</td><td>${k[1]}</td>${W>=480?`<td>${k[2]}</td>`:""}</tr>`}).join(""):`<tr><td colspan="4" class="alnote">No tests yet.</td></tr>`);
+    const has=t=>rows.some(r=>kind(r.v)[0]===t),need=["Normal","Boundary","Erroneous"].filter(t=>!has(t)),nb=rows.filter(r=>kind(r.v)[0]==="Boundary").length;
+    el.querySelector("[data-m]").innerHTML=!rows.length?"A good test plan has <b>normal</b>, <b>boundary</b> and <b>erroneous</b> data.":need.length?`Still missing: <b>${need.join(", ")}</b> data.`:nb<4?`All three types are covered. For a range check, test all four boundary values: ${p[3]-1}, ${p[3]}, ${p[4]} and ${p[4]+1}. Bugs such as &lt; instead of &lt;= only show up there.`:"A thorough test plan: every boundary on both sides, typical values, and data that must be rejected."};
+  const parse=s=>{const n=Number(s);return s!==""&&Number.isInteger(n)?n:s};
+  el.addEventListener("click",e=>{const s=e.target.closest("[data-bv]");if(s){p=P.find(x=>x[0]===s.dataset.bv);rows=[];alSegSet(el,"bv",p[0]);draw();return}
+    const b=e.target.closest("[data-v],[data-all],[data-rs]");if(!b)return;
+    if("rs" in b.dataset)rows=[];else if("all" in b.dataset)rows=chips().map(c=>({v:parse(String(c))}));
+    else{const v=parse(b.dataset.v),i=rows.findIndex(r=>String(r.v)===String(v));if(i>=0)rows.splice(i,1);else rows.push({v})}draw()});
+  alResp(el,w=>{W=w;draw()})};

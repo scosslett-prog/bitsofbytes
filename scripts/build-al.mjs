@@ -33,6 +33,10 @@ const ctx = {
   O: (id, steps, valid) => { if (ORDERS[id]) problems.push(`order ${id} defined twice`); ORDERS[id] = { steps, valid }; },
   S: (id, zones, per) => { if (SORTS[id]) problems.push(`sort ${id} defined twice`); SORTS[id] = { zones, per }; },
   A: (lid, acts) => { (EXTRA[lid] = EXTRA[lid] || []).push(...acts); },
+  /* shortcuts for activity definitions */
+  ord: (bank, desc, explain) => ({ gen: 'alorder', type: 'order', bank, desc: desc + ' · put in order', explain: explain + ' You score a mark for every step in the right place.' }),
+  srt: (bank, desc, explain) => ({ gen: 'alsortg', type: 'sort', bank, desc: desc + ' · drag and drop', explain: explain + ' You score a mark for every item in the right box. Different items every try.' }),
+  bnk: (bank, desc, explain) => ({ gen: 'bank', bank, desc: desc + ' · 8 questions', explain: explain + ' Every try picks a different set.' }),
   console,
 };
 vm.createContext(ctx);
@@ -179,12 +183,14 @@ for (const id of tmpl) if (!ids.has(id)) problems.push(`theory for unknown lesso
     if (asserts.length) { const r = run({ code, stdin: t.stdin || [], files: t.files, tests: asserts }); if (r.err || !(r.tests || []).every((x) => x.ok)) return false; }
     return t.tests.filter((x) => !x.py).every((x) => { if (!Array.isArray(x.stdin || [])) return false; const r = run({ code, stdin: x.stdin || [], files: t.files }); return !r.err && [].concat(x.expect).every((w) => norm(r.out).includes(norm(w))); });
   };
-  /* every runnable example in the theory must run without an error */
+  /* every runnable example in the theory must run without an error (unless marked data-err) */
   const unesc = (s) => s.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&');
   for (const m of theory.matchAll(/<template id="th-([^"]+)">([\s\S]*?)<\/template>/g)) for (const p of m[2].matchAll(/<pre class="pc py" data-run([^>]*)>([\s\S]*?)<\/pre>/g)) {
     const st = /data-stdin="([^"]*)"/.exec(p[1]);
     const r = run({ code: unesc(p[2]), stdin: st ? st[1].split('|') : [] });
-    if (r.err) problems.push(`theory ${m[1]}: runnable example fails: ${r.err}`);
+    const wantErr = /data-err\b/.test(p[1]);   /* data-err marks an example that is meant to fail */
+    if (r.err && !wantErr) problems.push(`theory ${m[1]}: runnable example fails: ${r.err}`);
+    if (!r.err && wantErr) problems.push(`theory ${m[1]}: example marked data-err ran without an error`);
   }
   for (const l of lessons) for (const a of l.acts || []) if (a.type === 'py') a.tasks.forEach((t, i) => {
     const where = `lesson ${l.id} ${a.id} task ${i + 1}`;

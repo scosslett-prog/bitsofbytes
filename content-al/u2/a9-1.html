@@ -1,0 +1,296 @@
+<template id="th-a9-1-design">
+<div class="theory airy">
+ <section>
+  <h2>Correct outcomes come from design</h2>
+  <p>In the Unit 2 exam you're given a task and must produce a program that does exactly what it asks. Most mistakes come from starting to type before you've understood the problem. A few minutes of design saves a lot of debugging.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Step</th><th>Questions to ask</th></tr>
+   <tr><td>Requirements</td><td>What exactly must the program do? What counts as correct? Are there limits (ranges, formats, sizes)?</td></tr>
+   <tr><td>Inputs</td><td>What data comes in, from the user, a file or a database? What type is it, and could it be invalid?</td></tr>
+   <tr><td>Processing</td><td>What calculations, decisions and repeats are needed? In what order?</td></tr>
+   <tr><td>Outputs</td><td>What must be displayed or saved, and in exactly what format?</td></tr>
+   <tr><td>Test cases</td><td>For a few inputs, what should the output be? Work these out <b>before</b> you code.</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Decomposition</h2>
+  <p><b>Decomposition</b> breaks a problem into sub-problems until each is small enough to write and test on its own. Each sub-problem usually becomes a subprogram.</p>
+  <figure class="dgwrap"><svg class="dg" viewBox="0 0 600 190" role="img" aria-label="A cinema booking program decomposed into sub-problems">
+   <rect x="210" y="10" width="180" height="40" rx="8" class="bi"/><text x="300" y="35" class="c">Cinema booking</text>
+   <line x1="300" y1="50" x2="100" y2="80" class="l"/><line x1="300" y1="50" x2="300" y2="80" class="l"/><line x1="300" y1="50" x2="500" y2="80" class="l"/>
+   <rect x="20" y="80" width="160" height="40" rx="8" class="b2"/><text x="100" y="105" class="c">Get the group's ages</text>
+   <rect x="220" y="80" width="160" height="40" rx="8" class="b2"/><text x="300" y="105" class="c">Work out the price</text>
+   <rect x="420" y="80" width="160" height="40" rx="8" class="b2"/><text x="500" y="105" class="c">Book the seats</text>
+   <line x1="300" y1="120" x2="230" y2="140" class="l"/><line x1="300" y1="120" x2="370" y2="140" class="l"/>
+   <rect x="160" y="140" width="140" height="40" rx="8" class="bw"/><text x="230" y="165" class="s c">ticket_price(age)</text>
+   <rect x="310" y="140" width="140" height="40" rx="8" class="bw"/><text x="380" y="165" class="s c">group discount</text>
+  </svg></figure>
+  <pre class="pc py" data-run data-t="Try it: the decomposed program">def ticket_price(age):
+    if age &lt; 12:
+        return 5.50
+    elif age &gt;= 65:
+        return 6.00
+    return 9.00
+
+def booking_total(ages):
+    total = 0
+    for a in ages:
+        total = total + ticket_price(a)
+    if len(ages) &gt;= 6:          # group discount
+        total = total * 0.9
+    return round(total, 2)
+
+print(booking_total([40, 38, 9]))
+print(booking_total([20, 20, 20, 20, 70, 8]))</pre>
+ </section>
+ <section>
+  <h2>Choosing constructs, structures and variables</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>If the problem needs…</th><th>Use</th></tr>
+   <tr><td>a choice between options</td><td><span class="mono">if</span> / <span class="mono">elif</span> / <span class="mono">else</span></td></tr>
+   <tr><td>to repeat a known number of times, or visit every item</td><td><span class="mono">for</span></td></tr>
+   <tr><td>to repeat until something happens</td><td><span class="mono">while</span></td></tr>
+   <tr><td>to look things up by a key</td><td>a dictionary</td></tr>
+   <tr><td>a grid, or a table of records</td><td>a 2D list</td></tr>
+   <tr><td>unique items or fast membership tests</td><td>a set</td></tr>
+   <tr><td>values that mustn't change</td><td>a tuple or named constants</td></tr></table></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Clear logic means checking conditions in the right order. In an if–elif chain the <b>first</b> true condition wins, so test the most restrictive case first: <span class="mono">mark &gt;= 70</span> before <span class="mono">mark &gt;= 40</span>. And two separate <span class="mono">if</span>s are not the same as <span class="mono">if</span>–<span class="mono">elif</span>: both can run.</p></div>
+  <div class="alw" data-w="trace" data-vars="age,group" data-title="Try it: two ifs where elif was meant"><pre>for age in [10, 15, 30]:
+    if age &lt; 13:
+        group = "child"
+    if age &lt; 18:
+        group = "teen"
+    else:
+        group = "adult"
+    print(age, group)</pre></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-1-modular">
+<div class="theory airy">
+ <section>
+  <h2>Modular programs</h2>
+  <p>A <b>modular</b> program is built from subprograms that each do one job. The specification lists the qualities to aim for:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Quality</th><th>Meaning</th></tr>
+   <tr><td>Modularity</td><td>Code is split into self-contained subprograms that can be written, tested and changed separately.</td></tr>
+   <tr><td>Separation of concerns</td><td>Input, processing and output are kept apart. A calculation function returns a value; it doesn't ask for input or print.</td></tr>
+   <tr><td>Minimal side effects</td><td>A subprogram changes nothing outside itself except through what it returns.</td></tr>
+   <tr><td>Scope isolation</td><td>Variables are local wherever possible, so one part of the program can't accidentally change another's data.</td></tr>
+   <tr><td>Fit-for-purpose input and output</td><td>Ask for exactly what's needed with clear prompts; display results clearly in the format required.</td></tr>
+   <tr><td>Efficiency</td><td>No unnecessary work, e.g. not recalculating a value inside a loop, using a set for frequent membership tests.</td></tr></table></div>
+  <div class="alw" data-w="refactor" data-ex="modular"></div>
+ </section>
+ <section>
+  <h2>Side effects</h2>
+  <p>A list passed to a function is the <b>same</b> list, not a copy, so changing it inside the function changes it for the caller too. Sometimes that's what you want, but often it's a surprise. Returning a new list avoids it.</p>
+  <pre class="pc py" data-run data-t="Try it: a side effect">def add_vat(prices):
+    for i in range(len(prices)):
+        prices[i] = round(prices[i] * 1.2, 2)
+    return prices
+
+def add_vat_safe(prices):
+    return [round(p * 1.2, 2) for p in prices]
+
+net = [10.0, 2.5]
+gross = add_vat(net)
+print("With a side effect:", net, gross)     # net has changed too!
+
+net = [10.0, 2.5]
+gross = add_vat_safe(net)
+print("Without:           ", net, gross)</pre>
+  <pre class="pc py" data-run data-t="Try it: global versus local">count = 0
+def count_long_global(words):
+    global count                      # changes a variable outside
+    for w in words:
+        if len(w) &gt;= 5:
+            count = count + 1
+
+def count_long(words, min_len):
+    total = 0                         # local: nobody else can touch it
+    for w in words:
+        if len(w) &gt;= min_len:
+            total = total + 1
+    return total
+
+words = ["to", "python", "loop", "variable"]
+count_long_global(words)
+count_long_global(words)
+print("Global version after two calls:", count)   # 4, not 2
+print("Local version:", count_long(words, 5), count_long(words, 5))</pre>
+ </section>
+ <section>
+  <h2>Building blocks of modular code</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Block</th><th>Example</th></tr>
+   <tr><td>User-defined function</td><td class="mono">def area(w, h): return w * h</td></tr>
+   <tr><td>User-defined procedure</td><td class="mono">def show_menu(): print("1. Play")</td></tr>
+   <tr><td>Built-in subprogram</td><td class="mono">len(), sum(), max(), sorted(), round()</td></tr>
+   <tr><td>Library</td><td class="mono">import math, random, statistics, sqlite3</td></tr>
+   <tr><td>File</td><td>Data kept separately from code, e.g. a CSV file of questions read by a quiz</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: using a library instead of writing it yourself">import statistics
+from math import sqrt
+
+data = [4, 8, 6, 5, 3, 7]
+print("Mean:", statistics.mean(data))
+print("Median:", statistics.median(data))
+print("Standard deviation:", round(statistics.stdev(data), 2))
+print("Square root of 50:", round(sqrt(50), 3))</pre>
+  <div class="callout tip"><span class="k">Why libraries?</span><p>Library code has already been written, tested and optimised by other people. Reusing it is quicker and less error-prone than writing your own, as long as you check it does exactly what the task asks.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-2-style">
+<div class="theory airy">
+ <section>
+  <h2>Why readability matters</h2>
+  <p>Code is read far more often than it's written: by you next week, by teammates, and by examiners. Python's style guide, <b>PEP 8</b>, sets out conventions so that all Python code looks familiar. Step through the example to see messy code tidied up without changing what it does.</p>
+  <div class="alw" data-w="refactor" data-ex="clean"></div>
+ </section>
+ <section>
+  <h2>Consistency</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Aspect</th><th>Convention</th><th>Example</th></tr>
+   <tr><td>Indentation</td><td>4 spaces per level</td><td class="mono">····total = 0</td></tr>
+   <tr><td>White space</td><td>Spaces around operators and after commas; blank lines between subprograms</td><td class="mono">total = price * qty</td></tr>
+   <tr><td>Variables and functions</td><td>snake_case</td><td class="mono">high_score, get_marks()</td></tr>
+   <tr><td>Constants</td><td>CAPITALS</td><td class="mono">MAX_LIVES = 3</td></tr>
+   <tr><td>Line length</td><td>No more than about 79 characters</td><td>Split long expressions inside brackets</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Readability</h2>
+  <p><b>Meaningful identifiers</b> make code explain itself. <b>Named constants</b> replace "magic numbers", so the meaning is clear and a change needs making in only one place. <b>Subprograms</b> give a name to a block of code and remove repetition. <b>Comments</b> explain <i>why</i>, where the reason isn't obvious from the code.</p>
+  <pre class="pc py" data-run data-t="Try it: same program, two styles">def c(a,b):
+  if a>b*0.2:return a-b*0.2
+  return 0
+print(c(30,100))
+
+DEPOSIT_RATE = 0.2   # deposits are 20% of the full price
+
+def amount_owed(paid, full_price):
+    """Return what's still owed after the deposit, or 0 if paid in full."""
+    deposit = full_price * DEPOSIT_RATE
+    if paid &gt; deposit:
+        return paid - deposit
+    return 0
+
+print(amount_owed(30, 100))</pre>
+  <div class="callout warnbox"><span class="k">Comments that don't help</span><p><span class="mono">x = x + 1  # add 1 to x</span> just repeats the code. A good comment says something the code can't, such as <span class="mono"># skip the header row</span>. If you need a comment to explain what a variable is, rename the variable instead.</p></div>
+  <pre class="pc py" data-run data-t="Try it: long lines split inside brackets">items = [("Pen", 1.5, 3), ("Pad", 2.25, 2)]
+total = sum(price * qty
+            for name, price, qty in items)
+message = (f"You bought {len(items)} kinds of item "
+           f"for a total of £{total:.2f}.")
+print(message)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-2-robust">
+<div class="theory airy">
+ <section>
+  <h2>Boundary value analysis</h2>
+  <p>Errors cluster at the edges of ranges, because it's easy to write <span class="mono">&lt;</span> where <span class="mono">&lt;=</span> was needed. <b>Boundary value analysis</b> chooses test data at each edge of the valid range <b>and just outside it</b>, alongside normal and erroneous data.</p>
+  <div class="alw" data-w="bva"></div>
+  <pre class="pc py" data-run data-t="Try it: a boundary bug">def valid_age(age):
+    return age &gt; 11 and age &lt; 18     # meant 11 to 18 inclusive
+
+for test in [10, 11, 14, 18, 19]:
+    print(test, valid_age(test))</pre>
+  <p>Normal data (14) passes, so without boundary tests this bug would go unnoticed. The fix is <span class="mono">11 &lt;= age &lt;= 18</span>.</p>
+ </section>
+ <section>
+  <h2>Exception handling and type conversion</h2>
+  <p>Converting user input is the most common source of crashes. Either check it first (<span class="mono">text.isdigit()</span>) or try the conversion and catch the <span class="mono">ValueError</span>. A validation loop keeps asking until the data is acceptable.</p>
+  <pre class="pc py" data-run data-t="Try it: a robust input loop" data-stdin="ten|0|13|5">while True:
+    text = input("Quantity (1-12): ")
+    try:
+        qty = int(text)
+    except ValueError:
+        print(repr(text), "isn't a whole number")
+        continue
+    if 1 &lt;= qty &lt;= 12:
+        break
+    print(qty, "is out of range")
+print("Ordered", qty)</pre>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Exception</th><th>Typical cause</th></tr>
+   <tr><td class="mono">ValueError</td><td><span class="mono">int("abc")</span>, <span class="mono">int("4.5")</span></td></tr>
+   <tr><td class="mono">ZeroDivisionError</td><td>Dividing by zero, e.g. the average of an empty list</td></tr>
+   <tr><td class="mono">IndexError</td><td>An index past the end of a list</td></tr>
+   <tr><td class="mono">KeyError</td><td>A dictionary key that doesn't exist</td></tr>
+   <tr><td class="mono">FileNotFoundError</td><td>Opening a missing file to read</td></tr>
+   <tr><td class="mono">TypeError</td><td><span class="mono">"Age " + 16</span></td></tr></table></div>
+  <div class="callout warnbox"><span class="k">Catch specific exceptions</span><p>A bare <span class="mono">except:</span> catches everything, including your own bugs, so problems are silently hidden. Name the exception you expect: <span class="mono">except ValueError:</span>.</p></div>
+ </section>
+ <section>
+  <h2>Guard clauses and less nesting</h2>
+  <p>Deeply nested ifs and loops are hard to follow. A <b>guard clause</b> deals with an invalid or special case at the top of a subprogram and returns immediately, so the main logic isn't buried.</p>
+  <div class="alw" data-w="refactor" data-ex="guard"></div>
+  <pre class="pc py" data-run data-t="Try it: guard clauses keep code flat">def mean(values):
+    if not values:              # guard: nothing to average
+        return None
+    return sum(values) / len(values)
+
+def first_word(text):
+    if not isinstance(text, str):
+        return ""
+    words = text.split()
+    if not words:
+        return ""
+    return words[0]
+
+print(mean([]), mean([2, 4]))
+print(repr(first_word("   ")), first_word("hello world"))</pre>
+  <div class="callout tip"><span class="k">Fewer nested loops too</span><p>A nested loop that searches a list inside another list can often be replaced by a set or dictionary lookup, which is flatter and faster: <span class="mono">if name in registered:</span>.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-3-testing">
+<div class="theory airy">
+ <section>
+  <h2>Types of error</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Type</th><th>What happens</th><th>Example</th></tr>
+   <tr><td>Syntax error</td><td>The program won't run at all; Python reports the line</td><td class="mono">if x &gt; 3</td></tr>
+   <tr><td>Runtime error</td><td>It runs, then crashes when it reaches the problem</td><td class="mono">nums[10]</td></tr>
+   <tr><td>Logic error</td><td>It runs to the end but gives the wrong result</td><td class="mono">(a + b / 2)</td></tr></table></div>
+  <pre class="pc py" data-run data-err data-t="Try it: read the error message">marks = [55, 72, 61]
+total = 0
+for i in range(len(marks) + 1):
+    total = total + marks[i]
+print(total / len(marks))</pre>
+  <p>The last line of the error message names the exception (<span class="mono">IndexError</span>) and the line above shows where. Logic errors give no message at all, which is why testing matters.</p>
+ </section>
+ <section>
+  <h2>Testing</h2>
+  <p>A <b>test plan</b> lists each test with its data, type and expected result, worked out <b>before</b> running. After running, the actual result is recorded. Any mismatch is a bug to fix, and every fix needs retesting.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Test</th><th>Data</th><th>Type</th><th>Expected</th><th>Actual</th></tr>
+   <tr><td>1</td><td>[39, 40, 41]</td><td>Boundary</td><td>2</td><td>1 ✗</td></tr>
+   <tr><td>2</td><td>[10, 20]</td><td>Normal</td><td>0</td><td>0 ✓</td></tr>
+   <tr><td>3</td><td>[]</td><td>Erroneous / extreme</td><td>0</td><td>0 ✓</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: automated tests with assert">def count_passes(marks):
+    count = 0
+    for m in marks:
+        if m &gt; 40:                    # the bug
+            count = count + 1
+    return count
+
+tests = [([10, 20], 0), ([], 0), ([39, 40, 41], 2)]
+for data, expected in tests:
+    actual = count_passes(data)
+    print(data, "expected", expected, "actual", actual, "✓" if actual == expected else "✗")</pre>
+  <p>Writing the tests as code means they can be rerun after every change in a second.</p>
+ </section>
+ <section>
+  <h2>Debugging</h2>
+  <p>To find a logic error, look at what the variables actually hold as the program runs: with <b>print statements</b>, a <b>trace table</b>, or a <b>debugger</b>. A debugger pauses at a <b>breakpoint</b> and shows every variable. Try it below: the loop should add up the numbers 1 to 5, but gives the wrong answer.</p>
+  <div class="alw" data-w="trace" data-bp data-bpl="4" data-vars="i,total" data-title="Try it: find the bug with a breakpoint"><pre>total = 0
+for i in range(1, 5):
+    square = i * i
+    total = total + i
+print("Total:", total)</pre></div>
+  <p>Watching <span class="mono">i</span> shows it stops at 4: <span class="mono">range(1, 5)</span> excludes 5. The fix is <span class="mono">range(1, 6)</span>.</p>
+  <div class="callout tip"><span class="k">A debugging routine</span><p>1. Reproduce the bug with a specific input. 2. Work out what the variables <i>should</i> be. 3. Step through and find the first point where they differ. 4. Fix that one thing. 5. Rerun every test.</p></div>
+ </section>
+ <section>
+  <h2>Reviewing and refining</h2>
+  <p>Once the program works, review it against the requirements: does it do everything asked, in the format asked? Then <b>refine</b> it: clearer names, constants for magic numbers, guard clauses instead of nesting, a library function instead of hand-written code. Rerun the tests after each change to be sure nothing broke.</p>
+ </section>
+</div>
+</template>

@@ -761,3 +761,4 @@ svg.dg{width:100%;height:auto;color:var(--ink);font-family:var(--body);overflow:
 .alout:empty::before{content:"(no output yet)";opacity:.55}
 .almrow{display:grid;grid-template-columns:4.2em minmax(0,1fr) 3em;gap:8px;align-items:center;margin:4px 0}
 @container (max-width:420px){.almrow{grid-template-columns:3.1em minmax(0,1fr) 2.2em;gap:5px}.albits{gap:3px}.albit button,.albit span.b{font-size:.95rem;border-radius:6px;border-width:1.5px}.albit small{font-size:.62rem}}
+@container (max-width:520px){.alrftabs{display:none}}

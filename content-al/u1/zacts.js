@@ -1,9 +1,5 @@
 /* Unit 1: extra activities, so every lesson has at least three.
    A(lessonId, [acts]) appends to the lesson; O() defines a put-in-order task; S() a sort-into-groups task. */
-const ord=(bank,desc,explain)=>({gen:"alorder",type:"order",bank,desc:desc+" · put in order",explain:explain+" You score a mark for every step in the right place."});
-const srt=(bank,desc,explain)=>({gen:"alsortg",type:"sort",bank,desc:desc+" · drag and drop",explain:explain+" You score a mark for every item in the right box. Different items every try."});
-const bnk=(bank,desc,explain)=>({gen:"bank",bank,desc:desc+" · 8 questions",explain:explain+" Every try picks a different set."});
-
 /* ---------------- 1.1 Computer architecture ---------------- */
 O("o-run",["The program is stored on secondary storage","The OS loader copies the program into RAM","The PC is set to the address of the first instruction","The CPU fetches the instruction the PC points to","The control unit decodes the instruction","The instruction is executed, and the cycle repeats"]);
 S("s-vn",{"Benefit":["Any program can be loaded without rewiring","One memory and one set of buses keep the design simple","Memory is shared flexibly between code and data","Programs such as compilers can create other programs"],
