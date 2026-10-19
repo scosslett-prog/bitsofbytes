@@ -162,6 +162,12 @@ G.alsort=function(){const qs=[];
   qs.push(mc("What is the worst case for a bubble sort?","The list is in reverse order",["The list is already sorted","The list has one item","Every item is the same"]));
   return shuffle(qs).slice(0,8)};
 
+/* generic: put steps in order (AL_ORDERS) and sort items into groups (AL_SORTS) */
+G.alorder=function(){const D=AL_ORDERS[this.bank],n=D.steps.length;let st;do{st=shuffle([...Array(n).keys()])}while((D.valid||[[...Array(n).keys()]]).some(v=>v.filter((x,i)=>st[i]===x).length>1));
+  return D.steps.map((text,pos)=>({kind:"order",pos,text,start:st,valid:D.valid}))};
+G.alsortg=function(){const D=AL_SORTS[this.bank],Z=Object.keys(D.zones),per=D.per||Math.max(2,Math.min(4,Math.floor(12/Z.length))),zl={},keys=Z.map((_,i)=>"g"+i),it=[];
+  Z.forEach((z,i)=>zl[keys[i]]=z);Z.forEach((z,i)=>shuffle(D.zones[z]).slice(0,per).forEach(text=>it.push({kind:"sort",text,z:keys[i],zones:keys,zl})));return shuffle(it)};
+
 /* 5.3 truth tables */
 G.altruth=function(){const E=[["A AND B",(a,b)=>a&b],["A OR B",(a,b)=>a|b],["A XOR B",(a,b)=>a^b],["NOT (A AND B)",(a,b)=>1-(a&b)],["NOT (A OR B)",(a,b)=>1-(a|b)],["A AND NOT B",(a,b)=>a&(1-b)],["NOT A OR B",(a,b)=>(1-a)|b],["(A OR B) AND NOT (A AND B)",(a,b)=>(a|b)&(1-(a&b))]];
   const E3=[["(A AND B) OR C",(a,b,c)=>(a&b)|c],["A AND (B OR C)",(a,b,c)=>a&(b|c)],["(A XOR B) AND C",(a,b,c)=>(a^b)&c],["NOT A AND (B OR C)",(a,b,c)=>(1-a)&(b|c)],["(A OR B) XOR C",(a,b,c)=>(a|b)^c]];
