@@ -185,17 +185,21 @@ let ADMUP="",ADMAL="";
 function admAlevel(){return `<section class="panel admsite"><h3>A-Level site (preview)</h3>
    <div class="admrow"><div><b>Pearson Edexcel IAL Computer Science</b><p class="sub">A copy of the site built for the International A-Level specification. Only admin accounts can open it, and nothing from it is shown to students or search engines.</p>
      ${ADMAL?`<p class="admprog" role="status">${esc(ADMAL)}</p>`:""}</div>
-    <div class="tbb">${BOB.course?`<a class="btn primary" href="/#home">Back to the IGCSE site</a>`:`<a class="btn primary" href="/?course=al#home">View A-Level site</a>`}<button class="btn" data-adm="alup">Upload A-Level files</button>
-     <input type="file" id="admalfiles" accept=".js,.html,.json" multiple hidden></div></div></section>`}
+    <div class="tbb">${BOB.course?`<a class="btn primary" href="/#home">Back to the IGCSE site</a>`:`<a class="btn primary" href="/?course=al#home">View A-Level site</a>`}${BOB.mode==="dev"?`<button class="btn" data-adm="alup">Upload from content/al</button>`:""}<label class="btn" title="Choose content.js, pairs.js, theory.html and exams.json together">Upload A-Level files<input type="file" id="admalfiles" accept=".js,.html,.json" multiple hidden></label></div></div></section>`}
 const AL_FILES=["content.js","pairs.js","theory.html","exams.json"];
+/* the four built files: read from content/al on the dev server, or from the files the admin picks */
 async function admAlFiles(){
   const get=async n=>{try{const r=await fetch("/__content/al/"+n,{cache:"no-store"});return r.ok?await r.text():null}catch(e){return null}};
   const got=await Promise.all(AL_FILES.map(get));
   if(got.every(Boolean))return Object.fromEntries(AL_FILES.map((n,i)=>[n,got[i]]));
-  return new Promise(ok=>{const f=$("#admalfiles");f.value="";f.onchange=async()=>{const fs=[...f.files],out={};
-    for(const n of AL_FILES){const x=fs.find(y=>y.name===n);if(!x){alert("Choose all four files at once: "+AL_FILES.join(", ")+". If a download was renamed (e.g. content (1).js), rename it back first.");ok(null);return}out[n]=await x.text()}ok(out)};
-    alert("Choose the four A-Level files you downloaded (usually in your Downloads folder): "+AL_FILES.join(", ")+". Hold Cmd (or Ctrl) to pick them all, and keep the names exactly as they are.");f.click()})}
-async function admAlUpload(){const F=await admAlFiles();if(!F)return;const step=t=>{ADMAL=t;tRender()};
+  ADMAL="The files aren't in content/al. Use Upload A-Level files instead.";tRender();return null}
+/* downloads are sometimes renamed "content (1).js": match on the name without that */
+async function admAlPicked(list){const fs=[...list],base=n=>n.replace(/\s*\(\d+\)(?=\.[^.]+$)/,"").replace(/-\d+(?=\.[^.]+$)/,""),out={},miss=[];
+  for(const n of AL_FILES){const x=fs.find(y=>y.name===n)||fs.find(y=>base(y.name)===n);if(x)out[n]=await x.text();else miss.push(n)}
+  if(miss.length){ADMAL=`Missing ${miss.join(", ")}. Choose all four files together (hold Cmd or Ctrl to select several).`;tRender();return}
+  admAlUpload(out)}
+document.addEventListener("change",e=>{if(e.target.id==="admalfiles"&&e.target.files.length){const f=e.target.files;admAlPicked(f)}});
+async function admAlUpload(given){const F=given||await admAlFiles();if(!F)return;const step=t=>{ADMAL=t;tRender()};
   try{JSON.parse(F["exams.json"])}catch(e){ADMAL="exams.json isn't valid JSON.";tRender();return}
   document.body.classList.add("tbusy");
   try{for(const n of AL_FILES){step(`Uploading ${n}…`);await BOB.school.admin.putCourseFile("al",n,F[n])}

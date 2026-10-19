@@ -21,6 +21,17 @@ with sync_playwright() as p:
     A=page('sam@bitsofbytes.co'); A.evaluate('location.hash="admin"'); A.wait_for_selector('[data-adm="alup"]')
     A.click('[data-adm="alup"]'); A.wait_for_function('/Uploaded\\. |Upload stopped|valid JSON/.test(document.body.innerText)',timeout=30000)
     ok('admin uploads the A-Level files', sql("select count(*) from course_files where course='al'")=='4', A.inner_text('#app')[:600])
+    # the real file chooser, as on the live site (a renamed download still matches)
+    import shutil, tempfile
+    d=tempfile.mkdtemp(); paths=[]
+    for n in ['content.js','pairs.js','theory.html','exams.json']:
+        q=d+'/'+(n.replace('.js',' (1).js') if n=='content.js' else n); shutil.copy('content/al/'+n,q); paths.append(q)
+    sql("delete from course_files")
+    A.set_input_files('#admalfiles', paths[:3]); A.wait_for_timeout(500)
+    ok('chooser reports a missing file', 'Missing exams.json' in A.inner_text('#app'), A.inner_text('#app')[:300])
+    A.set_input_files('#admalfiles', paths); A.wait_for_function('/Uploaded\\. |Upload stopped/.test(document.body.innerText)',timeout=30000)
+    ok('chooser uploads all four files', sql("select count(*) from course_files where course='al'")=='4', A.inner_text('#app')[:300])
+    ok('upload button is a real file chooser', A.evaluate('!!document.querySelector("label.btn #admalfiles")'))
     with A.expect_navigation(): A.click('text=View A-Level site')
     A.wait_for_function('window.BOB && !document.getElementById("boot")')
     ok('A-Level mode on', A.evaluate('BOB.course')=='al' and A.evaluate('document.documentElement.classList.contains("course-al")'))
