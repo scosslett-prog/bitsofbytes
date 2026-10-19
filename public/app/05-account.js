@@ -193,8 +193,8 @@ async function admAlFiles(){
   const got=await Promise.all(AL_FILES.map(get));
   if(got.every(Boolean))return Object.fromEntries(AL_FILES.map((n,i)=>[n,got[i]]));
   return new Promise(ok=>{const f=$("#admalfiles");f.value="";f.onchange=async()=>{const fs=[...f.files],out={};
-    for(const n of AL_FILES){const x=fs.find(y=>y.name===n);if(!x){alert("Choose all four files from the content/al folder: "+AL_FILES.join(", ")+".");ok(null);return}out[n]=await x.text()}ok(out)};
-    alert("Choose the four files in the content/al folder of the site: "+AL_FILES.join(", ")+" (hold Cmd to pick them all).");f.click()})}
+    for(const n of AL_FILES){const x=fs.find(y=>y.name===n);if(!x){alert("Choose all four files at once: "+AL_FILES.join(", ")+". If a download was renamed (e.g. content (1).js), rename it back first.");ok(null);return}out[n]=await x.text()}ok(out)};
+    alert("Choose the four A-Level files you downloaded (usually in your Downloads folder): "+AL_FILES.join(", ")+". Hold Cmd (or Ctrl) to pick them all, and keep the names exactly as they are.");f.click()})}
 async function admAlUpload(){const F=await admAlFiles();if(!F)return;const step=t=>{ADMAL=t;tRender()};
   try{JSON.parse(F["exams.json"])}catch(e){ADMAL="exams.json isn't valid JSON.";tRender();return}
   document.body.classList.add("tbusy");
