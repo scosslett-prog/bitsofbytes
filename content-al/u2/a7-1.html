@@ -1,0 +1,243 @@
+<template id="th-a7-1-selection">
+<div class="theory airy">
+ <section>
+  <h2>Unit 2: programming in Python</h2>
+  <p class="lede">Unit 2 is a <b>practical</b> exam: three hours at a computer, writing and fixing Python 3 programs. Everything in this unit is built around writing real code, so try every example and complete the Code it tasks.</p>
+  <div class="callout tip"><span class="k">How to use these lessons</span><p>Press <b>Run</b> on any example to see what it does, then press <b>Edit</b> and change it. Breaking code on purpose and fixing it is one of the fastest ways to learn.</p></div>
+ </section>
+ <section>
+  <h2>Sequence</h2>
+  <p>A program runs its statements in <b>sequence</b>: one after another, top to bottom. The order matters. Swap two lines and the program can give a different answer, or crash.</p>
+  <pre class="pc py" data-run data-t="Try it: sequence" data-stdin="Ana|2009">name = input("What's your name? ")
+born = int(input("Year of birth: "))
+age = 2026 - born
+print("Hello", name + ".", "This year you turn", age)</pre>
+ </section>
+ <section>
+  <h2>Selection with if, elif and else</h2>
+  <p><b>Selection</b> lets a program choose what to do. Python checks each condition in turn and runs the <b>first</b> block whose condition is True; the rest are skipped. <span class="mono">else</span> runs only if none of the conditions were True.</p>
+  <pre class="pc py" data-run data-t="Try it: grade boundaries" data-stdin="64">mark = int(input("Mark: "))
+if mark &gt;= 70:
+    print("A")
+elif mark &gt;= 60:
+    print("B")
+elif mark &gt;= 50:
+    print("C")
+else:
+    print("U")</pre>
+  <div class="alw" data-w="trace" data-vars="mark" data-title="Try it: watch which branch runs"><pre>for mark in [75, 64, 41]:
+    if mark &gt;= 70:
+        grade = "A"
+    elif mark &gt;= 60:
+        grade = "B"
+    else:
+        grade = "U"
+    print(mark, grade)</pre></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Order matters in an if–elif chain. If <span class="mono">mark &gt;= 50</span> came first, a mark of 75 would get a C, because the first True condition wins. Test the <b>most restrictive</b> condition first.</p></div>
+  <h3>Conditions</h3>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operator</th><th>Meaning</th><th>Example (x = 7)</th></tr>
+   <tr><td class="mono">==</td><td>equal to</td><td class="mono">x == 7 → True</td></tr>
+   <tr><td class="mono">!=</td><td>not equal to</td><td class="mono">x != 7 → False</td></tr>
+   <tr><td class="mono">&lt; &lt;= &gt; &gt;=</td><td>less than, less or equal, …</td><td class="mono">x &gt;= 7 → True</td></tr>
+   <tr><td class="mono">and / or / not</td><td>combine conditions</td><td class="mono">x &gt; 5 and x &lt; 10 → True</td></tr></table></div>
+  <p>Python also allows chained comparisons: <span class="mono">1 &lt;= x &lt;= 10</span> means x is between 1 and 10 inclusive. String comparisons are case-sensitive: <span class="mono">"Ana" == "ana"</span> is False.</p>
+ </section>
+ <section>
+  <h2>Selection with match-case</h2>
+  <p>When one value is compared with several fixed options, <span class="mono">match</span>-<span class="mono">case</span> is often clearer than a long if–elif chain. The <span class="mono">case _:</span> pattern matches anything not matched already, like <span class="mono">else</span>.</p>
+  <pre class="pc py" data-run data-t="Try it: a menu" data-stdin="2">choice = input("1 New  2 Open  3 Quit: ")
+match choice:
+    case "1":
+        print("Creating a new file")
+    case "2":
+        print("Opening a file")
+    case "3":
+        print("Goodbye")
+    case _:
+        print("Please choose 1, 2 or 3")</pre>
+  <div class="callout tip"><span class="k">Exam tip</span><p>input() always returns a <b>string</b>. Either convert it (<span class="mono">int(choice)</span>) and match numbers, or match strings like <span class="mono">"1"</span> — but be consistent.</p></div>
+  <h3>Nested selection</h3>
+  <p>An if inside an if is <b>nested</b> selection. It's useful when the second question only makes sense if the first answer was yes — but deep nesting quickly becomes hard to read (Topic 9 shows ways to avoid it).</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-iteration">
+<div class="theory airy">
+ <section>
+  <h2>Count-controlled loops: for</h2>
+  <p class="lede">A <b>count-controlled</b> loop repeats a set number of times. In Python, that's a <span class="mono">for</span> loop, usually with <span class="mono">range()</span>, or looping over the items in a list or string.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>range(…)</th><th>Values</th></tr>
+   <tr><td class="mono">range(5)</td><td class="mono">0 1 2 3 4</td></tr>
+   <tr><td class="mono">range(1, 6)</td><td class="mono">1 2 3 4 5</td></tr>
+   <tr><td class="mono">range(0, 20, 5)</td><td class="mono">0 5 10 15</td></tr>
+   <tr><td class="mono">range(10, 0, -2)</td><td class="mono">10 8 6 4 2</td></tr></table></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>The <b>stop</b> value is never included. To count from 1 to 10 you need <span class="mono">range(1, 11)</span>.</p></div>
+  <pre class="pc py" data-run data-t="Try it: for loops">for i in range(1, 6):
+    print(i, "squared is", i * i)
+
+for ch in "CPU":
+    print(ch)
+
+total = 0
+for score in [12, 7, 15]:
+    total = total + score
+print("Total:", total)</pre>
+ </section>
+ <section>
+  <h2>Condition-controlled loops: while</h2>
+  <p>A <b>condition-controlled</b> loop repeats <b>while</b> a condition is True. Use it when you don't know in advance how many times to repeat: until the user gets the password right, until a value passes a limit, until 0 is entered.</p>
+  <div class="alw" data-w="trace" data-vars="n,steps" data-title="Try it: a while loop"><pre>n = 50
+steps = 0
+while n &gt; 1:
+    n = n // 2
+    steps = steps + 1
+print(steps)</pre></div>
+  <p>The condition is checked <b>before</b> each pass, so a while loop might not run at all. Something inside the loop must change the condition eventually; otherwise you have an <b>infinite loop</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: keep asking" data-stdin="pasword|password123">secret = "password123"
+guess = input("Password: ")
+while guess != secret:
+    print("Wrong, try again")
+    guess = input("Password: ")
+print("Welcome!")</pre>
+  <h3>Leaving a loop early</h3>
+  <p><span class="mono">break</span> jumps straight out of the loop. A common pattern is <span class="mono">while True:</span> with a break once valid input arrives. Use it sparingly: a clear loop condition is usually easier to follow.</p>
+ </section>
+ <section>
+  <h2>Nested loops</h2>
+  <p>A loop inside a loop runs the inner loop <b>completely</b> for every pass of the outer loop. 3 outer passes × 4 inner passes = 12 runs of the inner body. Nested loops are how you work through a 2D grid, or every pair of items.</p>
+  <div class="alw" data-w="trace" data-vars="row,col" data-title="Try it: nested loops"><pre>for row in range(1, 3):
+    for col in range(1, 4):
+        print(row, "x", col, "=", row * col)</pre></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Use…</th><th>when…</th></tr>
+   <tr><td class="lbl">for</td><td>you know how many times, or you're going through every item of a list, string or range</td></tr>
+   <tr><td class="lbl">while</td><td>you repeat until something happens, and don't know when</td></tr></table></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-exceptions">
+<div class="theory airy">
+ <section>
+  <h2>When things go wrong</h2>
+  <p class="lede">An <b>exception</b> is an error that happens while a program is running. If nothing handles it, the program stops with a red error message. In the exam, programs must cope with bad input without crashing.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Exception</th><th>Caused by</th><th>Example</th></tr>
+   <tr><td class="lbl">ValueError</td><td>the right type but an unsuitable value</td><td class="mono">int("abc")</td></tr>
+   <tr><td class="lbl">TypeError</td><td>an operation on the wrong type</td><td class="mono">"5" + 3</td></tr>
+   <tr><td class="lbl">ZeroDivisionError</td><td>dividing by zero</td><td class="mono">10 / 0</td></tr>
+   <tr><td class="lbl">IndexError</td><td>a list or string index out of range</td><td class="mono">[1, 2][5]</td></tr>
+   <tr><td class="lbl">KeyError</td><td>a dictionary key that doesn't exist</td><td class="mono">{"a": 1}["b"]</td></tr>
+   <tr><td class="lbl">NameError</td><td>a variable that hasn't been created</td><td class="mono">print(totl)</td></tr>
+   <tr><td class="lbl">FileNotFoundError</td><td>opening a missing file to read</td><td class="mono">open("nope.txt")</td></tr>
+   <tr><td class="lbl">AttributeError</td><td>a method the value doesn't have</td><td class="mono">(5).upper()</td></tr></table></div>
+  <p>Others listed for the exam include <span class="mono">ArithmeticError</span> (the parent of ZeroDivisionError), <span class="mono">EOFError</span> (input() reached the end of input), <span class="mono">UnboundLocalError</span> (a local variable used before it's given a value) and <span class="mono">Exception</span> (the parent of almost all of them).</p>
+ </section>
+ <section>
+  <h2>try and except</h2>
+  <p>Put code that might fail in a <span class="mono">try</span> block. If a named exception happens, Python jumps to the matching <span class="mono">except</span> block instead of crashing.</p>
+  <pre class="pc py" data-run data-t="Try it: validating a number" data-stdin="twelve|-3|12">while True:
+    text = input("How many tickets? ")
+    try:
+        tickets = int(text)
+    except ValueError:
+        print("Please type a whole number")
+        continue
+    if tickets &lt; 1:
+        print("At least 1, please")
+    else:
+        break
+print("Booking", tickets, "tickets")</pre>
+  <p>You can have several except blocks, one for each kind of error, and Python uses the first that matches.</p>
+  <pre class="pc py" data-run data-t="Try it: two kinds of error" data-stdin="0">try:
+    n = int(input("Share 100 sweets between how many people? "))
+    print("Each gets", 100 // n)
+except ValueError:
+    print("That wasn't a number")
+except ZeroDivisionError:
+    print("You can't share between nobody!")</pre>
+  <div class="callout warnbox"><span class="k">Avoid a bare except</span><p><span class="mono">except:</span> on its own catches <b>every</b> error, including your own typos (NameError). The program then carries on silently doing the wrong thing. Name the exception you expect.</p></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>Keep the try block small — just the line that might fail — so you know exactly which error you're handling.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-variables">
+<div class="theory airy">
+ <section>
+  <h2>Variables and constants</h2>
+  <p class="lede">A <b>variable</b> is a named place in memory that holds a value which can change. Python creates a variable the first time you <b>assign</b> to it with <span class="mono">=</span>; using one before it exists raises a NameError.</p>
+  <p>A <b>constant</b> is a value that shouldn't change while the program runs, like a tax rate or the size of a board. Python has no special constant type, so the convention is to name constants in <b>CAPITALS</b> and set them at the top of the program.</p>
+  <pre class="pc py" data-run data-t="Try it: constants make code clearer">VAT_RATE = 0.2
+MAX_TICKETS = 6
+
+price = 15.00
+qty = 4
+if qty &lt;= MAX_TICKETS:
+    total = price * qty * (1 + VAT_RATE)
+    print(f"Total: £{total:.2f}")</pre>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Why use constants?</h3><ul><li>The name explains what the number means.</li><li>Change it once at the top, and every use updates.</li><li>No "magic numbers" hidden in the code.</li></ul></div>
+   <div class="keypts"><h3>Good variable names</h3><ul><li>Describe the contents: <span class="mono">total_price</span>, not <span class="mono">tp</span>.</li><li>Lower case with underscores (snake_case).</li><li>Can't start with a digit or be a keyword.</li></ul></div>
+  </div>
+ </section>
+ <section>
+  <h2>Operators</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Kind</th><th>Operators</th><th>Example</th></tr>
+   <tr><td class="lbl">Arithmetic</td><td class="mono">+ - * / // % **</td><td class="mono">17 // 5 → 3, 17 % 5 → 2, 2 ** 5 → 32</td></tr>
+   <tr><td class="lbl">Relational</td><td class="mono">== != &lt; &lt;= &gt; &gt;=</td><td class="mono">3 &lt;= 4 → True</td></tr>
+   <tr><td class="lbl">Boolean</td><td class="mono">and or not</td><td class="mono">not (3 &gt; 4) → True</td></tr>
+   <tr><td class="lbl">Bitwise</td><td class="mono">&amp; | ^ ~ &lt;&lt; &gt;&gt;</td><td class="mono">6 &amp; 3 → 2, 1 &lt;&lt; 4 → 16</td></tr></table></div>
+  <p><b>Order of operations</b> follows maths: <span class="mono">**</span>, then <span class="mono">* / // %</span>, then <span class="mono">+ -</span>, then comparisons, then <span class="mono">not</span>, <span class="mono">and</span>, <span class="mono">or</span>. Brackets override everything and make intentions clear.</p>
+  <p><span class="mono">/</span> always gives a float (<span class="mono">10 / 2</span> is <span class="mono">5.0</span>). <span class="mono">//</span> rounds <b>down</b> towards minus infinity, so <span class="mono">-7 // 2</span> is <span class="mono">-4</span>. In Python, <span class="mono">&gt;&gt;</span> is an arithmetic shift, and <span class="mono">~x</span> is <span class="mono">-x - 1</span>.</p>
+  <pre class="pc py" data-run data-t="Try it: operators">print(17 / 5, 17 // 5, 17 % 5, 2 ** 10)
+print(-7 // 2, -7 % 2)
+print(5 &gt; 3 and 2 &gt; 4, not 5 &gt; 3 or True)
+print(6 &amp; 3, 6 | 3, 6 ^ 3, ~6, 6 &lt;&lt; 2, -16 &gt;&gt; 2)
+a, b = 3, 8
+a, b = b, a          # swap
+print(a, b)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-subprograms">
+<div class="theory airy">
+ <section>
+  <h2>Subprograms</h2>
+  <p class="lede">A <b>subprogram</b> is a named block of code that can be called whenever it's needed. Subprograms let you break a big problem into small parts, reuse code instead of copying it, and test each part on its own.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Procedure</h3><p>Does a job but <b>doesn't return a value</b>. In Python it simply has no return statement (so it returns None).</p><p class="mono">def show_menu():<br>&nbsp;&nbsp;&nbsp;&nbsp;print("1 Play  2 Quit")</p></div>
+   <div class="keypts"><h3>Function</h3><p>Works something out and <b>returns</b> it to the code that called it.</p><p class="mono">def area(w, h):<br>&nbsp;&nbsp;&nbsp;&nbsp;return w * h</p></div>
+  </div>
+ </section>
+ <section>
+  <h2>Parameters and arguments</h2>
+  <p>A <b>parameter</b> is a name in the subprogram's definition. An <b>argument</b> is the actual value passed in when it's called. In <span class="mono">def area(w, h)</span> the parameters are w and h; in <span class="mono">area(3, 4)</span> the arguments are 3 and 4.</p>
+  <div class="alw" data-w="trace" data-stack data-vars="room" data-title="Try it: calling a function"><pre>def area(w, h):
+    result = w * h
+    return result
+
+room = area(3, 4)
+print("Room:", room)
+print("Hall:", area(2, 6))</pre></div>
+  <p>Arguments are matched to parameters by position, or by name: <span class="mono">area(h=4, w=3)</span>. A parameter can have a <b>default</b>: <span class="mono">def area(w, h=1)</span>. A function can return several values as a tuple: <span class="mono">return low, high</span>.</p>
+ </section>
+ <section>
+  <h2>Scope: local and global</h2>
+  <p>Variables created inside a subprogram are <b>local</b>: they exist only while it runs, and other code can't see them. Variables created outside all subprograms are <b>global</b>. A subprogram can read a global, but to <b>change</b> one it must say <span class="mono">global name</span> first; otherwise Python makes a new local variable with the same name.</p>
+  <pre class="pc py" data-run data-t="Try it: local and global">score = 0
+
+def add_points(n):
+    global score
+    score = score + n
+
+def try_to_change():
+    score = 99          # a new local variable!
+
+add_points(5)
+try_to_change()
+print(score)            # 5, not 99</pre>
+  <div class="callout tip"><span class="k">Good practice</span><p>Prefer passing values in as arguments and getting results back with return, rather than changing globals. Functions that only use their parameters are easier to test and reuse (Topic 9: minimising side effects).</p></div>
+ </section>
+</div>
+</template>

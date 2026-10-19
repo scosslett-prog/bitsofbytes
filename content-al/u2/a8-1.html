@@ -1,0 +1,425 @@
+<template id="th-a8-1-types">
+<div class="theory airy">
+ <section>
+  <h2>Primitive data types</h2>
+  <p>Every value in a program has a <b>data type</b>. The type decides what the value can hold and what you can do with it: you can divide two numbers, but not two names. Python works the type out from the value, and <span class="mono">type()</span> tells you what it decided.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Type</th><th>Python</th><th>Examples</th><th>Typical use</th></tr>
+   <tr><td>Integer</td><td class="mono">int</td><td class="mono">42, -7, 0</td><td>Counts, years, scores</td></tr>
+   <tr><td>Real</td><td class="mono">float</td><td class="mono">3.75, -0.5, 2.0</td><td>Prices, measurements, averages</td></tr>
+   <tr><td>Character</td><td class="mono">str</td><td class="mono">"A", "7", "?"</td><td>One letter or symbol (Python has no separate char type)</td></tr>
+   <tr><td>String</td><td class="mono">str</td><td class="mono">"Hello", "SW1A 1AA"</td><td>Names, postcodes, phone numbers</td></tr>
+   <tr><td>Boolean</td><td class="mono">bool</td><td class="mono">True, False</td><td>Flags: is it on loan? is the box ticked?</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: what type is it?">for value in [42, 3.75, "A", "Hello", True, 2.0, "42"]:
+    print(repr(value), "is", type(value).__name__)</pre>
+  <div class="callout tip"><span class="k">Choosing a type</span><p>A phone number or postcode looks like a number, but it should be a <b>string</b>: you never do arithmetic on it, and a leading 0 would be lost as an integer (<span class="mono">int("07700")</span> is 7700).</p></div>
+ </section>
+ <section>
+  <h2>Type conversion</h2>
+  <p><span class="mono">input()</span> <b>always</b> returns a string, even when the user types a number. To do arithmetic you must <b>convert</b> (or <b>cast</b>) it first.</p>
+  <pre class="pc py" data-run data-t="Try it: input is always a string" data-stdin="5|3">a = input("First number: ")
+b = input("Second number: ")
+print("Joined as strings:", a + b)
+print("Added as integers:", int(a) + int(b))</pre>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Function</th><th>Converts to</th><th>Examples</th></tr>
+   <tr><td class="mono">int()</td><td>Integer; a float is <b>truncated</b></td><td class="mono">int("42") → 42, int(7.9) → 7</td></tr>
+   <tr><td class="mono">float()</td><td>Real</td><td class="mono">float("2") → 2.0, float(3) → 3.0</td></tr>
+   <tr><td class="mono">str()</td><td>String</td><td class="mono">str(7) + "7" → "77"</td></tr>
+   <tr><td class="mono">bool()</td><td>Boolean; 0, 0.0 and "" are False, everything else True</td><td class="mono">bool(0) → False, bool("no") → True</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: conversions">print(int("42") + 1)
+print(int(7.9), int(-7.9))
+print(float("2") * 2)
+print(str(3.50))
+print(bool(0), bool(""), bool("False"), bool("no"))
+print("3" * 3)</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p><span class="mono">bool("False")</span> is <b>True</b>, because any non-empty string is True. To turn a user's answer into a Boolean, compare the text instead: <span class="mono">answer.lower() == "yes"</span>.</p></div>
+  <p>A conversion that doesn't make sense raises a <b>ValueError</b>, for example <span class="mono">int("ten")</span> or <span class="mono">int("3.5")</span>. You'll see how to handle that safely in the lesson on exceptions and in Best practice.</p>
+  <pre class="pc py" data-run data-t="Try it: a conversion that fails" data-stdin="ten">text = input("Enter a whole number: ")
+try:
+    n = int(text)
+    print("Doubled:", n * 2)
+except ValueError:
+    print(repr(text), "isn't a whole number")</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-1-structures">
+<div class="theory airy">
+ <section>
+  <h2>Arrays and records</h2>
+  <p>The specification talks about <b>arrays</b> and <b>records</b>. Python doesn't have either built in, so you use lists (and tuples) to play both roles.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Structure</th><th>What it is</th><th>In Python</th></tr>
+   <tr><td>One-dimensional array</td><td>Items of the <b>same type</b>, found by index</td><td class="mono">scores = [64, 71, 55]</td></tr>
+   <tr><td>Two-dimensional array</td><td>A grid of rows and columns</td><td class="mono">grid = [[1, 2, 3], [4, 5, 6]]</td></tr>
+   <tr><td>Record</td><td>Related <b>fields of different types</b> about one thing</td><td class="mono">pupil = ["Ana", "10B", 15]</td></tr>
+   <tr><td>Array of records</td><td>A table: one record per row</td><td class="mono">pupils = [["Ana", "10B", 15], ["Ben", "11A", 16]]</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Two-dimensional lists</h2>
+  <p>A 2D list is a list of lists. <span class="mono">grid[r]</span> is a whole row, and <span class="mono">grid[r][c]</span> is one item: row first, then column. A <b>nested loop</b> visits every item.</p>
+  <div class="alw" data-w="trace" data-vars="r,c,total" data-title="Try it: adding up a 2D list"><pre>grid = [[3, 1, 4],
+        [1, 5, 9]]
+total = 0
+for r in range(len(grid)):
+    for c in range(len(grid[r])):
+        total = total + grid[r][c]
+print(total)</pre></div>
+  <pre class="pc py" data-run data-t="Try it: build and change a grid">board = [["." for c in range(3)] for r in range(3)]
+board[1][1] = "X"
+board[0][2] = "O"
+for row in board:
+    print(" ".join(row))
+print("Rows:", len(board), "Columns:", len(board[0]))</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p><span class="mono">[[0] * 3] * 2</span> makes two references to the <b>same</b> row, so changing one row changes both. Build each row separately with a loop or <span class="mono">[[0] * 3 for _ in range(2)]</span>.</p></div>
+  <pre class="pc py" data-run data-t="Try it: the shared-row trap">bad = [[0] * 3] * 2
+bad[0][0] = 9
+print("bad: ", bad)
+good = [[0] * 3 for _ in range(2)]
+good[0][0] = 9
+print("good:", good)</pre>
+ </section>
+ <section>
+  <h2>Choosing a structure</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Structure</th><th>Ordered?</th><th>Changeable?</th><th>Duplicates?</th><th>Use it for</th></tr>
+   <tr><td>List <span class="mono">[ ]</span></td><td>Yes</td><td>Yes</td><td>Yes</td><td>A collection you add to, sort or index</td></tr>
+   <tr><td>Tuple <span class="mono">( )</span></td><td>Yes</td><td>No</td><td>Yes</td><td>Fixed values: a coordinate, an RGB colour</td></tr>
+   <tr><td>Dictionary <span class="mono">{k: v}</span></td><td>By insertion</td><td>Yes</td><td>Keys unique</td><td>Looking things up by name</td></tr>
+   <tr><td>Set <span class="mono">{ }</span></td><td>No</td><td>Yes</td><td>No</td><td>Unique items, membership, set operations</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Converting between structures</h2>
+  <p>The functions <span class="mono">list()</span>, <span class="mono">tuple()</span>, <span class="mono">set()</span> and <span class="mono">dict()</span> each build a new structure from another one.</p>
+  <pre class="pc py" data-run data-t="Try it: converting structures">nums = [3, 1, 3, 2, 1]
+print(set(nums))              # duplicates removed
+print(sorted(set(nums)))      # unique and sorted, back to a list
+print(tuple(nums))            # list to tuple
+print(list("abc"))            # string to a list of characters
+pairs = [("Ana", 15), ("Ben", 16)]
+ages = dict(pairs)            # list of pairs to dictionary
+print(ages)
+print(list(ages.keys()), list(ages.values()))
+print(list(ages.items()))     # and back to pairs</pre>
+  <div class="callout tip"><span class="k">Unpacking</span><p>A record's fields can be unpacked into separate variables in one line: <span class="mono">name, form, age = pupil</span>. The number of variables must match the number of fields.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-numbers">
+<div class="theory airy">
+ <section>
+  <h2>Rounding and truncation</h2>
+  <p><b>Rounding</b> moves a number to the <b>nearest</b> value with fewer decimal places. <b>Truncation</b> simply <b>chops off</b> the fractional part, whichever is nearer.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Expression</th><th>Result</th><th>What happens</th></tr>
+   <tr><td class="mono">round(3.14159, 2)</td><td class="mono">3.14</td><td>Rounds to 2 decimal places</td></tr>
+   <tr><td class="mono">round(4.7)</td><td class="mono">5</td><td>Rounds to the nearest whole number</td></tr>
+   <tr><td class="mono">int(4.7)</td><td class="mono">4</td><td>Truncates (towards zero)</td></tr>
+   <tr><td class="mono">int(-4.7)</td><td class="mono">-4</td><td>Truncates towards zero</td></tr>
+   <tr><td class="mono">math.floor(-4.7)</td><td class="mono">-5</td><td>Rounds <b>down</b></td></tr>
+   <tr><td class="mono">math.ceil(4.1)</td><td class="mono">5</td><td>Rounds <b>up</b></td></tr>
+   <tr><td class="mono">17 // 5</td><td class="mono">3</td><td>Integer division</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: round, truncate, floor, ceil">import math
+for x in [4.7, 4.2, -4.7, 2.5, 3.5]:
+    print(x, "round:", round(x), "int:", int(x),
+          "floor:", math.floor(x), "ceil:", math.ceil(x))</pre>
+  <div class="callout warnbox"><span class="k">Something surprising!</span><p>Python rounds exact halves to the nearest <b>even</b> number ("banker's rounding"), so <span class="mono">round(2.5)</span> is 2 and <span class="mono">round(3.5)</span> is 4. And because floats are stored in binary, <span class="mono">round(2.675, 2)</span> gives 2.67: 2.675 is really stored as 2.67499999…</p></div>
+  <pre class="pc py" data-run data-t="Try it: floats are approximations">print(0.1 + 0.2)
+print(0.1 + 0.2 == 0.3)
+print(abs((0.1 + 0.2) - 0.3) &lt; 0.000001)
+print(f"{2.675:.20f}")</pre>
+  <p>To compare floats, check that they are <b>close</b> rather than exactly equal. For money, many programs store whole pence as integers.</p>
+ </section>
+ <section>
+  <h2>Randomisation</h2>
+  <p>The <span class="mono">random</span> library generates pseudo-random values. You must <span class="mono">import random</span> first.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Function</th><th>Returns</th></tr>
+   <tr><td class="mono">random.randint(a, b)</td><td>A whole number from a to b, <b>including both</b></td></tr>
+   <tr><td class="mono">random.random()</td><td>A real number from 0 up to, but not including, 1</td></tr>
+   <tr><td class="mono">random.choice(lst)</td><td>One random item from a list</td></tr>
+   <tr><td class="mono">random.shuffle(lst)</td><td>Shuffles the list in place</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: random values (run it more than once)">import random
+print("Dice:", random.randint(1, 6))
+print("Chance:", round(random.random(), 3))
+print("Pick:", random.choice(["rock", "paper", "scissors"]))
+deck = list(range(1, 11))
+random.shuffle(deck)
+print("Shuffled:", deck)</pre>
+  <pre class="pc py" data-run data-t="Try it: is the dice fair?">import random
+counts = [0] * 7
+for i in range(6000):
+    counts[random.randint(1, 6)] += 1
+for face in range(1, 7):
+    print(face, "#" * (counts[face] // 50), counts[face])</pre>
+ </section>
+ <section>
+  <h2>The math library</h2>
+  <pre class="pc py" data-run data-t="Try it: math functions">import math
+print(math.sqrt(49), math.pi)
+print(math.floor(7.8), math.ceil(7.2))
+print(abs(-4), pow(2, 10), 2 ** 10)
+radius = 3
+print("Area:", round(math.pi * radius ** 2, 2))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-strings">
+<div class="theory airy">
+ <section>
+  <h2>Indexing and slicing</h2>
+  <p>A string is a <b>sequence</b> of characters, numbered from 0. Negative indexes count from the end. A <b>slice</b> <span class="mono">s[start:stop]</span> includes start but <b>stops before</b> stop.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Character</th><td class="mono">P</td><td class="mono">y</td><td class="mono">t</td><td class="mono">h</td><td class="mono">o</td><td class="mono">n</td></tr>
+   <tr><th>Index</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+   <tr><th>Negative</th><td>-6</td><td>-5</td><td>-4</td><td>-3</td><td>-2</td><td>-1</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: indexing and slicing">s = "Python"
+print(len(s), s[0], s[-1])
+print(s[1:4])     # yth
+print(s[:3])      # first three
+print(s[3:])      # from index 3 to the end
+print(s[::-1])    # reversed</pre>
+  <div class="alw" data-w="trace" data-vars="i,ch,vowels" data-title="Try it: traversing a string"><pre>word = "banana"
+vowels = 0
+for i in range(len(word)):
+    ch = word[i]
+    if ch in "aeiou":
+        vowels = vowels + 1
+print(vowels)</pre></div>
+ </section>
+ <section>
+  <h2>Strings are immutable</h2>
+  <p>You can't change a character in place: <span class="mono">s[0] = "b"</span> raises a TypeError. String methods <b>return a new string</b> instead, so you must store the result.</p>
+  <pre class="pc py" data-run data-t="Try it: methods return new strings">name = "  ada lovelace "
+name.upper()                 # does nothing on its own
+print(repr(name))
+name = name.strip().title()  # store the result
+print(repr(name))</pre>
+ </section>
+ <section>
+  <h2>String methods</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Job</th><th>Methods</th><th>Example</th></tr>
+   <tr><td>Change case</td><td class="mono">upper() lower() title() capitalize()</td><td class="mono">"abc".upper() → "ABC"</td></tr>
+   <tr><td>Examine</td><td class="mono">isdigit() isalpha() isupper() startswith() endswith()</td><td class="mono">"42".isdigit() → True</td></tr>
+   <tr><td>Find</td><td class="mono">find() index() count() in</td><td class="mono">"banana".find("n") → 2</td></tr>
+   <tr><td>Clean</td><td class="mono">strip() replace()</td><td class="mono">" hi ".strip() → "hi"</td></tr>
+   <tr><td>Split and join</td><td class="mono">split() join()</td><td class="mono">"a,b".split(",") → ['a', 'b']</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: validating a password" data-stdin="Secret42">pw = input("Password: ")
+has_digit = False
+has_upper = False
+for ch in pw:
+    if ch.isdigit():
+        has_digit = True
+    if ch.isupper():
+        has_upper = True
+if len(pw) &gt;= 8 and has_digit and has_upper:
+    print("Strong enough")
+else:
+    print("Needs 8+ characters, a capital and a digit")</pre>
+  <pre class="pc py" data-run data-t="Try it: split and join">line = "Ana,10B,15"
+fields = line.split(",")
+print(fields)
+print(fields[0], "is in", fields[1])
+print("-".join(["2026", "10", "19"]))</pre>
+ </section>
+ <section>
+  <h2>Formatting output</h2>
+  <p>An <b>f-string</b> puts values straight into text inside <span class="mono">{ }</span>. A <b>format specifier</b> after a colon controls how they look.</p>
+  <pre class="pc py" data-run data-t="Try it: f-strings">item, price, qty = "Pen", 1.5, 3
+print(f"{item}: £{price:.2f}")           # 2 decimal places
+print(f"{qty} x {item} = £{price * qty:.2f}")
+print(f"[{item:&lt;8}] [{item:&gt;8}]")        # left and right aligned in 8
+print(f"{0.4567:.1%}")                    # as a percentage
+print("Old style: " + item + " costs £" + str(price))</pre>
+  <div class="callout tip"><span class="k">Concatenation needs strings</span><p><span class="mono">"Age " + 16</span> raises a TypeError. Either convert with <span class="mono">str(16)</span> or use an f-string, which converts for you.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-files">
+<div class="theory airy">
+ <section>
+  <h2>Why use text files?</h2>
+  <p>Variables are lost when a program ends. A <b>text file</b> keeps data <b>persistent</b> so it can be loaded again next time. Data is often stored as one record per line, with fields separated by commas (a <b>CSV</b> file).</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Mode</th><th>Meaning</th><th>If the file exists</th><th>If it doesn't</th></tr>
+   <tr><td class="mono">"r"</td><td>Read</td><td>Read from the start</td><td>FileNotFoundError</td></tr>
+   <tr><td class="mono">"w"</td><td>Write</td><td><b>Contents are deleted</b></td><td>Created</td></tr>
+   <tr><td class="mono">"a"</td><td>Append</td><td>Added to the end</td><td>Created</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Writing and appending</h2>
+  <p><span class="mono">write()</span> writes exactly the string you give it. It does <b>not</b> add a new line, so add <span class="mono">"\n"</span> yourself. Using <span class="mono">with</span> closes the file for you at the end of the block, which makes sure the data is saved.</p>
+  <pre class="pc py" data-run data-t="Try it: write, then append">with open("pupils.txt", "w") as f:
+    f.write("Ana,10B,15\n")
+    f.write("Ben,11A,16\n")
+
+with open("pupils.txt", "a") as f:
+    f.write("Cai,10B,15\n")
+
+with open("pupils.txt", "r") as f:
+    print(f.read())</pre>
+  <pre class="pc py" data-run data-t="Try it: without with, you close it yourself">f = open("log.txt", "w")
+f.write("first\n")
+f.close()
+f = open("log.txt", "w")      # "w" again: the old line is gone
+f.write("second\n")
+f.close()
+print(open("log.txt").read())</pre>
+ </section>
+ <section>
+  <h2>Reading</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Method</th><th>Returns</th></tr>
+   <tr><td class="mono">f.read()</td><td>The whole file as one string</td></tr>
+   <tr><td class="mono">f.readline()</td><td>The next line (with its <span class="mono">\n</span>)</td></tr>
+   <tr><td class="mono">f.readlines()</td><td>A list of all the lines</td></tr>
+   <tr><td class="mono">for line in f:</td><td>Each line in turn, without loading the whole file</td></tr></table></div>
+  <p>Each line ends with a newline character, so <span class="mono">strip()</span> it before using it. Then <span class="mono">split(",")</span> separates the fields, and each field is a string that may need converting.</p>
+  <pre class="pc py" data-run data-t="Try it: reading records from a CSV file">with open("pupils.txt", "w") as f:
+    f.write("Ana,10B,15\nBen,11A,16\nCai,10B,15\n")
+
+pupils = []
+with open("pupils.txt", "r") as f:
+    for line in f:
+        name, form, age = line.strip().split(",")
+        pupils.append([name, form, int(age)])
+
+print(pupils)
+print("Average age:", sum(p[2] for p in pupils) / len(pupils))</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Forgetting <span class="mono">strip()</span> leaves a <span class="mono">"\n"</span> on the last field. <span class="mono">int("15\n")</span> happens to work, but comparing <span class="mono">"10B\n" == "10B"</span> is False.</p></div>
+  <pre class="pc py" data-run data-t="Try it: handling a missing file">try:
+    with open("missing.txt", "r") as f:
+        print(f.read())
+except FileNotFoundError:
+    print("No saved data yet, starting fresh")</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-structops">
+<div class="theory airy">
+ <section>
+  <h2>Create, insert, update, retrieve, delete</h2>
+  <p>Whatever the structure, the same basic operations come up again and again.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operation</th><th>List</th><th>Dictionary</th><th>Set</th></tr>
+   <tr><td>Create</td><td class="mono">lst = []</td><td class="mono">d = {}</td><td class="mono">s = set()</td></tr>
+   <tr><td>Insert</td><td class="mono">lst.append(x)<br>lst.insert(i, x)</td><td class="mono">d[key] = value</td><td class="mono">s.add(x)</td></tr>
+   <tr><td>Update</td><td class="mono">lst[i] = x</td><td class="mono">d[key] = new</td><td>(remove then add)</td></tr>
+   <tr><td>Retrieve</td><td class="mono">lst[i]</td><td class="mono">d[key]<br>d.get(key)</td><td class="mono">x in s</td></tr>
+   <tr><td>Delete</td><td class="mono">del lst[i]<br>lst.remove(x)<br>lst.pop()</td><td class="mono">del d[key]<br>d.pop(key)</td><td class="mono">s.remove(x)<br>s.discard(x)</td></tr></table></div>
+  <div class="alw" data-w="list"></div>
+  <pre class="pc py" data-run data-t="Try it: a phone book dictionary">book = {}                          # create
+book["Ana"] = "07700 900001"       # insert
+book["Ben"] = "07700 900002"
+book["Ana"] = "07700 900099"       # update
+print(book.get("Ana"))             # retrieve
+print(book.get("Zed", "not found"))
+del book["Ben"]                    # delete
+print(book)</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p><span class="mono">d["Zed"]</span> raises a <b>KeyError</b> if the key isn't there, and <span class="mono">lst.remove(x)</span> raises a ValueError if x isn't in the list. Check with <span class="mono">in</span> first, or use <span class="mono">d.get()</span> and <span class="mono">s.discard()</span>.</p></div>
+ </section>
+ <section>
+  <h2>Traversal</h2>
+  <p>To <b>traverse</b> a structure is to visit every item, usually with a for loop. Many algorithms are just a traversal with a variable tracking something: a total, a count, or the best so far.</p>
+  <div class="alw" data-w="trace" data-vars="name,s,best,top" data-title="Try it: finding the highest score"><pre>scores = {"Ana": 72, "Ben": 88, "Cai": 65}
+best = ""
+top = -1
+for name, s in scores.items():
+    if s &gt; top:
+        top = s
+        best = name
+print(best, top)</pre></div>
+  <pre class="pc py" data-run data-t="Try it: counting with a dictionary">words = "the cat sat on the mat the end".split()
+counts = {}
+for w in words:
+    if w in counts:
+        counts[w] = counts[w] + 1
+    else:
+        counts[w] = 1
+for w, n in counts.items():
+    print(w, n)</pre>
+ </section>
+ <section>
+  <h2>Set operations</h2>
+  <p>Sets have operations for combining them, which are much quicker to write than nested loops.</p>
+  <div class="alw" data-w="sets"></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operation</th><th>Method</th><th>Operator</th><th>Gives</th></tr>
+   <tr><td>Union</td><td class="mono">a.union(b)</td><td class="mono">a | b</td><td>Everything in either</td></tr>
+   <tr><td>Intersection</td><td class="mono">a.intersection(b)</td><td class="mono">a &amp; b</td><td>Only what's in both</td></tr>
+   <tr><td>Difference</td><td class="mono">a.difference(b)</td><td class="mono">a - b</td><td>In a but not b</td></tr>
+   <tr><td>Symmetric difference</td><td class="mono">a.symmetric_difference(b)</td><td class="mono">a ^ b</td><td>In one but not both</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: clubs">chess = {"Ana", "Ben", "Cai"}
+coding = {"Ben", "Dev", "Cai", "Eve"}
+print("In both:", sorted(chess &amp; coding))
+print("Chess only:", sorted(chess - coding))
+print("Either:", sorted(chess | coding))
+print("Just one:", sorted(chess ^ coding))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-stackqueue">
+<div class="theory airy">
+ <section>
+  <h2>Fixed-length structures</h2>
+  <p>A Python list can grow forever with <span class="mono">append()</span>, but the specification asks you to build stacks and queues in <b>fixed-length</b> lists, as they would be in an array. You create the list at its full size and keep <b>pointers</b> to track where the data is.</p>
+  <pre class="pc py" data-run data-t="Try it: a fixed-length list">SIZE = 5
+stack = [None] * SIZE
+print(stack, len(stack))</pre>
+  <p>Each structure needs three helper functions: <b>IsEmpty</b>, <b>IsFull</b> and <b>Size</b>. Check them <b>before</b> every push or pop so the pointers never go out of range.</p>
+ </section>
+ <section>
+  <h2>A stack</h2>
+  <p>A stack is <b>last in, first out</b>. One pointer, <span class="mono">top</span>, holds the index of the top item, and starts at −1 when the stack is empty.</p>
+  <div class="alw" data-w="stack"></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Function</th><th>Test</th></tr>
+   <tr><td>IsEmpty</td><td class="mono">top == -1</td></tr>
+   <tr><td>IsFull</td><td class="mono">top == SIZE - 1</td></tr>
+   <tr><td>Size</td><td class="mono">top + 1</td></tr></table></div>
+  <div class="alw" data-w="trace" data-vars="top,stack" data-title="Try it: push and pop"><pre>SIZE = 3
+stack = [None] * SIZE
+top = -1
+for item in ["a", "b", "c", "d"]:
+    if top == SIZE - 1:
+        print("Full, can't push", item)
+    else:
+        top = top + 1
+        stack[top] = item
+while top != -1:
+    print("Pop", stack[top])
+    stack[top] = None
+    top = top - 1</pre></div>
+  <div class="callout tip"><span class="k">Overflow and underflow</span><p>Pushing onto a full stack is <b>overflow</b>; popping from an empty one is <b>underflow</b>. Your functions should detect both and report them (for example by returning False or None) rather than crashing.</p></div>
+ </section>
+ <section>
+  <h2>A queue</h2>
+  <p>A queue is <b>first in, first out</b>. Items join at the <b>rear</b> and leave from the <b>front</b>. In a <b>circular</b> queue the pointers wrap back to 0 after the last index, so spaces freed at the front are reused. A <span class="mono">count</span> variable makes IsEmpty, IsFull and Size simple.</p>
+  <div class="alw" data-w="queue"></div>
+  <pre class="pc py" data-run data-t="Try it: a circular queue">SIZE = 3
+queue = [None] * SIZE
+front, rear, count = 0, -1, 0
+
+def enqueue(item):
+    global rear, count
+    if count == SIZE:
+        print("Full, can't add", item)
+        return
+    rear = (rear + 1) % SIZE
+    queue[rear] = item
+    count += 1
+
+def dequeue():
+    global front, count
+    if count == 0:
+        return None
+    item = queue[front]
+    front = (front + 1) % SIZE
+    count -= 1
+    return item
+
+for x in ["A", "B", "C", "D"]:
+    enqueue(x)
+print("Out:", dequeue(), dequeue())
+enqueue("E")
+print(queue, "front =", front, "rear =", rear)
+print("Out:", dequeue(), dequeue(), dequeue(), dequeue())</pre>
+  <div class="callout warnbox"><span class="k">Remember global</span><p>A function that changes a pointer stored outside it needs <span class="mono">global top</span> (or <span class="mono">global front, count</span>). Without it, Python makes a new local variable and raises an UnboundLocalError.</p></div>
+ </section>
+</div>
+</template>
