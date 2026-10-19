@@ -1866,3 +1866,1663 @@ for row in db.execute("SELECT Name FROM Student WHERE Age &gt; 16"):
  </section>
 </div>
 </template>
+
+<template id="th-a10-1-abstraction">
+<div class="theory airy">
+ <section>
+  <h2>Abstraction: hiding the detail</h2>
+  <p><b>Abstraction</b> means ignoring detail that doesn't matter right now. In programming, the main tool for it is the <b>subprogram</b>: once <span class="mono">is_leap(year)</span> exists, the rest of the program only needs to know what goes in and what comes out (its <b>interface</b>), not how it works (its <b>implementation</b>).</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Interface (what callers see)</th><th>Implementation (hidden)</th></tr>
+   <tr><td class="mono">len(s)</td><td>Takes a sequence, returns a whole number</td><td>How Python counts the items</td></tr>
+   <tr><td class="mono">random.randint(1, 6)</td><td>Takes two limits, returns a whole number between them</td><td>The pseudo-random number generator</td></tr>
+   <tr><td class="mono">is_leap(year)</td><td>Takes a year, returns True or False</td><td>The rules about 4, 100 and 400</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: building on an abstraction">def is_leap(year):
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+def days_in_month(month, year):
+    if month == 2 and is_leap(year):     # no need to know the leap year rules here
+        return 29
+    return DAYS[month - 1]
+
+for y in [2023, 2024, 1900, 2000]:
+    print(y, "February has", days_in_month(2, y), "days")</pre>
+  <div class="callout tip"><span class="k">Change the inside, not the outside</span><p>Because callers depend only on the interface, you can rewrite a subprogram's implementation, to fix a bug or make it faster, without changing any code that calls it.</p></div>
+ </section>
+ <section>
+  <h2>Decomposition and comment-first coding</h2>
+  <p><b>Decomposition</b> breaks a problem into parts. Inside a single subprogram you can decompose the algorithm by writing its steps as <b>comments first</b>, checking the steps make sense, and then writing the code under each one. The comments stay as documentation.</p>
+  <pre class="pc py" data-run data-t="Try it: comments first, then code">def is_leap(year):
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+def days_in_month(month, year):
+    if month == 2 and is_leap(year):
+        return 29
+    return DAYS[month - 1]
+
+def day_of_year(day, month, year):
+    # start a running total at 0
+    total = 0
+    # for each month before this one, add its number of days
+    for m in range(1, month):
+        total = total + days_in_month(m, year)
+    # add the day of this month
+    total = total + day
+    # return the total
+    return total
+
+print(day_of_year(1, 3, 2024), day_of_year(25, 12, 2026))</pre>
+  <div class="alw" data-w="trace" data-stack data-vars="m,total" data-title="Try it: abstractions calling abstractions" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":15,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024"}}],"out":"","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"0"}}],"out":"","ret":null},{"e":"line","line":12,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"0","m":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"0","m":"1"}},{"fn":"days_in_month","loc":{"month":"1","year":"2024"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"0","m":"1"}},{"fn":"days_in_month","loc":{"month":"1","year":"2024"}}],"out":"","ret":null},{"e":"return","line":7,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"0","m":"1"}},{"fn":"days_in_month","loc":{"month":"1","year":"2024"}}],"out":"","ret":"31"},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"31","m":"1"}}],"out":"","ret":null},{"e":"line","line":12,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"31","m":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"31","m":"2"}},{"fn":"days_in_month","loc":{"month":"2","year":"2024"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"31","m":"2"}},{"fn":"days_in_month","loc":{"month":"2","year":"2024"}},{"fn":"is_leap","loc":{"year":"2024"}}],"out":"","ret":null},{"e":"return","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"31","m":"2"}},{"fn":"days_in_month","loc":{"month":"2","year":"2024"}},{"fn":"is_leap","loc":{"year":"2024"}}],"out":"","ret":"True"},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"31","m":"2"}},{"fn":"days_in_month","loc":{"month":"2","year":"2024"}}],"out":"","ret":null},{"e":"return","line":6,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"31","m":"2"}},{"fn":"days_in_month","loc":{"month":"2","year":"2024"}}],"out":"","ret":"29"},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"60","m":"2"}}],"out":"","ret":null},{"e":"line","line":13,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"60","m":"2"}}],"out":"","ret":null},{"e":"return","line":13,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"day_of_year","loc":{"day":"5","month":"3","year":"2024","total":"60","m":"2"}}],"out":"","ret":"65"},{"e":"end","line":null,"stack":[],"out":"65\n","ret":null}]'><pre>def is_leap(year):
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+def days_in_month(month, year):
+    if month == 2 and is_leap(year):
+        return 29
+    return [31, 28, 31][month - 1]
+
+def day_of_year(day, month, year):
+    total = 0
+    for m in range(1, month):
+        total = total + days_in_month(m, year)
+    return total + day
+
+print(day_of_year(5, 3, 2024))</pre></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-1-patterns">
+<div class="theory airy">
+ <section>
+  <h2>Pattern recognition</h2>
+  <p>Most programs are built from a small number of standard patterns. Once you recognise that 'cheapest flight' is the same problem as 'highest score' with the comparison flipped, you can reuse a solution you already trust.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Pattern</th><th>Shape of the code</th><th>Problems it solves</th></tr>
+   <tr><td>Running total</td><td class="mono">total = 0 … total = total + x</td><td>Bills, sums, averages</td></tr>
+   <tr><td>Counting</td><td class="mono">count = 0 … if test: count = count + 1</td><td>How many passed, how many are empty</td></tr>
+   <tr><td>Maximum / minimum</td><td class="mono">best = first … if x &gt; best: best = x</td><td>Highest score, cheapest flight</td></tr>
+   <tr><td>Linear search</td><td class="mono">for … if match: return i</td><td>Is this username taken? Where is Ben?</td></tr>
+   <tr><td>Frequency table</td><td class="mono">counts[key] = counts.get(key, 0) + 1</td><td>Word counts, votes, survey answers</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: same pattern, different problems">temps = [12.5, 9.0, 14.2, 7.8]
+flights = {"Paris": 89, "Rome": 64, "Oslo": 120}
+
+coldest = temps[0]
+for t in temps:
+    if t &lt; coldest:
+        coldest = t
+print("Coldest:", coldest)
+
+cheapest = None
+for city, price in flights.items():
+    if cheapest is None or price &lt; flights[cheapest]:
+        cheapest = city
+print("Cheapest flight:", cheapest)</pre>
+ </section>
+ <section>
+  <h2>Generalisation</h2>
+  <p><b>Generalisation</b> turns a solution to one problem into a solution for a whole family. The usual way is to replace fixed values with <b>parameters</b>. A <b>default parameter</b> keeps the common case simple.</p>
+  <pre class="pc py" data-run data-t="Try it: from specific to general">def count_teenagers(ages):            # specific: 13 and 19 are fixed
+    n = 0
+    for a in ages:
+        if 13 &lt;= a &lt;= 19:
+            n = n + 1
+    return n
+
+def count_between(values, low, high):  # general: the limits are parameters
+    n = 0
+    for v in values:
+        if low &lt;= v &lt;= high:
+            n = n + 1
+    return n
+
+ages = [12, 13, 17, 19, 20, 15]
+marks = [39, 40, 100, 72, 101]
+print(count_teenagers(ages), count_between(ages, 13, 19))
+print("Valid passes:", count_between(marks, 40, 100))</pre>
+  <pre class="pc py" data-run data-t="Try it: default parameters">def box(width, height, ch="#"):
+    line = ch * width
+    return "\n".join([line] * height)
+
+print(box(5, 2))          # uses the default "#"
+print(box(3, 3, "*"))     # overrides it</pre>
+  <div class="callout tip"><span class="k">One function, one set of tests</span><p>Three near-identical functions mean three places for bugs and three places to update. One general function is tested once and fixed once.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-2-flowcode">
+<div class="theory airy">
+ <section>
+  <h2>Reading an algorithm</h2>
+  <p>In the exam, algorithms may be given in words, as structured English, as pseudocode or as a flowchart. Your job is to turn them into working Python. Each part maps to a Python construct.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Flowchart / algorithm</th><th>Python</th></tr>
+   <tr><td>Start / Stop (rounded)</td><td>The beginning and end of the program or function</td></tr>
+   <tr><td>INPUT x (parallelogram)</td><td class="mono">x = int(input("x: "))</td></tr>
+   <tr><td>OUTPUT total (parallelogram)</td><td class="mono">print(total)</td></tr>
+   <tr><td>total ← total + x (rectangle)</td><td class="mono">total = total + x</td></tr>
+   <tr><td>Decision with paths that rejoin</td><td class="mono">if … else</td></tr>
+   <tr><td>Decision with an arrow back up</td><td class="mono">while</td> loop</tr>
+   <tr><td>"Repeat 10 times"</td><td class="mono">for i in range(10):</td></tr>
+   <tr><td>= and ≠ in a test</td><td class="mono">==</td> and <span class="mono">!=</span></td></tr></table></div>
+ </section>
+ <section>
+  <h2>A flowchart and its code</h2>
+  <p>Step through the flowchart and watch the matching line of Python. Notice that the input appears <b>twice</b> in the code: once before the loop and once at the end of the loop body, because the flowchart's arrow goes back to the input before the decision is checked again.</p>
+  <div class="alw" data-w="flow" data-py></div>
+  <pre class="pc py" data-run data-t="Try it: the flowchart as Python" data-stdin="5|3|8|0">total = 0
+x = int(input("Number: "))
+while x != 0:
+    total = total + x
+    x = int(input("Number: "))
+print(total)</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Forgetting the second input inside the loop means x never changes, so the loop never ends. When a decision loops back to an input, the input must be repeated at the end of the loop body.</p></div>
+ </section>
+ <section>
+  <h2>From structured English</h2>
+  <p>Structured English is a numbered list of precise steps. Translate one step at a time, keeping the comments.</p>
+  <pre class="pc py" data-run data-t="Try it: step by step" data-stdin="12|30|7|-1"># 1. Set highest to -1 and count to 0
+highest = -1
+count = 0
+# 2. Input a score
+score = int(input("Score: "))
+# 3. While the score isn't -1: update highest, add 1 to count, input the next score
+while score != -1:
+    if score &gt; highest:
+        highest = score
+    count = count + 1
+    score = int(input("Score: "))
+# 4. Output the results
+if count == 0:
+    print("No scores")
+else:
+    print("Highest:", highest)
+    print("Count:", count)</pre>
+  <div class="callout tip"><span class="k">Trace before you type</span><p>Run the algorithm by hand with a couple of inputs first and write down the expected output. Then you know exactly what your program must print, and can tell at once if it's wrong.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-3-linear">
+<div class="theory airy">
+ <section>
+  <h2>Linear search</h2>
+  <p>A <b>linear search</b> checks each item in turn from the start. It works on <b>any</b> list, sorted or not. It should <b>exit early</b>: as soon as the target is found, there's no point checking the rest.</p>
+  <pre class="pc py" data-run data-t="Try it: linear search">def linear_search(items, target):
+    for i in range(len(items)):
+        if items[i] == target:
+            return i          # early exit: found
+    return -1                 # checked everything: not found
+
+names = ["Eve", "Ben", "Ana", "Cai"]
+print(linear_search(names, "Ana"))
+print(linear_search(names, "Zed"))</pre>
+  <div class="alw" data-w="trace" data-vars="i,target" data-title="Try it: watch it exit early" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"linear_search","loc":{"items":"[7, 3, 9, 3, 5]","target":"9"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"linear_search","loc":{"items":"[7, 3, 9, 3, 5]","target":"9","i":"0"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"linear_search","loc":{"items":"[7, 3, 9, 3, 5]","target":"9","i":"0"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"linear_search","loc":{"items":"[7, 3, 9, 3, 5]","target":"9","i":"1"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"linear_search","loc":{"items":"[7, 3, 9, 3, 5]","target":"9","i":"1"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"linear_search","loc":{"items":"[7, 3, 9, 3, 5]","target":"9","i":"2"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"linear_search","loc":{"items":"[7, 3, 9, 3, 5]","target":"9","i":"2"}}],"out":"","ret":null},{"e":"return","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"linear_search","loc":{"items":"[7, 3, 9, 3, 5]","target":"9","i":"2"}}],"out":"","ret":"2"},{"e":"end","line":null,"stack":[],"out":"2\n","ret":null}]'><pre>def linear_search(items, target):
+    for i in range(len(items)):
+        if items[i] == target:
+            return i
+    return -1
+
+print(linear_search([7, 3, 9, 3, 5], 9))</pre></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Putting <span class="mono">return -1</span> in an <span class="mono">else</span> inside the loop returns after checking only the first item. "Not found" can only be decided <b>after</b> the loop has checked everything.</p></div>
+ </section>
+ <section>
+  <h2>Early exit on a sorted list</h2>
+  <p>If the list is sorted, the search can also give up as soon as it reaches an item <b>bigger</b> than the target, because everything after it is bigger too.</p>
+  <pre class="pc py" data-run data-t="Try it: two kinds of early exit">def sorted_search(items, target):
+    checks = 0
+    for i in range(len(items)):
+        checks = checks + 1
+        if items[i] == target:
+            return i, checks
+        if items[i] &gt; target:
+            return -1, checks      # it can't be further on
+    return -1, checks
+
+data = [3, 8, 12, 20, 31, 40, 55, 60]
+print("Find 20:", sorted_search(data, 20))
+print("Find 10:", sorted_search(data, 10))
+print("Find 99:", sorted_search(data, 99))</pre>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Case</th><th>Comparisons for n items</th></tr>
+   <tr><td>Best case: target first</td><td>1</td></tr>
+   <tr><td>Worst case: target last or missing (unsorted)</td><td>n</td></tr>
+   <tr><td>Average when found</td><td>about n / 2</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Variations</h2>
+  <pre class="pc py" data-run data-t="Try it: searching records, counting, a while loop">pupils = [["Ana", "10B"], ["Ben", "11A"], ["Cai", "10C"]]
+
+def find_form(pupils, name):
+    for record in pupils:
+        if record[0].lower() == name.lower():   # compare one field
+            return record[1]
+    return "Not found"
+
+def count_matches(items, target):               # no early exit: must see them all
+    count = 0
+    for x in items:
+        if x == target:
+            count = count + 1
+    return count
+
+items = [4, 9, 2, 9]
+i, found = 0, False
+while i &lt; len(items) and not found:             # while loop with a flag
+    if items[i] == 2:
+        found = True
+    else:
+        i = i + 1
+
+print(find_form(pupils, "ben"), count_matches(items, 9), i, found)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-3-binary">
+<div class="theory airy">
+ <section>
+  <h2>Binary search</h2>
+  <p>On a <b>sorted</b> list, <b>binary search</b> checks the middle item. If it's not the target, half the list can be thrown away: the target must be in the half on the correct side. This repeats until the target is found or nothing is left.</p>
+  <div class="alw" data-w="search"></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Items</th><th>Linear search (worst)</th><th>Binary search (worst)</th></tr>
+   <tr><td>15</td><td>15</td><td>4</td></tr>
+   <tr><td>1,000</td><td>1,000</td><td>10</td></tr>
+   <tr><td>1,000,000</td><td>1,000,000</td><td>20</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Iterative binary search</h2>
+  <pre class="pc py" data-run data-t="Try it: iterative binary search">def binary_search(items, target):
+    low = 0
+    high = len(items) - 1
+    while low &lt;= high:
+        mid = (low + high) // 2
+        if items[mid] == target:
+            return mid
+        elif items[mid] &lt; target:
+            low = mid + 1         # discard the lower half
+        else:
+            high = mid - 1        # discard the upper half
+    return -1                     # low has passed high: not there
+
+data = [3, 8, 12, 15, 21, 27, 34, 42, 49, 57]
+print(binary_search(data, 42), binary_search(data, 3), binary_search(data, 40))</pre>
+  <div class="alw" data-w="trace" data-vars="low,high,mid" data-title="Try it: trace the pointers" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"9"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"9"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"9","mid":"4"}}],"out":"","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"9","mid":"4"}}],"out":"","ret":null},{"e":"line","line":13,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"9","mid":"4"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"3","mid":"4"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"3","mid":"4"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"3","mid":"1"}}],"out":"","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"3","mid":"1"}}],"out":"","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"0","high":"3","mid":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"2","high":"3","mid":"1"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"2","high":"3","mid":"1"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"2","high":"3","mid":"2"}}],"out":"","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"2","high":"3","mid":"2"}}],"out":"","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"2","high":"3","mid":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"3","high":"3","mid":"2"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"3","high":"3","mid":"2"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"3","high":"3","mid":"3"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"3","high":"3","mid":"3"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"items":"[3, 8, 12, 15, 21, 27, 34, 42, 49, 57]","target":"15","low":"3","high":"3","mid":"3"}}],"out":"Found at 3\n","ret":null},{"e":"end","line":null,"stack":[],"out":"Found at 3\n","ret":null}]'><pre>items = [3, 8, 12, 15, 21, 27, 34, 42, 49, 57]
+target = 15
+low = 0
+high = len(items) - 1
+while low &lt;= high:
+    mid = (low + high) // 2
+    if items[mid] == target:
+        print("Found at", mid)
+        break
+    elif items[mid] &lt; target:
+        low = mid + 1
+    else:
+        high = mid - 1</pre></div>
+  <div class="callout warnbox"><span class="k">Off-by-one traps</span><p>The condition must be <span class="mono">low &lt;= high</span>, not <span class="mono">&lt;</span>, or a range of one item is never checked. And the pointers must move <b>past</b> mid (<span class="mono">mid + 1</span>, <span class="mono">mid - 1</span>); setting <span class="mono">high = mid</span> can loop forever.</p></div>
+ </section>
+ <section>
+  <h2>Recursive binary search</h2>
+  <p>The same algorithm can be written <b>recursively</b>: search the middle, then call the function again on the half that's left. There are two base cases: found, or <span class="mono">low &gt; high</span> (not there).</p>
+  <div class="alw" data-w="trace" data-stack data-vars="low,high,mid" data-title="Try it: recursive binary search" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":12,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"4","high":"6"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"4","high":"6"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"4","high":"6","mid":"5"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"4","high":"6","mid":"5"}}],"out":"","ret":null},{"e":"return","line":6,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"4","high":"6","mid":"5"}}],"out":"","ret":"5"},{"e":"return","line":8,"stack":[{"fn":"&lt;module>","loc":{"data":"[3, 8, 12, 15, 21, 27, 34]"}},{"fn":"bsearch","loc":{"items":"[3, 8, 12, 15, 21, 27, 34]","target":"27","low":"0","high":"6","mid":"3"}}],"out":"","ret":"5"},{"e":"end","line":null,"stack":[],"out":"5\n","ret":null}]'><pre>def bsearch(items, target, low, high):
+    if low &gt; high:
+        return -1
+    mid = (low + high) // 2
+    if items[mid] == target:
+        return mid
+    if items[mid] &lt; target:
+        return bsearch(items, target, mid + 1, high)
+    return bsearch(items, target, low, mid - 1)
+
+data = [3, 8, 12, 15, 21, 27, 34]
+print(bsearch(data, 27, 0, len(data) - 1))</pre></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-3-bubble">
+<div class="theory airy">
+ <section>
+  <h2>Bubble sort</h2>
+  <p><b>Bubble sort</b> passes through the list comparing each pair of neighbours and swapping them if they're in the wrong order. After the first pass the largest item has "bubbled" to the end. Two improvements are required by the specification:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Improvement</th><th>How</th><th>Why</th></tr>
+   <tr><td>Shrinking upper bound</td><td>After each pass, <span class="mono">n = n - 1</span>, and compare only up to index <span class="mono">n - 2</span></td><td>The end of the list is already in its final place</td></tr>
+   <tr><td>Early exit</td><td>A <span class="mono">swapped</span> flag; stop after a pass with no swaps</td><td>No swaps means the list is sorted</td></tr></table></div>
+  <div class="alw" data-w="sort" data-kind="bubble"></div>
+ </section>
+ <section>
+  <h2>In Python</h2>
+  <pre class="pc py" data-run data-t="Try it: bubble sort with both improvements">def bubble_sort(items):
+    n = len(items)
+    swapped = True
+    passes = 0
+    while swapped:
+        swapped = False
+        passes = passes + 1
+        for j in range(n - 1):
+            if items[j] &gt; items[j + 1]:
+                items[j], items[j + 1] = items[j + 1], items[j]
+                swapped = True
+        n = n - 1                  # the last item is now in place
+    return passes
+
+for data in [[31, 12, 47, 8, 25, 19], [1, 2, 3, 5, 4], [1, 2, 3, 4]]:
+    p = bubble_sort(data)
+    print(data, "in", p, "passes")</pre>
+  <div class="alw" data-w="trace" data-vars="n,j,swapped,items" data-ms="700" data-title="Try it: trace a bubble sort" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 1, 4, 2]"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 1, 4, 2]","n":"4"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 1, 4, 2]","n":"4","swapped":"True"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 1, 4, 2]","n":"4","swapped":"True"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 1, 4, 2]","n":"4","swapped":"False"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 1, 4, 2]","n":"4","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 1, 4, 2]","n":"4","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 5, 4, 2]","n":"4","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 5, 4, 2]","n":"4","swapped":"True","j":"0"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 5, 4, 2]","n":"4","swapped":"True","j":"1"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 5, 4, 2]","n":"4","swapped":"True","j":"1"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 5, 2]","n":"4","swapped":"True","j":"1"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 5, 2]","n":"4","swapped":"True","j":"1"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 5, 2]","n":"4","swapped":"True","j":"2"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 5, 2]","n":"4","swapped":"True","j":"2"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"4","swapped":"True","j":"2"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"4","swapped":"True","j":"2"}}],"out":"","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"4","swapped":"True","j":"2"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"3","swapped":"True","j":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"3","swapped":"True","j":"2"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"3","swapped":"False","j":"2"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"3","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"3","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"3","swapped":"False","j":"1"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 4, 2, 5]","n":"3","swapped":"False","j":"1"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"3","swapped":"False","j":"1"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"3","swapped":"True","j":"1"}}],"out":"","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"3","swapped":"True","j":"1"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"2","swapped":"True","j":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"2","swapped":"True","j":"1"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"2","swapped":"False","j":"1"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"2","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"2","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"2","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"1","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","n":"1","swapped":"False","j":"0"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"[1, 2, 4, 5]\n","ret":null}]'><pre>items = [5, 1, 4, 2]
+n = len(items)
+swapped = True
+while swapped:
+    swapped = False
+    for j in range(n - 1):
+        if items[j] &gt; items[j + 1]:
+            items[j], items[j + 1] = items[j + 1], items[j]
+            swapped = True
+    n = n - 1
+print(items)</pre></div>
+  <div class="callout tip"><span class="k">Python's swap</span><p><span class="mono">a, b = b, a</span> swaps in one line. Two separate assignments (<span class="mono">a = b</span> then <span class="mono">b = a</span>) don't work: the first overwrites a value before it's copied. In other languages you'd use a temporary variable.</p></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p><span class="mono">for j in range(len(items))</span> goes one too far: when j is the last index, <span class="mono">items[j + 1]</span> raises an IndexError. The last pair starts at index <span class="mono">n - 2</span>, so use <span class="mono">range(n - 1)</span>.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-3-insertion">
+<div class="theory airy">
+ <section>
+  <h2>Insertion sort</h2>
+  <p><b>Insertion sort</b> builds a sorted part at the start of the list. Each pass takes the next item, saves it as <span class="mono">current</span>, shifts every bigger item in the sorted part one place right, and drops <span class="mono">current</span> into the gap. It works <b>in place</b>: no second list is needed.</p>
+  <div class="alw" data-w="sort" data-kind="insertion"></div>
+ </section>
+ <section>
+  <h2>In Python</h2>
+  <pre class="pc py" data-run data-t="Try it: in-place insertion sort">def insertion_sort(items):
+    for i in range(1, len(items)):        # items[0] alone is already sorted
+        current = items[i]                # save it before it's overwritten
+        j = i - 1
+        while j &gt;= 0 and items[j] &gt; current:
+            items[j + 1] = items[j]       # shift right
+            j = j - 1
+        items[j + 1] = current            # drop into the gap
+
+data = [31, 12, 47, 8, 25, 19]
+insertion_sort(data)
+print(data)
+words = ["pear", "apple", "fig", "kiwi"]
+insertion_sort(words)
+print(words)</pre>
+  <div class="alw" data-w="trace" data-vars="i,current,j,items" data-ms="700" data-title="Try it: trace an insertion sort" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 2, 4, 1]"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 2, 4, 1]","i":"1"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 2, 4, 1]","i":"1","current":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 2, 4, 1]","i":"1","current":"2","j":"0"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 2, 4, 1]","i":"1","current":"2","j":"0"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 5, 4, 1]","i":"1","current":"2","j":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 5, 4, 1]","i":"1","current":"2","j":"-1"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"items":"[5, 5, 4, 1]","i":"1","current":"2","j":"-1"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 5, 4, 1]","i":"1","current":"2","j":"-1"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 5, 4, 1]","i":"2","current":"2","j":"-1"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 5, 4, 1]","i":"2","current":"4","j":"-1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 5, 4, 1]","i":"2","current":"4","j":"1"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 5, 4, 1]","i":"2","current":"4","j":"1"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 5, 5, 1]","i":"2","current":"4","j":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 5, 5, 1]","i":"2","current":"4","j":"0"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 5, 5, 1]","i":"2","current":"4","j":"0"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 5, 1]","i":"2","current":"4","j":"0"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 5, 1]","i":"3","current":"4","j":"0"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 5, 1]","i":"3","current":"1","j":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 5, 1]","i":"3","current":"1","j":"2"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 5, 1]","i":"3","current":"1","j":"2"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 5, 5]","i":"3","current":"1","j":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 5, 5]","i":"3","current":"1","j":"1"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 5, 5]","i":"3","current":"1","j":"1"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 4, 5]","i":"3","current":"1","j":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 4, 5]","i":"3","current":"1","j":"0"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 4, 4, 5]","i":"3","current":"1","j":"0"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 2, 4, 5]","i":"3","current":"1","j":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 2, 4, 5]","i":"3","current":"1","j":"-1"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"items":"[2, 2, 4, 5]","i":"3","current":"1","j":"-1"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","i":"3","current":"1","j":"-1"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"items":"[1, 2, 4, 5]","i":"3","current":"1","j":"-1"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"[1, 2, 4, 5]\n","ret":null}]'><pre>items = [5, 2, 4, 1]
+for i in range(1, len(items)):
+    current = items[i]
+    j = i - 1
+    while j &gt;= 0 and items[j] &gt; current:
+        items[j + 1] = items[j]
+        j = j - 1
+    items[j + 1] = current
+print(items)</pre></div>
+  <div class="callout tip"><span class="k">Why j + 1?</span><p>When the while loop stops, <span class="mono">j</span> points at the item that is <b>not</b> bigger than current (or −1 at the start of the list). The gap is one place to its right.</p></div>
+ </section>
+ <section>
+  <h2>Bubble sort or insertion sort?</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Bubble sort</th><th>Insertion sort</th></tr>
+   <tr><td>Each pass</td><td>Moves the largest unsorted item to the end</td><td>Inserts the next item into the sorted start</td></tr>
+   <tr><td>Already sorted list</td><td>1 pass with early exit</td><td>n − 1 comparisons, no shifts</td></tr>
+   <tr><td>Nearly sorted list</td><td>Few passes</td><td>Very few shifts: usually faster</td></tr>
+   <tr><td>Reversed list</td><td>Slow</td><td>Slow</td></tr></table></div>
+  <p>Changing the comparison changes the order: <span class="mono">items[j] &lt; current</span> sorts largest first, and comparing <span class="mono">len(items[j])</span> or <span class="mono">items[j][1]</span> sorts by length or by a record's field.</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-4-recursion2">
+<div class="theory airy">
+ <section>
+  <h2>Recursion in Python</h2>
+  <p>A <b>recursive</b> function solves a problem by calling itself on a smaller version of it. Every recursive function needs:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Part</th><th>Job</th><th>In <span class="mono">factorial</span></th></tr>
+   <tr><td>Base case</td><td>Returns an answer directly, with no further call</td><td class="mono">if n == 1: return 1</td></tr>
+   <tr><td>Recursive case</td><td>Calls itself with an argument closer to the base case</td><td class="mono">return n * factorial(n - 1)</td></tr></table></div>
+  <div class="alw" data-w="trace" data-stack data-title="Try it: the call stack grows, then unwinds" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}},{"fn":"factorial","loc":{"n":"1"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}},{"fn":"factorial","loc":{"n":"1"}}],"out":"","ret":null},{"e":"return","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}},{"fn":"factorial","loc":{"n":"1"}}],"out":"","ret":"1"},{"e":"return","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}}],"out":"","ret":"2"},{"e":"return","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}}],"out":"","ret":"6"},{"e":"return","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}}],"out":"","ret":"24"},{"e":"end","line":null,"stack":[],"out":"24\n","ret":null}]'><pre>def factorial(n):
+    if n == 1:
+        return 1
+    return n * factorial(n - 1)
+
+print(factorial(4))</pre></div>
+  <p>Each call gets its own <b>stack frame</b> with its own <span class="mono">n</span>. The calls pile up until the base case returns, then each frame finishes its multiplication and returns to the one below: the stack <b>unwinds</b>.</p>
+ </section>
+ <section>
+  <h2>Writing recursive functions</h2>
+  <p>Ask two questions: what's the simplest case I can answer straight away? And how can I express the answer using the answer to a slightly smaller problem?</p>
+  <pre class="pc py" data-run data-t="Try it: recursive patterns">def sum_to(n):                    # 1 + 2 + ... + n
+    if n == 0:
+        return 0
+    return n + sum_to(n - 1)
+
+def power(base, exp):             # base ** exp
+    if exp == 0:
+        return 1
+    return base * power(base, exp - 1)
+
+def reverse(s):                   # a string backwards
+    if s == "":
+        return ""
+    return reverse(s[1:]) + s[0]
+
+def digit_sum(n):                 # 472 → 4 + 7 + 2
+    if n &lt; 10:
+        return n
+    return n % 10 + digit_sum(n // 10)
+
+print(sum_to(100), power(2, 10), reverse("python"), digit_sum(472))</pre>
+  <pre class="pc py" data-run data-t="Try it: print before or after the call">def down(n):
+    if n == 0:
+        return
+    print(n, end=" ")    # before the call: on the way in
+    down(n - 1)
+
+def up(n):
+    if n == 0:
+        return
+    up(n - 1)
+    print(n, end=" ")    # after the call: on the way back out
+
+down(5)
+print()
+up(5)</pre>
+ </section>
+ <section>
+  <h2>When recursion goes wrong</h2>
+  <pre class="pc py" data-run data-t="Try it: a missing base case">import sys
+def count_down(n):
+    if n == 0:
+        return "done"
+    return count_down(n - 2)      # skips 0 when n is odd!
+
+print(count_down(6))
+try:
+    print(count_down(5))
+except RecursionError:
+    print("RecursionError: more than", sys.getrecursionlimit(), "calls deep")</pre>
+  <div class="callout warnbox"><span class="k">Recursion versus iteration</span><p>Any recursive function can be written with a loop. Recursion is often shorter and clearer for problems that are naturally self-similar (binary search, tree structures, factorials), but every call uses stack memory, so very deep recursion fails with a RecursionError where a loop wouldn't.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-selection">
+<div class="theory airy">
+ <section>
+  <h2>Unit 2: programming in Python</h2>
+  <p class="lede">Unit 2 is a <b>practical</b> exam: three hours at a computer, writing and fixing Python 3 programs. Everything in this unit is built around writing real code, so try every example and complete the Code it tasks.</p>
+  <div class="callout tip"><span class="k">How to use these lessons</span><p>Press <b>Run</b> on any example to see what it does, then press <b>Edit</b> and change it. Breaking code on purpose and fixing it is one of the fastest ways to learn.</p></div>
+ </section>
+ <section>
+  <h2>Sequence</h2>
+  <p>A program runs its statements in <b>sequence</b>: one after another, top to bottom. The order matters. Swap two lines and the program can give a different answer, or crash.</p>
+  <pre class="pc py" data-run data-t="Try it: sequence" data-stdin="Ana|2009">name = input("What's your name? ")
+born = int(input("Year of birth: "))
+age = 2026 - born
+print("Hello", name + ".", "This year you turn", age)</pre>
+ </section>
+ <section>
+  <h2>Selection with if, elif and else</h2>
+  <p><b>Selection</b> lets a program choose what to do. Python checks each condition in turn and runs the <b>first</b> block whose condition is True; the rest are skipped. <span class="mono">else</span> runs only if none of the conditions were True.</p>
+  <pre class="pc py" data-run data-t="Try it: grade boundaries" data-stdin="64">mark = int(input("Mark: "))
+if mark &gt;= 70:
+    print("A")
+elif mark &gt;= 60:
+    print("B")
+elif mark &gt;= 50:
+    print("C")
+else:
+    print("U")</pre>
+  <div class="alw" data-w="trace" data-vars="mark" data-title="Try it: watch which branch runs" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"mark":"75"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"mark":"75"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"mark":"75","grade":"&#39;A&#39;"}}],"out":"","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{"mark":"75","grade":"&#39;A&#39;"}}],"out":"75 A\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"mark":"64","grade":"&#39;A&#39;"}}],"out":"75 A\n","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"mark":"64","grade":"&#39;A&#39;"}}],"out":"75 A\n","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"mark":"64","grade":"&#39;A&#39;"}}],"out":"75 A\n","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"mark":"64","grade":"&#39;B&#39;"}}],"out":"75 A\n","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{"mark":"64","grade":"&#39;B&#39;"}}],"out":"75 A\n64 B\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"mark":"41","grade":"&#39;B&#39;"}}],"out":"75 A\n64 B\n","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"mark":"41","grade":"&#39;B&#39;"}}],"out":"75 A\n64 B\n","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"mark":"41","grade":"&#39;B&#39;"}}],"out":"75 A\n64 B\n","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"mark":"41","grade":"&#39;U&#39;"}}],"out":"75 A\n64 B\n","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{"mark":"41","grade":"&#39;U&#39;"}}],"out":"75 A\n64 B\n41 U\n","ret":null},{"e":"end","line":null,"stack":[],"out":"75 A\n64 B\n41 U\n","ret":null}]'><pre>for mark in [75, 64, 41]:
+    if mark &gt;= 70:
+        grade = "A"
+    elif mark &gt;= 60:
+        grade = "B"
+    else:
+        grade = "U"
+    print(mark, grade)</pre></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Order matters in an if–elif chain. If <span class="mono">mark &gt;= 50</span> came first, a mark of 75 would get a C, because the first True condition wins. Test the <b>most restrictive</b> condition first.</p></div>
+  <h3>Conditions</h3>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operator</th><th>Meaning</th><th>Example (x = 7)</th></tr>
+   <tr><td class="mono">==</td><td>equal to</td><td class="mono">x == 7 → True</td></tr>
+   <tr><td class="mono">!=</td><td>not equal to</td><td class="mono">x != 7 → False</td></tr>
+   <tr><td class="mono">&lt; &lt;= &gt; &gt;=</td><td>less than, less or equal, …</td><td class="mono">x &gt;= 7 → True</td></tr>
+   <tr><td class="mono">and / or / not</td><td>combine conditions</td><td class="mono">x &gt; 5 and x &lt; 10 → True</td></tr></table></div>
+  <p>Python also allows chained comparisons: <span class="mono">1 &lt;= x &lt;= 10</span> means x is between 1 and 10 inclusive. String comparisons are case-sensitive: <span class="mono">"Ana" == "ana"</span> is False.</p>
+ </section>
+ <section>
+  <h2>Selection with match-case</h2>
+  <p>When one value is compared with several fixed options, <span class="mono">match</span>-<span class="mono">case</span> is often clearer than a long if–elif chain. The <span class="mono">case _:</span> pattern matches anything not matched already, like <span class="mono">else</span>.</p>
+  <pre class="pc py" data-run data-t="Try it: a menu" data-stdin="2">choice = input("1 New  2 Open  3 Quit: ")
+match choice:
+    case "1":
+        print("Creating a new file")
+    case "2":
+        print("Opening a file")
+    case "3":
+        print("Goodbye")
+    case _:
+        print("Please choose 1, 2 or 3")</pre>
+  <div class="callout tip"><span class="k">Exam tip</span><p>input() always returns a <b>string</b>. Either convert it (<span class="mono">int(choice)</span>) and match numbers, or match strings like <span class="mono">"1"</span> — but be consistent.</p></div>
+  <h3>Nested selection</h3>
+  <p>An if inside an if is <b>nested</b> selection. It's useful when the second question only makes sense if the first answer was yes — but deep nesting quickly becomes hard to read (Topic 9 shows ways to avoid it).</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-iteration">
+<div class="theory airy">
+ <section>
+  <h2>Count-controlled loops: for</h2>
+  <p class="lede">A <b>count-controlled</b> loop repeats a set number of times. In Python, that's a <span class="mono">for</span> loop, usually with <span class="mono">range()</span>, or looping over the items in a list or string.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>range(…)</th><th>Values</th></tr>
+   <tr><td class="mono">range(5)</td><td class="mono">0 1 2 3 4</td></tr>
+   <tr><td class="mono">range(1, 6)</td><td class="mono">1 2 3 4 5</td></tr>
+   <tr><td class="mono">range(0, 20, 5)</td><td class="mono">0 5 10 15</td></tr>
+   <tr><td class="mono">range(10, 0, -2)</td><td class="mono">10 8 6 4 2</td></tr></table></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>The <b>stop</b> value is never included. To count from 1 to 10 you need <span class="mono">range(1, 11)</span>.</p></div>
+  <pre class="pc py" data-run data-t="Try it: for loops">for i in range(1, 6):
+    print(i, "squared is", i * i)
+
+for ch in "CPU":
+    print(ch)
+
+total = 0
+for score in [12, 7, 15]:
+    total = total + score
+print("Total:", total)</pre>
+ </section>
+ <section>
+  <h2>Condition-controlled loops: while</h2>
+  <p>A <b>condition-controlled</b> loop repeats <b>while</b> a condition is True. Use it when you don't know in advance how many times to repeat: until the user gets the password right, until a value passes a limit, until 0 is entered.</p>
+  <div class="alw" data-w="trace" data-vars="n,steps" data-title="Try it: a while loop" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"n":"50"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"50","steps":"0"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"50","steps":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"25","steps":"0"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"25","steps":"1"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"25","steps":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"12","steps":"1"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"12","steps":"2"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"12","steps":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"6","steps":"2"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"6","steps":"3"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"6","steps":"3"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"3","steps":"3"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"3","steps":"4"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"3","steps":"4"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"1","steps":"4"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"1","steps":"5"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"n":"1","steps":"5"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"5\n","ret":null}]'><pre>n = 50
+steps = 0
+while n &gt; 1:
+    n = n // 2
+    steps = steps + 1
+print(steps)</pre></div>
+  <p>The condition is checked <b>before</b> each pass, so a while loop might not run at all. Something inside the loop must change the condition eventually; otherwise you have an <b>infinite loop</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: keep asking" data-stdin="pasword|password123">secret = "password123"
+guess = input("Password: ")
+while guess != secret:
+    print("Wrong, try again")
+    guess = input("Password: ")
+print("Welcome!")</pre>
+  <h3>Leaving a loop early</h3>
+  <p><span class="mono">break</span> jumps straight out of the loop. A common pattern is <span class="mono">while True:</span> with a break once valid input arrives. Use it sparingly: a clear loop condition is usually easier to follow.</p>
+ </section>
+ <section>
+  <h2>Nested loops</h2>
+  <p>A loop inside a loop runs the inner loop <b>completely</b> for every pass of the outer loop. 3 outer passes × 4 inner passes = 12 runs of the inner body. Nested loops are how you work through a 2D grid, or every pair of items.</p>
+  <div class="alw" data-w="trace" data-vars="row,col" data-title="Try it: nested loops" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"row":"1"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"row":"1","col":"1"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"row":"1","col":"1"}}],"out":"1 x 1 = 1\n","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"row":"1","col":"2"}}],"out":"1 x 1 = 1\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"row":"1","col":"2"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"row":"1","col":"3"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"row":"1","col":"3"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{"row":"1","col":"3"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"row":"2","col":"3"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"row":"2","col":"1"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"row":"2","col":"1"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n2 x 1 = 2\n","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"row":"2","col":"2"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n2 x 1 = 2\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"row":"2","col":"2"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n2 x 1 = 2\n2 x 2 = 4\n","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"row":"2","col":"3"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n2 x 1 = 2\n2 x 2 = 4\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"row":"2","col":"3"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n2 x 1 = 2\n2 x 2 = 4\n2 x 3 = 6\n","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{"row":"2","col":"3"}}],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n2 x 1 = 2\n2 x 2 = 4\n2 x 3 = 6\n","ret":null},{"e":"end","line":null,"stack":[],"out":"1 x 1 = 1\n1 x 2 = 2\n1 x 3 = 3\n2 x 1 = 2\n2 x 2 = 4\n2 x 3 = 6\n","ret":null}]'><pre>for row in range(1, 3):
+    for col in range(1, 4):
+        print(row, "x", col, "=", row * col)</pre></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Use…</th><th>when…</th></tr>
+   <tr><td class="lbl">for</td><td>you know how many times, or you're going through every item of a list, string or range</td></tr>
+   <tr><td class="lbl">while</td><td>you repeat until something happens, and don't know when</td></tr></table></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-exceptions">
+<div class="theory airy">
+ <section>
+  <h2>When things go wrong</h2>
+  <p class="lede">An <b>exception</b> is an error that happens while a program is running. If nothing handles it, the program stops with a red error message. In the exam, programs must cope with bad input without crashing.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Exception</th><th>Caused by</th><th>Example</th></tr>
+   <tr><td class="lbl">ValueError</td><td>the right type but an unsuitable value</td><td class="mono">int("abc")</td></tr>
+   <tr><td class="lbl">TypeError</td><td>an operation on the wrong type</td><td class="mono">"5" + 3</td></tr>
+   <tr><td class="lbl">ZeroDivisionError</td><td>dividing by zero</td><td class="mono">10 / 0</td></tr>
+   <tr><td class="lbl">IndexError</td><td>a list or string index out of range</td><td class="mono">[1, 2][5]</td></tr>
+   <tr><td class="lbl">KeyError</td><td>a dictionary key that doesn't exist</td><td class="mono">{"a": 1}["b"]</td></tr>
+   <tr><td class="lbl">NameError</td><td>a variable that hasn't been created</td><td class="mono">print(totl)</td></tr>
+   <tr><td class="lbl">FileNotFoundError</td><td>opening a missing file to read</td><td class="mono">open("nope.txt")</td></tr>
+   <tr><td class="lbl">AttributeError</td><td>a method the value doesn't have</td><td class="mono">(5).upper()</td></tr></table></div>
+  <p>Others listed for the exam include <span class="mono">ArithmeticError</span> (the parent of ZeroDivisionError), <span class="mono">EOFError</span> (input() reached the end of input), <span class="mono">UnboundLocalError</span> (a local variable used before it's given a value) and <span class="mono">Exception</span> (the parent of almost all of them).</p>
+ </section>
+ <section>
+  <h2>try and except</h2>
+  <p>Put code that might fail in a <span class="mono">try</span> block. If a named exception happens, Python jumps to the matching <span class="mono">except</span> block instead of crashing.</p>
+  <pre class="pc py" data-run data-t="Try it: validating a number" data-stdin="twelve|-3|12">while True:
+    text = input("How many tickets? ")
+    try:
+        tickets = int(text)
+    except ValueError:
+        print("Please type a whole number")
+        continue
+    if tickets &lt; 1:
+        print("At least 1, please")
+    else:
+        break
+print("Booking", tickets, "tickets")</pre>
+  <p>You can have several except blocks, one for each kind of error, and Python uses the first that matches.</p>
+  <pre class="pc py" data-run data-t="Try it: two kinds of error" data-stdin="0">try:
+    n = int(input("Share 100 sweets between how many people? "))
+    print("Each gets", 100 // n)
+except ValueError:
+    print("That wasn't a number")
+except ZeroDivisionError:
+    print("You can't share between nobody!")</pre>
+  <div class="callout warnbox"><span class="k">Avoid a bare except</span><p><span class="mono">except:</span> on its own catches <b>every</b> error, including your own typos (NameError). The program then carries on silently doing the wrong thing. Name the exception you expect.</p></div>
+  <div class="callout tip"><span class="k">Exam tip</span><p>Keep the try block small — just the line that might fail — so you know exactly which error you're handling.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-variables">
+<div class="theory airy">
+ <section>
+  <h2>Variables and constants</h2>
+  <p class="lede">A <b>variable</b> is a named place in memory that holds a value which can change. Python creates a variable the first time you <b>assign</b> to it with <span class="mono">=</span>; using one before it exists raises a NameError.</p>
+  <p>A <b>constant</b> is a value that shouldn't change while the program runs, like a tax rate or the size of a board. Python has no special constant type, so the convention is to name constants in <b>CAPITALS</b> and set them at the top of the program.</p>
+  <pre class="pc py" data-run data-t="Try it: constants make code clearer">VAT_RATE = 0.2
+MAX_TICKETS = 6
+
+price = 15.00
+qty = 4
+if qty &lt;= MAX_TICKETS:
+    total = price * qty * (1 + VAT_RATE)
+    print(f"Total: £{total:.2f}")</pre>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Why use constants?</h3><ul><li>The name explains what the number means.</li><li>Change it once at the top, and every use updates.</li><li>No "magic numbers" hidden in the code.</li></ul></div>
+   <div class="keypts"><h3>Good variable names</h3><ul><li>Describe the contents: <span class="mono">total_price</span>, not <span class="mono">tp</span>.</li><li>Lower case with underscores (snake_case).</li><li>Can't start with a digit or be a keyword.</li></ul></div>
+  </div>
+ </section>
+ <section>
+  <h2>Operators</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Kind</th><th>Operators</th><th>Example</th></tr>
+   <tr><td class="lbl">Arithmetic</td><td class="mono">+ - * / // % **</td><td class="mono">17 // 5 → 3, 17 % 5 → 2, 2 ** 5 → 32</td></tr>
+   <tr><td class="lbl">Relational</td><td class="mono">== != &lt; &lt;= &gt; &gt;=</td><td class="mono">3 &lt;= 4 → True</td></tr>
+   <tr><td class="lbl">Boolean</td><td class="mono">and or not</td><td class="mono">not (3 &gt; 4) → True</td></tr>
+   <tr><td class="lbl">Bitwise</td><td class="mono">&amp; | ^ ~ &lt;&lt; &gt;&gt;</td><td class="mono">6 &amp; 3 → 2, 1 &lt;&lt; 4 → 16</td></tr></table></div>
+  <p><b>Order of operations</b> follows maths: <span class="mono">**</span>, then <span class="mono">* / // %</span>, then <span class="mono">+ -</span>, then comparisons, then <span class="mono">not</span>, <span class="mono">and</span>, <span class="mono">or</span>. Brackets override everything and make intentions clear.</p>
+  <p><span class="mono">/</span> always gives a float (<span class="mono">10 / 2</span> is <span class="mono">5.0</span>). <span class="mono">//</span> rounds <b>down</b> towards minus infinity, so <span class="mono">-7 // 2</span> is <span class="mono">-4</span>. In Python, <span class="mono">&gt;&gt;</span> is an arithmetic shift, and <span class="mono">~x</span> is <span class="mono">-x - 1</span>.</p>
+  <pre class="pc py" data-run data-t="Try it: operators">print(17 / 5, 17 // 5, 17 % 5, 2 ** 10)
+print(-7 // 2, -7 % 2)
+print(5 &gt; 3 and 2 &gt; 4, not 5 &gt; 3 or True)
+print(6 &amp; 3, 6 | 3, 6 ^ 3, ~6, 6 &lt;&lt; 2, -16 &gt;&gt; 2)
+a, b = 3, 8
+a, b = b, a          # swap
+print(a, b)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a7-1-subprograms">
+<div class="theory airy">
+ <section>
+  <h2>Subprograms</h2>
+  <p class="lede">A <b>subprogram</b> is a named block of code that can be called whenever it's needed. Subprograms let you break a big problem into small parts, reuse code instead of copying it, and test each part on its own.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Procedure</h3><p>Does a job but <b>doesn't return a value</b>. In Python it simply has no return statement (so it returns None).</p><p class="mono">def show_menu():<br>&nbsp;&nbsp;&nbsp;&nbsp;print("1 Play  2 Quit")</p></div>
+   <div class="keypts"><h3>Function</h3><p>Works something out and <b>returns</b> it to the code that called it.</p><p class="mono">def area(w, h):<br>&nbsp;&nbsp;&nbsp;&nbsp;return w * h</p></div>
+  </div>
+ </section>
+ <section>
+  <h2>Parameters and arguments</h2>
+  <p>A <b>parameter</b> is a name in the subprogram's definition. An <b>argument</b> is the actual value passed in when it's called. In <span class="mono">def area(w, h)</span> the parameters are w and h; in <span class="mono">area(3, 4)</span> the arguments are 3 and 4.</p>
+  <div class="alw" data-w="trace" data-stack data-vars="room" data-title="Try it: calling a function" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"area","loc":{"w":"3","h":"4"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"area","loc":{"w":"3","h":"4","result":"12"}}],"out":"","ret":null},{"e":"return","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"area","loc":{"w":"3","h":"4","result":"12"}}],"out":"","ret":"12"},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"room":"12"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"room":"12"}}],"out":"Room: 12\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"room":"12"}},{"fn":"area","loc":{"w":"2","h":"6"}}],"out":"Room: 12\n","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"room":"12"}},{"fn":"area","loc":{"w":"2","h":"6","result":"12"}}],"out":"Room: 12\n","ret":null},{"e":"return","line":3,"stack":[{"fn":"&lt;module>","loc":{"room":"12"}},{"fn":"area","loc":{"w":"2","h":"6","result":"12"}}],"out":"Room: 12\n","ret":"12"},{"e":"end","line":null,"stack":[],"out":"Room: 12\nHall: 12\n","ret":null}]'><pre>def area(w, h):
+    result = w * h
+    return result
+
+room = area(3, 4)
+print("Room:", room)
+print("Hall:", area(2, 6))</pre></div>
+  <p>Arguments are matched to parameters by position, or by name: <span class="mono">area(h=4, w=3)</span>. A parameter can have a <b>default</b>: <span class="mono">def area(w, h=1)</span>. A function can return several values as a tuple: <span class="mono">return low, high</span>.</p>
+ </section>
+ <section>
+  <h2>Scope: local and global</h2>
+  <p>Variables created inside a subprogram are <b>local</b>: they exist only while it runs, and other code can't see them. Variables created outside all subprograms are <b>global</b>. A subprogram can read a global, but to <b>change</b> one it must say <span class="mono">global name</span> first; otherwise Python makes a new local variable with the same name.</p>
+  <pre class="pc py" data-run data-t="Try it: local and global">score = 0
+
+def add_points(n):
+    global score
+    score = score + n
+
+def try_to_change():
+    score = 99          # a new local variable!
+
+add_points(5)
+try_to_change()
+print(score)            # 5, not 99</pre>
+  <div class="callout tip"><span class="k">Good practice</span><p>Prefer passing values in as arguments and getting results back with return, rather than changing globals. Functions that only use their parameters are easier to test and reuse (Topic 9: minimising side effects).</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-1-types">
+<div class="theory airy">
+ <section>
+  <h2>Primitive data types</h2>
+  <p>Every value in a program has a <b>data type</b>. The type decides what the value can hold and what you can do with it: you can divide two numbers, but not two names. Python works the type out from the value, and <span class="mono">type()</span> tells you what it decided.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Type</th><th>Python</th><th>Examples</th><th>Typical use</th></tr>
+   <tr><td>Integer</td><td class="mono">int</td><td class="mono">42, -7, 0</td><td>Counts, years, scores</td></tr>
+   <tr><td>Real</td><td class="mono">float</td><td class="mono">3.75, -0.5, 2.0</td><td>Prices, measurements, averages</td></tr>
+   <tr><td>Character</td><td class="mono">str</td><td class="mono">"A", "7", "?"</td><td>One letter or symbol (Python has no separate char type)</td></tr>
+   <tr><td>String</td><td class="mono">str</td><td class="mono">"Hello", "SW1A 1AA"</td><td>Names, postcodes, phone numbers</td></tr>
+   <tr><td>Boolean</td><td class="mono">bool</td><td class="mono">True, False</td><td>Flags: is it on loan? is the box ticked?</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: what type is it?">for value in [42, 3.75, "A", "Hello", True, 2.0, "42"]:
+    print(repr(value), "is", type(value).__name__)</pre>
+  <div class="callout tip"><span class="k">Choosing a type</span><p>A phone number or postcode looks like a number, but it should be a <b>string</b>: you never do arithmetic on it, and a leading 0 would be lost as an integer (<span class="mono">int("07700")</span> is 7700).</p></div>
+ </section>
+ <section>
+  <h2>Type conversion</h2>
+  <p><span class="mono">input()</span> <b>always</b> returns a string, even when the user types a number. To do arithmetic you must <b>convert</b> (or <b>cast</b>) it first.</p>
+  <pre class="pc py" data-run data-t="Try it: input is always a string" data-stdin="5|3">a = input("First number: ")
+b = input("Second number: ")
+print("Joined as strings:", a + b)
+print("Added as integers:", int(a) + int(b))</pre>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Function</th><th>Converts to</th><th>Examples</th></tr>
+   <tr><td class="mono">int()</td><td>Integer; a float is <b>truncated</b></td><td class="mono">int("42") → 42, int(7.9) → 7</td></tr>
+   <tr><td class="mono">float()</td><td>Real</td><td class="mono">float("2") → 2.0, float(3) → 3.0</td></tr>
+   <tr><td class="mono">str()</td><td>String</td><td class="mono">str(7) + "7" → "77"</td></tr>
+   <tr><td class="mono">bool()</td><td>Boolean; 0, 0.0 and "" are False, everything else True</td><td class="mono">bool(0) → False, bool("no") → True</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: conversions">print(int("42") + 1)
+print(int(7.9), int(-7.9))
+print(float("2") * 2)
+print(str(3.50))
+print(bool(0), bool(""), bool("False"), bool("no"))
+print("3" * 3)</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p><span class="mono">bool("False")</span> is <b>True</b>, because any non-empty string is True. To turn a user's answer into a Boolean, compare the text instead: <span class="mono">answer.lower() == "yes"</span>.</p></div>
+  <p>A conversion that doesn't make sense raises a <b>ValueError</b>, for example <span class="mono">int("ten")</span> or <span class="mono">int("3.5")</span>. You'll see how to handle that safely in the lesson on exceptions and in Best practice.</p>
+  <pre class="pc py" data-run data-t="Try it: a conversion that fails" data-stdin="ten">text = input("Enter a whole number: ")
+try:
+    n = int(text)
+    print("Doubled:", n * 2)
+except ValueError:
+    print(repr(text), "isn't a whole number")</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-1-structures">
+<div class="theory airy">
+ <section>
+  <h2>Arrays and records</h2>
+  <p>The specification talks about <b>arrays</b> and <b>records</b>. Python doesn't have either built in, so you use lists (and tuples) to play both roles.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Structure</th><th>What it is</th><th>In Python</th></tr>
+   <tr><td>One-dimensional array</td><td>Items of the <b>same type</b>, found by index</td><td class="mono">scores = [64, 71, 55]</td></tr>
+   <tr><td>Two-dimensional array</td><td>A grid of rows and columns</td><td class="mono">grid = [[1, 2, 3], [4, 5, 6]]</td></tr>
+   <tr><td>Record</td><td>Related <b>fields of different types</b> about one thing</td><td class="mono">pupil = ["Ana", "10B", 15]</td></tr>
+   <tr><td>Array of records</td><td>A table: one record per row</td><td class="mono">pupils = [["Ana", "10B", 15], ["Ben", "11A", 16]]</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Two-dimensional lists</h2>
+  <p>A 2D list is a list of lists. <span class="mono">grid[r]</span> is a whole row, and <span class="mono">grid[r][c]</span> is one item: row first, then column. A <b>nested loop</b> visits every item.</p>
+  <div class="alw" data-w="trace" data-vars="r,c,total" data-title="Try it: adding up a 2D list" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"0","r":"0"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"0","r":"0","c":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"3","r":"0","c":"0"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"3","r":"0","c":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"4","r":"0","c":"1"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"4","r":"0","c":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"8","r":"0","c":"2"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"8","r":"0","c":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"8","r":"1","c":"2"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"8","r":"1","c":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"9","r":"1","c":"0"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"9","r":"1","c":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"14","r":"1","c":"1"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"14","r":"1","c":"2"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"23","r":"1","c":"2"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"23","r":"1","c":"2"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"grid":"[[3, 1, 4], [1, 5, 9]]","total":"23","r":"1","c":"2"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"23\n","ret":null}]'><pre>grid = [[3, 1, 4],
+        [1, 5, 9]]
+total = 0
+for r in range(len(grid)):
+    for c in range(len(grid[r])):
+        total = total + grid[r][c]
+print(total)</pre></div>
+  <pre class="pc py" data-run data-t="Try it: build and change a grid">board = [["." for c in range(3)] for r in range(3)]
+board[1][1] = "X"
+board[0][2] = "O"
+for row in board:
+    print(" ".join(row))
+print("Rows:", len(board), "Columns:", len(board[0]))</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p><span class="mono">[[0] * 3] * 2</span> makes two references to the <b>same</b> row, so changing one row changes both. Build each row separately with a loop or <span class="mono">[[0] * 3 for _ in range(2)]</span>.</p></div>
+  <pre class="pc py" data-run data-t="Try it: the shared-row trap">bad = [[0] * 3] * 2
+bad[0][0] = 9
+print("bad: ", bad)
+good = [[0] * 3 for _ in range(2)]
+good[0][0] = 9
+print("good:", good)</pre>
+ </section>
+ <section>
+  <h2>Choosing a structure</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Structure</th><th>Ordered?</th><th>Changeable?</th><th>Duplicates?</th><th>Use it for</th></tr>
+   <tr><td>List <span class="mono">[ ]</span></td><td>Yes</td><td>Yes</td><td>Yes</td><td>A collection you add to, sort or index</td></tr>
+   <tr><td>Tuple <span class="mono">( )</span></td><td>Yes</td><td>No</td><td>Yes</td><td>Fixed values: a coordinate, an RGB colour</td></tr>
+   <tr><td>Dictionary <span class="mono">{k: v}</span></td><td>By insertion</td><td>Yes</td><td>Keys unique</td><td>Looking things up by name</td></tr>
+   <tr><td>Set <span class="mono">{ }</span></td><td>No</td><td>Yes</td><td>No</td><td>Unique items, membership, set operations</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Converting between structures</h2>
+  <p>The functions <span class="mono">list()</span>, <span class="mono">tuple()</span>, <span class="mono">set()</span> and <span class="mono">dict()</span> each build a new structure from another one.</p>
+  <pre class="pc py" data-run data-t="Try it: converting structures">nums = [3, 1, 3, 2, 1]
+print(set(nums))              # duplicates removed
+print(sorted(set(nums)))      # unique and sorted, back to a list
+print(tuple(nums))            # list to tuple
+print(list("abc"))            # string to a list of characters
+pairs = [("Ana", 15), ("Ben", 16)]
+ages = dict(pairs)            # list of pairs to dictionary
+print(ages)
+print(list(ages.keys()), list(ages.values()))
+print(list(ages.items()))     # and back to pairs</pre>
+  <div class="callout tip"><span class="k">Unpacking</span><p>A record's fields can be unpacked into separate variables in one line: <span class="mono">name, form, age = pupil</span>. The number of variables must match the number of fields.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-numbers">
+<div class="theory airy">
+ <section>
+  <h2>Rounding and truncation</h2>
+  <p><b>Rounding</b> moves a number to the <b>nearest</b> value with fewer decimal places. <b>Truncation</b> simply <b>chops off</b> the fractional part, whichever is nearer.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Expression</th><th>Result</th><th>What happens</th></tr>
+   <tr><td class="mono">round(3.14159, 2)</td><td class="mono">3.14</td><td>Rounds to 2 decimal places</td></tr>
+   <tr><td class="mono">round(4.7)</td><td class="mono">5</td><td>Rounds to the nearest whole number</td></tr>
+   <tr><td class="mono">int(4.7)</td><td class="mono">4</td><td>Truncates (towards zero)</td></tr>
+   <tr><td class="mono">int(-4.7)</td><td class="mono">-4</td><td>Truncates towards zero</td></tr>
+   <tr><td class="mono">math.floor(-4.7)</td><td class="mono">-5</td><td>Rounds <b>down</b></td></tr>
+   <tr><td class="mono">math.ceil(4.1)</td><td class="mono">5</td><td>Rounds <b>up</b></td></tr>
+   <tr><td class="mono">17 // 5</td><td class="mono">3</td><td>Integer division</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: round, truncate, floor, ceil">import math
+for x in [4.7, 4.2, -4.7, 2.5, 3.5]:
+    print(x, "round:", round(x), "int:", int(x),
+          "floor:", math.floor(x), "ceil:", math.ceil(x))</pre>
+  <div class="callout warnbox"><span class="k">Something surprising!</span><p>Python rounds exact halves to the nearest <b>even</b> number ("banker's rounding"), so <span class="mono">round(2.5)</span> is 2 and <span class="mono">round(3.5)</span> is 4. And because floats are stored in binary, <span class="mono">round(2.675, 2)</span> gives 2.67: 2.675 is really stored as 2.67499999…</p></div>
+  <pre class="pc py" data-run data-t="Try it: floats are approximations">print(0.1 + 0.2)
+print(0.1 + 0.2 == 0.3)
+print(abs((0.1 + 0.2) - 0.3) &lt; 0.000001)
+print(f"{2.675:.20f}")</pre>
+  <p>To compare floats, check that they are <b>close</b> rather than exactly equal. For money, many programs store whole pence as integers.</p>
+ </section>
+ <section>
+  <h2>Randomisation</h2>
+  <p>The <span class="mono">random</span> library generates pseudo-random values. You must <span class="mono">import random</span> first.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Function</th><th>Returns</th></tr>
+   <tr><td class="mono">random.randint(a, b)</td><td>A whole number from a to b, <b>including both</b></td></tr>
+   <tr><td class="mono">random.random()</td><td>A real number from 0 up to, but not including, 1</td></tr>
+   <tr><td class="mono">random.choice(lst)</td><td>One random item from a list</td></tr>
+   <tr><td class="mono">random.shuffle(lst)</td><td>Shuffles the list in place</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: random values (run it more than once)">import random
+print("Dice:", random.randint(1, 6))
+print("Chance:", round(random.random(), 3))
+print("Pick:", random.choice(["rock", "paper", "scissors"]))
+deck = list(range(1, 11))
+random.shuffle(deck)
+print("Shuffled:", deck)</pre>
+  <pre class="pc py" data-run data-t="Try it: is the dice fair?">import random
+counts = [0] * 7
+for i in range(6000):
+    counts[random.randint(1, 6)] += 1
+for face in range(1, 7):
+    print(face, "#" * (counts[face] // 50), counts[face])</pre>
+ </section>
+ <section>
+  <h2>The math library</h2>
+  <pre class="pc py" data-run data-t="Try it: math functions">import math
+print(math.sqrt(49), math.pi)
+print(math.floor(7.8), math.ceil(7.2))
+print(abs(-4), pow(2, 10), 2 ** 10)
+radius = 3
+print("Area:", round(math.pi * radius ** 2, 2))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-strings">
+<div class="theory airy">
+ <section>
+  <h2>Indexing and slicing</h2>
+  <p>A string is a <b>sequence</b> of characters, numbered from 0. Negative indexes count from the end. A <b>slice</b> <span class="mono">s[start:stop]</span> includes start but <b>stops before</b> stop.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Character</th><td class="mono">P</td><td class="mono">y</td><td class="mono">t</td><td class="mono">h</td><td class="mono">o</td><td class="mono">n</td></tr>
+   <tr><th>Index</th><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td></tr>
+   <tr><th>Negative</th><td>-6</td><td>-5</td><td>-4</td><td>-3</td><td>-2</td><td>-1</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: indexing and slicing">s = "Python"
+print(len(s), s[0], s[-1])
+print(s[1:4])     # yth
+print(s[:3])      # first three
+print(s[3:])      # from index 3 to the end
+print(s[::-1])    # reversed</pre>
+  <div class="alw" data-w="trace" data-vars="i,ch,vowels" data-title="Try it: traversing a string" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"0"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"0","i":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"0","i":"0","ch":"&#39;b&#39;"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"0","i":"0","ch":"&#39;b&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"0","i":"1","ch":"&#39;b&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"0","i":"1","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"0","i":"1","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"1","i":"1","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"1","i":"2","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"1","i":"2","ch":"&#39;n&#39;"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"1","i":"2","ch":"&#39;n&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"1","i":"3","ch":"&#39;n&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"1","i":"3","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"1","i":"3","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"2","i":"3","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"2","i":"4","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"2","i":"4","ch":"&#39;n&#39;"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"2","i":"4","ch":"&#39;n&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"2","i":"5","ch":"&#39;n&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"2","i":"5","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"2","i":"5","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"3","i":"5","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"word":"&#39;banana&#39;","vowels":"3","i":"5","ch":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"3\n","ret":null}]'><pre>word = "banana"
+vowels = 0
+for i in range(len(word)):
+    ch = word[i]
+    if ch in "aeiou":
+        vowels = vowels + 1
+print(vowels)</pre></div>
+ </section>
+ <section>
+  <h2>Strings are immutable</h2>
+  <p>You can't change a character in place: <span class="mono">s[0] = "b"</span> raises a TypeError. String methods <b>return a new string</b> instead, so you must store the result.</p>
+  <pre class="pc py" data-run data-t="Try it: methods return new strings">name = "  ada lovelace "
+name.upper()                 # does nothing on its own
+print(repr(name))
+name = name.strip().title()  # store the result
+print(repr(name))</pre>
+ </section>
+ <section>
+  <h2>String methods</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Job</th><th>Methods</th><th>Example</th></tr>
+   <tr><td>Change case</td><td class="mono">upper() lower() title() capitalize()</td><td class="mono">"abc".upper() → "ABC"</td></tr>
+   <tr><td>Examine</td><td class="mono">isdigit() isalpha() isupper() startswith() endswith()</td><td class="mono">"42".isdigit() → True</td></tr>
+   <tr><td>Find</td><td class="mono">find() index() count() in</td><td class="mono">"banana".find("n") → 2</td></tr>
+   <tr><td>Clean</td><td class="mono">strip() replace()</td><td class="mono">" hi ".strip() → "hi"</td></tr>
+   <tr><td>Split and join</td><td class="mono">split() join()</td><td class="mono">"a,b".split(",") → ['a', 'b']</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: validating a password" data-stdin="Secret42">pw = input("Password: ")
+has_digit = False
+has_upper = False
+for ch in pw:
+    if ch.isdigit():
+        has_digit = True
+    if ch.isupper():
+        has_upper = True
+if len(pw) &gt;= 8 and has_digit and has_upper:
+    print("Strong enough")
+else:
+    print("Needs 8+ characters, a capital and a digit")</pre>
+  <pre class="pc py" data-run data-t="Try it: split and join">line = "Ana,10B,15"
+fields = line.split(",")
+print(fields)
+print(fields[0], "is in", fields[1])
+print("-".join(["2026", "10", "19"]))</pre>
+ </section>
+ <section>
+  <h2>Formatting output</h2>
+  <p>An <b>f-string</b> puts values straight into text inside <span class="mono">{ }</span>. A <b>format specifier</b> after a colon controls how they look.</p>
+  <pre class="pc py" data-run data-t="Try it: f-strings">item, price, qty = "Pen", 1.5, 3
+print(f"{item}: £{price:.2f}")           # 2 decimal places
+print(f"{qty} x {item} = £{price * qty:.2f}")
+print(f"[{item:&lt;8}] [{item:&gt;8}]")        # left and right aligned in 8
+print(f"{0.4567:.1%}")                    # as a percentage
+print("Old style: " + item + " costs £" + str(price))</pre>
+  <div class="callout tip"><span class="k">Concatenation needs strings</span><p><span class="mono">"Age " + 16</span> raises a TypeError. Either convert with <span class="mono">str(16)</span> or use an f-string, which converts for you.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-files">
+<div class="theory airy">
+ <section>
+  <h2>Why use text files?</h2>
+  <p>Variables are lost when a program ends. A <b>text file</b> keeps data <b>persistent</b> so it can be loaded again next time. Data is often stored as one record per line, with fields separated by commas (a <b>CSV</b> file).</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Mode</th><th>Meaning</th><th>If the file exists</th><th>If it doesn't</th></tr>
+   <tr><td class="mono">"r"</td><td>Read</td><td>Read from the start</td><td>FileNotFoundError</td></tr>
+   <tr><td class="mono">"w"</td><td>Write</td><td><b>Contents are deleted</b></td><td>Created</td></tr>
+   <tr><td class="mono">"a"</td><td>Append</td><td>Added to the end</td><td>Created</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Writing and appending</h2>
+  <p><span class="mono">write()</span> writes exactly the string you give it. It does <b>not</b> add a new line, so add <span class="mono">"\n"</span> yourself. Using <span class="mono">with</span> closes the file for you at the end of the block, which makes sure the data is saved.</p>
+  <pre class="pc py" data-run data-t="Try it: write, then append">with open("pupils.txt", "w") as f:
+    f.write("Ana,10B,15\n")
+    f.write("Ben,11A,16\n")
+
+with open("pupils.txt", "a") as f:
+    f.write("Cai,10B,15\n")
+
+with open("pupils.txt", "r") as f:
+    print(f.read())</pre>
+  <pre class="pc py" data-run data-t="Try it: without with, you close it yourself">f = open("log.txt", "w")
+f.write("first\n")
+f.close()
+f = open("log.txt", "w")      # "w" again: the old line is gone
+f.write("second\n")
+f.close()
+print(open("log.txt").read())</pre>
+ </section>
+ <section>
+  <h2>Reading</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Method</th><th>Returns</th></tr>
+   <tr><td class="mono">f.read()</td><td>The whole file as one string</td></tr>
+   <tr><td class="mono">f.readline()</td><td>The next line (with its <span class="mono">\n</span>)</td></tr>
+   <tr><td class="mono">f.readlines()</td><td>A list of all the lines</td></tr>
+   <tr><td class="mono">for line in f:</td><td>Each line in turn, without loading the whole file</td></tr></table></div>
+  <p>Each line ends with a newline character, so <span class="mono">strip()</span> it before using it. Then <span class="mono">split(",")</span> separates the fields, and each field is a string that may need converting.</p>
+  <pre class="pc py" data-run data-t="Try it: reading records from a CSV file">with open("pupils.txt", "w") as f:
+    f.write("Ana,10B,15\nBen,11A,16\nCai,10B,15\n")
+
+pupils = []
+with open("pupils.txt", "r") as f:
+    for line in f:
+        name, form, age = line.strip().split(",")
+        pupils.append([name, form, int(age)])
+
+print(pupils)
+print("Average age:", sum(p[2] for p in pupils) / len(pupils))</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Forgetting <span class="mono">strip()</span> leaves a <span class="mono">"\n"</span> on the last field. <span class="mono">int("15\n")</span> happens to work, but comparing <span class="mono">"10B\n" == "10B"</span> is False.</p></div>
+  <pre class="pc py" data-run data-t="Try it: handling a missing file">try:
+    with open("missing.txt", "r") as f:
+        print(f.read())
+except FileNotFoundError:
+    print("No saved data yet, starting fresh")</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-structops">
+<div class="theory airy">
+ <section>
+  <h2>Create, insert, update, retrieve, delete</h2>
+  <p>Whatever the structure, the same basic operations come up again and again.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operation</th><th>List</th><th>Dictionary</th><th>Set</th></tr>
+   <tr><td>Create</td><td class="mono">lst = []</td><td class="mono">d = {}</td><td class="mono">s = set()</td></tr>
+   <tr><td>Insert</td><td class="mono">lst.append(x)<br>lst.insert(i, x)</td><td class="mono">d[key] = value</td><td class="mono">s.add(x)</td></tr>
+   <tr><td>Update</td><td class="mono">lst[i] = x</td><td class="mono">d[key] = new</td><td>(remove then add)</td></tr>
+   <tr><td>Retrieve</td><td class="mono">lst[i]</td><td class="mono">d[key]<br>d.get(key)</td><td class="mono">x in s</td></tr>
+   <tr><td>Delete</td><td class="mono">del lst[i]<br>lst.remove(x)<br>lst.pop()</td><td class="mono">del d[key]<br>d.pop(key)</td><td class="mono">s.remove(x)<br>s.discard(x)</td></tr></table></div>
+  <div class="alw" data-w="list"></div>
+  <pre class="pc py" data-run data-t="Try it: a phone book dictionary">book = {}                          # create
+book["Ana"] = "07700 900001"       # insert
+book["Ben"] = "07700 900002"
+book["Ana"] = "07700 900099"       # update
+print(book.get("Ana"))             # retrieve
+print(book.get("Zed", "not found"))
+del book["Ben"]                    # delete
+print(book)</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p><span class="mono">d["Zed"]</span> raises a <b>KeyError</b> if the key isn't there, and <span class="mono">lst.remove(x)</span> raises a ValueError if x isn't in the list. Check with <span class="mono">in</span> first, or use <span class="mono">d.get()</span> and <span class="mono">s.discard()</span>.</p></div>
+ </section>
+ <section>
+  <h2>Traversal</h2>
+  <p>To <b>traverse</b> a structure is to visit every item, usually with a for loop. Many algorithms are just a traversal with a variable tracking something: a total, a count, or the best so far.</p>
+  <div class="alw" data-w="trace" data-vars="name,s,best,top" data-title="Try it: finding the highest score" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;&#39;","top":"-1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;&#39;","top":"-1","name":"&#39;Ana&#39;","s":"72"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;&#39;","top":"-1","name":"&#39;Ana&#39;","s":"72"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;&#39;","top":"72","name":"&#39;Ana&#39;","s":"72"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;Ana&#39;","top":"72","name":"&#39;Ana&#39;","s":"72"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;Ana&#39;","top":"72","name":"&#39;Ben&#39;","s":"88"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;Ana&#39;","top":"72","name":"&#39;Ben&#39;","s":"88"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;Ana&#39;","top":"88","name":"&#39;Ben&#39;","s":"88"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;Ben&#39;","top":"88","name":"&#39;Ben&#39;","s":"88"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;Ben&#39;","top":"88","name":"&#39;Cai&#39;","s":"65"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;Ben&#39;","top":"88","name":"&#39;Cai&#39;","s":"65"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"scores":"{&#39;Ana&#39;: 72, &#39;Ben&#39;: 88, &#39;Cai&#39;: 65}","best":"&#39;Ben&#39;","top":"88","name":"&#39;Cai&#39;","s":"65"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"Ben 88\n","ret":null}]'><pre>scores = {"Ana": 72, "Ben": 88, "Cai": 65}
+best = ""
+top = -1
+for name, s in scores.items():
+    if s &gt; top:
+        top = s
+        best = name
+print(best, top)</pre></div>
+  <pre class="pc py" data-run data-t="Try it: counting with a dictionary">words = "the cat sat on the mat the end".split()
+counts = {}
+for w in words:
+    if w in counts:
+        counts[w] = counts[w] + 1
+    else:
+        counts[w] = 1
+for w, n in counts.items():
+    print(w, n)</pre>
+ </section>
+ <section>
+  <h2>Set operations</h2>
+  <p>Sets have operations for combining them, which are much quicker to write than nested loops.</p>
+  <div class="alw" data-w="sets"></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Operation</th><th>Method</th><th>Operator</th><th>Gives</th></tr>
+   <tr><td>Union</td><td class="mono">a.union(b)</td><td class="mono">a | b</td><td>Everything in either</td></tr>
+   <tr><td>Intersection</td><td class="mono">a.intersection(b)</td><td class="mono">a &amp; b</td><td>Only what's in both</td></tr>
+   <tr><td>Difference</td><td class="mono">a.difference(b)</td><td class="mono">a - b</td><td>In a but not b</td></tr>
+   <tr><td>Symmetric difference</td><td class="mono">a.symmetric_difference(b)</td><td class="mono">a ^ b</td><td>In one but not both</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: clubs">chess = {"Ana", "Ben", "Cai"}
+coding = {"Ben", "Dev", "Cai", "Eve"}
+print("In both:", sorted(chess &amp; coding))
+print("Chess only:", sorted(chess - coding))
+print("Either:", sorted(chess | coding))
+print("Just one:", sorted(chess ^ coding))</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-2-stackqueue">
+<div class="theory airy">
+ <section>
+  <h2>Fixed-length structures</h2>
+  <p>A Python list can grow forever with <span class="mono">append()</span>, but the specification asks you to build stacks and queues in <b>fixed-length</b> lists, as they would be in an array. You create the list at its full size and keep <b>pointers</b> to track where the data is.</p>
+  <pre class="pc py" data-run data-t="Try it: a fixed-length list">SIZE = 5
+stack = [None] * SIZE
+print(stack, len(stack))</pre>
+  <p>Each structure needs three helper functions: <b>IsEmpty</b>, <b>IsFull</b> and <b>Size</b>. Check them <b>before</b> every push or pop so the pointers never go out of range.</p>
+ </section>
+ <section>
+  <h2>A stack</h2>
+  <p>A stack is <b>last in, first out</b>. One pointer, <span class="mono">top</span>, holds the index of the top item, and starts at −1 when the stack is empty.</p>
+  <div class="alw" data-w="stack"></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Function</th><th>Test</th></tr>
+   <tr><td>IsEmpty</td><td class="mono">top == -1</td></tr>
+   <tr><td>IsFull</td><td class="mono">top == SIZE - 1</td></tr>
+   <tr><td>Size</td><td class="mono">top + 1</td></tr></table></div>
+  <div class="alw" data-w="trace" data-vars="top,stack" data-title="Try it: push and pop" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[None, None, None]"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[None, None, None]","top":"-1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[None, None, None]","top":"-1","item":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[None, None, None]","top":"-1","item":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[None, None, None]","top":"0","item":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, None, None]","top":"0","item":"&#39;a&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, None, None]","top":"0","item":"&#39;b&#39;"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, None, None]","top":"0","item":"&#39;b&#39;"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, None, None]","top":"1","item":"&#39;b&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, None]","top":"1","item":"&#39;b&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, None]","top":"1","item":"&#39;c&#39;"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, None]","top":"1","item":"&#39;c&#39;"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, None]","top":"2","item":"&#39;c&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]","top":"2","item":"&#39;c&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]","top":"2","item":"&#39;d&#39;"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]","top":"2","item":"&#39;d&#39;"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]","top":"2","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\n","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]","top":"2","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\n","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]","top":"2","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\n","ret":null},{"e":"line","line":12,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, &#39;c&#39;]","top":"2","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\n","ret":null},{"e":"line","line":13,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, None]","top":"2","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\n","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, None]","top":"1","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\n","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, None]","top":"1","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\n","ret":null},{"e":"line","line":12,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, &#39;b&#39;, None]","top":"1","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\nPop b\n","ret":null},{"e":"line","line":13,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, None, None]","top":"1","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\nPop b\n","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, None, None]","top":"0","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\nPop b\n","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, None, None]","top":"0","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\nPop b\n","ret":null},{"e":"line","line":12,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[&#39;a&#39;, None, None]","top":"0","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\nPop b\nPop a\n","ret":null},{"e":"line","line":13,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[None, None, None]","top":"0","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\nPop b\nPop a\n","ret":null},{"e":"line","line":10,"stack":[{"fn":"&lt;module>","loc":{"SIZE":"3","stack":"[None, None, None]","top":"-1","item":"&#39;d&#39;"}}],"out":"Full, can&#39;t push d\nPop c\nPop b\nPop a\n","ret":null},{"e":"end","line":null,"stack":[],"out":"Full, can&#39;t push d\nPop c\nPop b\nPop a\n","ret":null}]'><pre>SIZE = 3
+stack = [None] * SIZE
+top = -1
+for item in ["a", "b", "c", "d"]:
+    if top == SIZE - 1:
+        print("Full, can't push", item)
+    else:
+        top = top + 1
+        stack[top] = item
+while top != -1:
+    print("Pop", stack[top])
+    stack[top] = None
+    top = top - 1</pre></div>
+  <div class="callout tip"><span class="k">Overflow and underflow</span><p>Pushing onto a full stack is <b>overflow</b>; popping from an empty one is <b>underflow</b>. Your functions should detect both and report them (for example by returning False or None) rather than crashing.</p></div>
+ </section>
+ <section>
+  <h2>A queue</h2>
+  <p>A queue is <b>first in, first out</b>. Items join at the <b>rear</b> and leave from the <b>front</b>. In a <b>circular</b> queue the pointers wrap back to 0 after the last index, so spaces freed at the front are reused. A <span class="mono">count</span> variable makes IsEmpty, IsFull and Size simple.</p>
+  <div class="alw" data-w="queue"></div>
+  <pre class="pc py" data-run data-t="Try it: a circular queue">SIZE = 3
+queue = [None] * SIZE
+front, rear, count = 0, -1, 0
+
+def enqueue(item):
+    global rear, count
+    if count == SIZE:
+        print("Full, can't add", item)
+        return
+    rear = (rear + 1) % SIZE
+    queue[rear] = item
+    count += 1
+
+def dequeue():
+    global front, count
+    if count == 0:
+        return None
+    item = queue[front]
+    front = (front + 1) % SIZE
+    count -= 1
+    return item
+
+for x in ["A", "B", "C", "D"]:
+    enqueue(x)
+print("Out:", dequeue(), dequeue())
+enqueue("E")
+print(queue, "front =", front, "rear =", rear)
+print("Out:", dequeue(), dequeue(), dequeue(), dequeue())</pre>
+  <div class="callout warnbox"><span class="k">Remember global</span><p>A function that changes a pointer stored outside it needs <span class="mono">global top</span> (or <span class="mono">global front, count</span>). Without it, Python makes a new local variable and raises an UnboundLocalError.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-3-sqlcreate">
+<div class="theory airy">
+ <section>
+  <h2>Databases from Python</h2>
+  <p>A text file is fine for a short list, but searching, sorting and linking larger amounts of data is far easier in a <b>relational database</b>. Python's built-in <span class="mono">sqlite3</span> library lets a program create and use an SQLite database, which is stored as a single file. You talk to it in <b>SQL</b>.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Step</th><th>Python</th></tr>
+   <tr><td>1. Load the library</td><td class="mono">import sqlite3</td></tr>
+   <tr><td>2. Connect (creates the file if it's new)</td><td class="mono">con = sqlite3.connect("pets.db")</td></tr>
+   <tr><td>3. Make a cursor</td><td class="mono">cur = con.cursor()</td></tr>
+   <tr><td>4. Run SQL</td><td class="mono">cur.execute("…")</td></tr>
+   <tr><td>5. Save changes</td><td class="mono">con.commit()</td></tr>
+   <tr><td>6. Finish</td><td class="mono">con.close()</td></tr></table></div>
+  <div class="callout tip"><span class="k">In these lessons</span><p>The examples connect to <span class="mono">":memory:"</span>, a database held in RAM that disappears when the program ends, so every run starts fresh. In the exam you'll usually be given a <span class="mono">.db</span> file name instead; the code is otherwise the same.</p></div>
+ </section>
+ <section>
+  <h2>Creating tables</h2>
+  <p><span class="mono">CREATE TABLE</span> names the table and lists its fields, each with a data type. SQLite's main types are <b>INTEGER</b>, <b>REAL</b> and <b>TEXT</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: create two linked tables">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+
+cur.execute("""CREATE TABLE Owner (
+    OwnerID INTEGER PRIMARY KEY,
+    Name TEXT,
+    Town TEXT)""")
+
+cur.execute("""CREATE TABLE Pet (
+    PetID INTEGER PRIMARY KEY,
+    Name TEXT,
+    Species TEXT,
+    Age INTEGER,
+    OwnerID INTEGER,
+    FOREIGN KEY (OwnerID) REFERENCES Owner(OwnerID))""")
+con.commit()
+
+for row in cur.execute("SELECT name FROM sqlite_master WHERE type = 'table'"):
+    print("Table:", row[0])
+for col in cur.execute("PRAGMA table_info(Pet)"):
+    print(" ", col[1], col[2], "(primary key)" if col[5] else "")
+con.close()</pre>
+  <p>The <b>primary key</b> uniquely identifies each record. The <b>foreign key</b> <span class="mono">Pet.OwnerID</span> holds an owner's primary key, which links every pet to one owner: a <b>one-to-many</b> relationship (one owner, many pets).</p>
+  <div class="alw" data-w="erd"></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Running <span class="mono">CREATE TABLE</span> on a table that already exists raises an error, which is a problem when a program is run a second time on the same file. Write <span class="mono">CREATE TABLE IF NOT EXISTS</span> to avoid it.</p></div>
+ </section>
+ <section>
+  <h2>The tables used in this section</h2>
+  <p>The rest of 8.3 uses these two tables.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th colspan="3">Owner</th></tr><tr><th>OwnerID</th><th>Name</th><th>Town</th></tr><tr><td>1</td><td>Ana</td><td>Leeds</td></tr><tr><td>2</td><td>Ben</td><td>York</td></tr><tr><td>3</td><td>Cai</td><td>Leeds</td></tr></table></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th colspan="5">Pet</th></tr><tr><th>PetID</th><th>Name</th><th>Species</th><th>Age</th><th>OwnerID</th></tr><tr><td>1</td><td>Rex</td><td>Dog</td><td>5</td><td>1</td></tr><tr><td>2</td><td>Tom</td><td>Cat</td><td>3</td><td>1</td></tr><tr><td>3</td><td>Bubbles</td><td>Fish</td><td>1</td><td>2</td></tr><tr><td>4</td><td>Luna</td><td>Cat</td><td>8</td><td>3</td></tr><tr><td>5</td><td>Max</td><td>Dog</td><td>2</td><td>3</td></tr></table></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-3-sqlmodify">
+<div class="theory airy">
+ <section>
+  <h2>Inserting records</h2>
+  <p><span class="mono">INSERT INTO</span> adds a record. Values come from Python through <b>? placeholders</b>, passed as a tuple after the SQL. <span class="mono">executemany()</span> runs the same statement for every tuple in a list.</p>
+  <pre class="pc py" data-run data-t="Try it: inserting records">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Owner (OwnerID INTEGER PRIMARY KEY, Name TEXT, Town TEXT)")
+
+cur.execute("INSERT INTO Owner VALUES (?, ?, ?)", (1, "Ana", "Leeds"))
+owners = [(2, "Ben", "York"), (3, "Cai", "Leeds")]
+cur.executemany("INSERT INTO Owner VALUES (?, ?, ?)", owners)
+cur.execute("INSERT INTO Owner (Name) VALUES (?)", ("Dev",))  # ID chosen for us
+con.commit()
+
+print(cur.execute("SELECT * FROM Owner").fetchall())</pre>
+  <div class="callout tip"><span class="k">A tuple of one</span><p>A single value still has to be passed as a tuple, so it needs a trailing comma: <span class="mono">("Dev",)</span>. Without it, <span class="mono">("Dev")</span> is just a string in brackets.</p></div>
+ </section>
+ <section>
+  <h2>Why placeholders matter</h2>
+  <p>It's tempting to build SQL by joining strings, but if the value comes from a user they can type text that changes the meaning of the statement. This is <b>SQL injection</b>. Placeholders pass the value separately, so it's always treated as data, never as SQL.</p>
+  <pre class="pc py" data-run data-t="Try it: an injection attack" data-stdin="x' OR '1'='1">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Users (Name TEXT, Secret TEXT)")
+cur.executemany("INSERT INTO Users VALUES (?, ?)", [("ana", "cat123"), ("ben", "pa55")])
+
+name = input("Username: ")
+unsafe = "SELECT * FROM Users WHERE Name = '" + name + "'"
+print("Joined into the SQL:", cur.execute(unsafe).fetchall())
+safe = cur.execute("SELECT * FROM Users WHERE Name = ?", (name,)).fetchall()
+print("With a placeholder:", safe)</pre>
+ </section>
+ <section>
+  <h2>Updating and deleting</h2>
+  <p><span class="mono">UPDATE</span> changes fields and <span class="mono">DELETE</span> removes whole records. The <span class="mono">WHERE</span> clause chooses which records are affected. <span class="mono">cur.rowcount</span> tells you how many were changed.</p>
+  <pre class="pc py" data-run data-t="Try it: update and delete">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Pet (PetID INTEGER PRIMARY KEY, Name TEXT, Species TEXT, Age INTEGER)")
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?, ?)",
+    [(1, "Rex", "Dog", 5), (2, "Tom", "Cat", 3), (3, "Bubbles", "Fish", 1), (4, "Luna", "Cat", 8)])
+
+cur.execute("UPDATE Pet SET Age = Age + 1 WHERE Species = 'Cat'")
+print("Updated", cur.rowcount, "rows")
+cur.execute("DELETE FROM Pet WHERE Name = ?", ("Bubbles",))
+print("Deleted", cur.rowcount, "row")
+con.commit()
+for row in cur.execute("SELECT * FROM Pet"):
+    print(row)</pre>
+  <div class="callout warnbox"><span class="k">Forget WHERE at your peril</span><p><span class="mono">UPDATE Pet SET Age = 1</span> sets <b>every</b> pet's age to 1, and <span class="mono">DELETE FROM Pet</span> empties the whole table. Always check the WHERE clause before you run a change.</p></div>
+  <div class="callout tip"><span class="k">Commit</span><p>Changes aren't written to the file until <span class="mono">con.commit()</span>. If the program crashes first, they are lost. Reading data with SELECT doesn't need a commit.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-3-sqlselect">
+<div class="theory airy">
+ <section>
+  <h2>SELECT queries</h2>
+  <p>A query is built from clauses that always come in this order. Only SELECT and FROM are required.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Clause</th><th>Job</th><th>Example</th></tr>
+   <tr><td class="mono">SELECT</td><td>Which fields</td><td class="mono">SELECT Name, Age</td></tr>
+   <tr><td class="mono">FROM</td><td>Which table</td><td class="mono">FROM Pet</td></tr>
+   <tr><td class="mono">WHERE</td><td>Which records</td><td class="mono">WHERE Species = 'Cat'</td></tr>
+   <tr><td class="mono">ORDER BY</td><td>Sort order</td><td class="mono">ORDER BY Age DESC</td></tr></table></div>
+  <p>In Python, <span class="mono">fetchall()</span> returns the result as a <b>list of tuples</b>, one tuple per row. <span class="mono">fetchone()</span> returns just the next row, or <span class="mono">None</span>. You can also loop straight over the cursor.</p>
+  <pre class="pc py" data-run data-t="Try it: queries on the Pet table">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Pet (PetID INTEGER PRIMARY KEY, Name TEXT, Species TEXT, Age INTEGER, OwnerID INTEGER)")
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?, ?, ?)", [(1, "Rex", "Dog", 5, 1),
+    (2, "Tom", "Cat", 3, 1), (3, "Bubbles", "Fish", 1, 2), (4, "Luna", "Cat", 8, 3), (5, "Max", "Dog", 2, 3)])
+
+print(cur.execute("SELECT Name, Age FROM Pet WHERE Species = 'Cat'").fetchall())
+print(cur.execute("SELECT Name FROM Pet ORDER BY Age DESC").fetchone())
+for name, age in cur.execute("SELECT Name, Age FROM Pet WHERE Age BETWEEN 2 AND 5 ORDER BY Name"):
+    print(f"{name} is {age}")</pre>
+ </section>
+ <section>
+  <h2>Conditions</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Condition</th><th>Meaning</th></tr>
+   <tr><td class="mono">= &lt;&gt; &lt; &gt; &lt;= &gt;=</td><td>Comparisons (<span class="mono">&lt;&gt;</span> or <span class="mono">!=</span> means not equal)</td></tr>
+   <tr><td class="mono">AND / OR / NOT</td><td>Combine conditions</td></tr>
+   <tr><td class="mono">BETWEEN 2 AND 5</td><td>In the range, including both ends</td></tr>
+   <tr><td class="mono">LIKE 'B%'</td><td>Pattern: % is any number of characters, _ is exactly one</td></tr>
+   <tr><td class="mono">IN ('Cat', 'Dog')</td><td>Matches any value in the list</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: search with input" data-stdin="b">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Pet (Name TEXT, Species TEXT, Age INTEGER)")
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?)", [("Rex", "Dog", 5),
+    ("Tom", "Cat", 3), ("Bubbles", "Fish", 1), ("Luna", "Cat", 8), ("Max", "Dog", 2)])
+
+start = input("Names starting with: ")
+rows = cur.execute("SELECT Name FROM Pet WHERE Name LIKE ? ORDER BY Name", (start + "%",)).fetchall()
+if rows:
+    print("Found:", ", ".join(r[0] for r in rows))
+else:
+    print("None found")</pre>
+  <div class="callout tip"><span class="k">Getting plain values out</span><p>Each row is a tuple even when you select one field, so <span class="mono">[('Rex',), ('Max',)]</span> needs turning into a plain list: <span class="mono">[row[0] for row in rows]</span>.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-3-sqljoin">
+<div class="theory airy">
+ <section>
+  <h2>Aggregate functions</h2>
+  <p>An <b>aggregate function</b> works on many rows and returns a single value. With <span class="mono">GROUP BY</span>, it returns one value for each group instead.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Function</th><th>Returns</th><th>On the Pet table</th></tr>
+   <tr><td class="mono">COUNT(*)</td><td>Number of rows</td><td class="mono">5</td></tr>
+   <tr><td class="mono">SUM(Age)</td><td>Total</td><td class="mono">19</td></tr>
+   <tr><td class="mono">AVG(Age)</td><td>Mean</td><td class="mono">3.8</td></tr>
+   <tr><td class="mono">MIN(Age) / MAX(Age)</td><td>Smallest / largest</td><td class="mono">1 / 8</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: aggregates and GROUP BY">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Pet (PetID INTEGER PRIMARY KEY, Name TEXT, Species TEXT, Age INTEGER, OwnerID INTEGER)")
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?, ?, ?)", [(1, "Rex", "Dog", 5, 1),
+    (2, "Tom", "Cat", 3, 1), (3, "Bubbles", "Fish", 1, 2), (4, "Luna", "Cat", 8, 3), (5, "Max", "Dog", 2, 3)])
+
+n, total, mean = cur.execute("SELECT COUNT(*), SUM(Age), AVG(Age) FROM Pet").fetchone()
+print(n, "pets, total age", total, "mean", mean)
+print("Cats:", cur.execute("SELECT COUNT(*) FROM Pet WHERE Species = 'Cat'").fetchone()[0])
+for species, count, oldest in cur.execute(
+        "SELECT Species, COUNT(*), MAX(Age) FROM Pet GROUP BY Species ORDER BY Species"):
+    print(f"{species}: {count}, oldest {oldest}")</pre>
+  <div class="callout tip"><span class="k">One value back</span><p>An aggregate query still returns a row tuple, so a single total needs <span class="mono">fetchone()[0]</span>.</p></div>
+ </section>
+ <section>
+  <h2>Joining tables</h2>
+  <p>The owner's name isn't in the Pet table, only their OwnerID. An <b>INNER JOIN</b> combines each pet with the owner whose primary key matches the pet's foreign key. When both tables have a field with the same name, write <span class="mono">Table.Field</span> to say which you mean.</p>
+  <pre class="pc py" data-run data-t="Try it: joining Pet and Owner" data-stdin="Leeds">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Owner (OwnerID INTEGER PRIMARY KEY, Name TEXT, Town TEXT)")
+cur.execute("CREATE TABLE Pet (PetID INTEGER PRIMARY KEY, Name TEXT, Species TEXT, Age INTEGER, OwnerID INTEGER)")
+cur.executemany("INSERT INTO Owner VALUES (?, ?, ?)", [(1, "Ana", "Leeds"), (2, "Ben", "York"), (3, "Cai", "Leeds")])
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?, ?, ?)", [(1, "Rex", "Dog", 5, 1),
+    (2, "Tom", "Cat", 3, 1), (3, "Bubbles", "Fish", 1, 2), (4, "Luna", "Cat", 8, 3), (5, "Max", "Dog", 2, 3)])
+
+town = input("Town: ")
+rows = cur.execute("""SELECT Pet.Name, Pet.Species, Owner.Name
+                      FROM Pet INNER JOIN Owner ON Pet.OwnerID = Owner.OwnerID
+                      WHERE Owner.Town = ?
+                      ORDER BY Pet.Name""", (town,)).fetchall()
+for pet, species, owner in rows:
+    print(f"{pet} the {species.lower()} belongs to {owner}")
+
+print(cur.execute("""SELECT Owner.Name, COUNT(*) FROM Owner
+                     INNER JOIN Pet ON Pet.OwnerID = Owner.OwnerID
+                     GROUP BY Owner.Name""").fetchall())</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Leaving out the <span class="mono">ON</span> condition (or writing <span class="mono">FROM Pet, Owner</span> with no WHERE linking them) pairs <b>every</b> pet with <b>every</b> owner: 5 × 3 = 15 rows of nonsense.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-1-design">
+<div class="theory airy">
+ <section>
+  <h2>Correct outcomes come from design</h2>
+  <p>In the Unit 2 exam you're given a task and must produce a program that does exactly what it asks. Most mistakes come from starting to type before you've understood the problem. A few minutes of design saves a lot of debugging.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Step</th><th>Questions to ask</th></tr>
+   <tr><td>Requirements</td><td>What exactly must the program do? What counts as correct? Are there limits (ranges, formats, sizes)?</td></tr>
+   <tr><td>Inputs</td><td>What data comes in, from the user, a file or a database? What type is it, and could it be invalid?</td></tr>
+   <tr><td>Processing</td><td>What calculations, decisions and repeats are needed? In what order?</td></tr>
+   <tr><td>Outputs</td><td>What must be displayed or saved, and in exactly what format?</td></tr>
+   <tr><td>Test cases</td><td>For a few inputs, what should the output be? Work these out <b>before</b> you code.</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Decomposition</h2>
+  <p><b>Decomposition</b> breaks a problem into sub-problems until each is small enough to write and test on its own. Each sub-problem usually becomes a subprogram.</p>
+  <figure class="dgwrap"><svg class="dg" viewBox="0 0 600 190" role="img" aria-label="A cinema booking program decomposed into sub-problems">
+   <rect x="210" y="10" width="180" height="40" rx="8" class="bi"/><text x="300" y="35" class="c">Cinema booking</text>
+   <line x1="300" y1="50" x2="100" y2="80" class="l"/><line x1="300" y1="50" x2="300" y2="80" class="l"/><line x1="300" y1="50" x2="500" y2="80" class="l"/>
+   <rect x="20" y="80" width="160" height="40" rx="8" class="b2"/><text x="100" y="105" class="c">Get the group's ages</text>
+   <rect x="220" y="80" width="160" height="40" rx="8" class="b2"/><text x="300" y="105" class="c">Work out the price</text>
+   <rect x="420" y="80" width="160" height="40" rx="8" class="b2"/><text x="500" y="105" class="c">Book the seats</text>
+   <line x1="300" y1="120" x2="230" y2="140" class="l"/><line x1="300" y1="120" x2="370" y2="140" class="l"/>
+   <rect x="160" y="140" width="140" height="40" rx="8" class="bw"/><text x="230" y="165" class="s c">ticket_price(age)</text>
+   <rect x="310" y="140" width="140" height="40" rx="8" class="bw"/><text x="380" y="165" class="s c">group discount</text>
+  </svg></figure>
+  <pre class="pc py" data-run data-t="Try it: the decomposed program">def ticket_price(age):
+    if age &lt; 12:
+        return 5.50
+    elif age &gt;= 65:
+        return 6.00
+    return 9.00
+
+def booking_total(ages):
+    total = 0
+    for a in ages:
+        total = total + ticket_price(a)
+    if len(ages) &gt;= 6:          # group discount
+        total = total * 0.9
+    return round(total, 2)
+
+print(booking_total([40, 38, 9]))
+print(booking_total([20, 20, 20, 20, 70, 8]))</pre>
+ </section>
+ <section>
+  <h2>Choosing constructs, structures and variables</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>If the problem needs…</th><th>Use</th></tr>
+   <tr><td>a choice between options</td><td><span class="mono">if</span> / <span class="mono">elif</span> / <span class="mono">else</span></td></tr>
+   <tr><td>to repeat a known number of times, or visit every item</td><td><span class="mono">for</span></td></tr>
+   <tr><td>to repeat until something happens</td><td><span class="mono">while</span></td></tr>
+   <tr><td>to look things up by a key</td><td>a dictionary</td></tr>
+   <tr><td>a grid, or a table of records</td><td>a 2D list</td></tr>
+   <tr><td>unique items or fast membership tests</td><td>a set</td></tr>
+   <tr><td>values that mustn't change</td><td>a tuple or named constants</td></tr></table></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Clear logic means checking conditions in the right order. In an if–elif chain the <b>first</b> true condition wins, so test the most restrictive case first: <span class="mono">mark &gt;= 70</span> before <span class="mono">mark &gt;= 40</span>. And two separate <span class="mono">if</span>s are not the same as <span class="mono">if</span>–<span class="mono">elif</span>: both can run.</p></div>
+  <div class="alw" data-w="trace" data-vars="age,group" data-title="Try it: two ifs where elif was meant" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"age":"10"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"age":"10"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"age":"10","group":"&#39;child&#39;"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"age":"10","group":"&#39;child&#39;"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"age":"10","group":"&#39;teen&#39;"}}],"out":"","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{"age":"10","group":"&#39;teen&#39;"}}],"out":"10 teen\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"age":"15","group":"&#39;teen&#39;"}}],"out":"10 teen\n","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"age":"15","group":"&#39;teen&#39;"}}],"out":"10 teen\n","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"age":"15","group":"&#39;teen&#39;"}}],"out":"10 teen\n","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"age":"15","group":"&#39;teen&#39;"}}],"out":"10 teen\n","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{"age":"15","group":"&#39;teen&#39;"}}],"out":"10 teen\n15 teen\n","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"age":"30","group":"&#39;teen&#39;"}}],"out":"10 teen\n15 teen\n","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"age":"30","group":"&#39;teen&#39;"}}],"out":"10 teen\n15 teen\n","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"age":"30","group":"&#39;teen&#39;"}}],"out":"10 teen\n15 teen\n","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{"age":"30","group":"&#39;adult&#39;"}}],"out":"10 teen\n15 teen\n","ret":null},{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{"age":"30","group":"&#39;adult&#39;"}}],"out":"10 teen\n15 teen\n30 adult\n","ret":null},{"e":"end","line":null,"stack":[],"out":"10 teen\n15 teen\n30 adult\n","ret":null}]'><pre>for age in [10, 15, 30]:
+    if age &lt; 13:
+        group = "child"
+    if age &lt; 18:
+        group = "teen"
+    else:
+        group = "adult"
+    print(age, group)</pre></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-1-modular">
+<div class="theory airy">
+ <section>
+  <h2>Modular programs</h2>
+  <p>A <b>modular</b> program is built from subprograms that each do one job. The specification lists the qualities to aim for:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Quality</th><th>Meaning</th></tr>
+   <tr><td>Modularity</td><td>Code is split into self-contained subprograms that can be written, tested and changed separately.</td></tr>
+   <tr><td>Separation of concerns</td><td>Input, processing and output are kept apart. A calculation function returns a value; it doesn't ask for input or print.</td></tr>
+   <tr><td>Minimal side effects</td><td>A subprogram changes nothing outside itself except through what it returns.</td></tr>
+   <tr><td>Scope isolation</td><td>Variables are local wherever possible, so one part of the program can't accidentally change another's data.</td></tr>
+   <tr><td>Fit-for-purpose input and output</td><td>Ask for exactly what's needed with clear prompts; display results clearly in the format required.</td></tr>
+   <tr><td>Efficiency</td><td>No unnecessary work, e.g. not recalculating a value inside a loop, using a set for frequent membership tests.</td></tr></table></div>
+  <div class="alw" data-w="refactor" data-ex="modular"></div>
+ </section>
+ <section>
+  <h2>Side effects</h2>
+  <p>A list passed to a function is the <b>same</b> list, not a copy, so changing it inside the function changes it for the caller too. Sometimes that's what you want, but often it's a surprise. Returning a new list avoids it.</p>
+  <pre class="pc py" data-run data-t="Try it: a side effect">def add_vat(prices):
+    for i in range(len(prices)):
+        prices[i] = round(prices[i] * 1.2, 2)
+    return prices
+
+def add_vat_safe(prices):
+    return [round(p * 1.2, 2) for p in prices]
+
+net = [10.0, 2.5]
+gross = add_vat(net)
+print("With a side effect:", net, gross)     # net has changed too!
+
+net = [10.0, 2.5]
+gross = add_vat_safe(net)
+print("Without:           ", net, gross)</pre>
+  <pre class="pc py" data-run data-t="Try it: global versus local">count = 0
+def count_long_global(words):
+    global count                      # changes a variable outside
+    for w in words:
+        if len(w) &gt;= 5:
+            count = count + 1
+
+def count_long(words, min_len):
+    total = 0                         # local: nobody else can touch it
+    for w in words:
+        if len(w) &gt;= min_len:
+            total = total + 1
+    return total
+
+words = ["to", "python", "loop", "variable"]
+count_long_global(words)
+count_long_global(words)
+print("Global version after two calls:", count)   # 4, not 2
+print("Local version:", count_long(words, 5), count_long(words, 5))</pre>
+ </section>
+ <section>
+  <h2>Building blocks of modular code</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Block</th><th>Example</th></tr>
+   <tr><td>User-defined function</td><td class="mono">def area(w, h): return w * h</td></tr>
+   <tr><td>User-defined procedure</td><td class="mono">def show_menu(): print("1. Play")</td></tr>
+   <tr><td>Built-in subprogram</td><td class="mono">len(), sum(), max(), sorted(), round()</td></tr>
+   <tr><td>Library</td><td class="mono">import math, random, statistics, sqlite3</td></tr>
+   <tr><td>File</td><td>Data kept separately from code, e.g. a CSV file of questions read by a quiz</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: using a library instead of writing it yourself">import statistics
+from math import sqrt
+
+data = [4, 8, 6, 5, 3, 7]
+print("Mean:", statistics.mean(data))
+print("Median:", statistics.median(data))
+print("Standard deviation:", round(statistics.stdev(data), 2))
+print("Square root of 50:", round(sqrt(50), 3))</pre>
+  <div class="callout tip"><span class="k">Why libraries?</span><p>Library code has already been written, tested and optimised by other people. Reusing it is quicker and less error-prone than writing your own, as long as you check it does exactly what the task asks.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-2-style">
+<div class="theory airy">
+ <section>
+  <h2>Why readability matters</h2>
+  <p>Code is read far more often than it's written: by you next week, by teammates, and by examiners. Python's style guide, <b>PEP 8</b>, sets out conventions so that all Python code looks familiar. Step through the example to see messy code tidied up without changing what it does.</p>
+  <div class="alw" data-w="refactor" data-ex="clean"></div>
+ </section>
+ <section>
+  <h2>Consistency</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Aspect</th><th>Convention</th><th>Example</th></tr>
+   <tr><td>Indentation</td><td>4 spaces per level</td><td class="mono">····total = 0</td></tr>
+   <tr><td>White space</td><td>Spaces around operators and after commas; blank lines between subprograms</td><td class="mono">total = price * qty</td></tr>
+   <tr><td>Variables and functions</td><td>snake_case</td><td class="mono">high_score, get_marks()</td></tr>
+   <tr><td>Constants</td><td>CAPITALS</td><td class="mono">MAX_LIVES = 3</td></tr>
+   <tr><td>Line length</td><td>No more than about 79 characters</td><td>Split long expressions inside brackets</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Readability</h2>
+  <p><b>Meaningful identifiers</b> make code explain itself. <b>Named constants</b> replace "magic numbers", so the meaning is clear and a change needs making in only one place. <b>Subprograms</b> give a name to a block of code and remove repetition. <b>Comments</b> explain <i>why</i>, where the reason isn't obvious from the code.</p>
+  <pre class="pc py" data-run data-t="Try it: same program, two styles">def c(a,b):
+  if a>b*0.2:return a-b*0.2
+  return 0
+print(c(30,100))
+
+DEPOSIT_RATE = 0.2   # deposits are 20% of the full price
+
+def amount_owed(paid, full_price):
+    """Return what's still owed after the deposit, or 0 if paid in full."""
+    deposit = full_price * DEPOSIT_RATE
+    if paid &gt; deposit:
+        return paid - deposit
+    return 0
+
+print(amount_owed(30, 100))</pre>
+  <div class="callout warnbox"><span class="k">Comments that don't help</span><p><span class="mono">x = x + 1  # add 1 to x</span> just repeats the code. A good comment says something the code can't, such as <span class="mono"># skip the header row</span>. If you need a comment to explain what a variable is, rename the variable instead.</p></div>
+  <pre class="pc py" data-run data-t="Try it: long lines split inside brackets">items = [("Pen", 1.5, 3), ("Pad", 2.25, 2)]
+total = sum(price * qty
+            for name, price, qty in items)
+message = (f"You bought {len(items)} kinds of item "
+           f"for a total of £{total:.2f}.")
+print(message)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-2-robust">
+<div class="theory airy">
+ <section>
+  <h2>Boundary value analysis</h2>
+  <p>Errors cluster at the edges of ranges, because it's easy to write <span class="mono">&lt;</span> where <span class="mono">&lt;=</span> was needed. <b>Boundary value analysis</b> chooses test data at each edge of the valid range <b>and just outside it</b>, alongside normal and erroneous data.</p>
+  <div class="alw" data-w="bva"></div>
+  <pre class="pc py" data-run data-t="Try it: a boundary bug">def valid_age(age):
+    return age &gt; 11 and age &lt; 18     # meant 11 to 18 inclusive
+
+for test in [10, 11, 14, 18, 19]:
+    print(test, valid_age(test))</pre>
+  <p>Normal data (14) passes, so without boundary tests this bug would go unnoticed. The fix is <span class="mono">11 &lt;= age &lt;= 18</span>.</p>
+ </section>
+ <section>
+  <h2>Exception handling and type conversion</h2>
+  <p>Converting user input is the most common source of crashes. Either check it first (<span class="mono">text.isdigit()</span>) or try the conversion and catch the <span class="mono">ValueError</span>. A validation loop keeps asking until the data is acceptable.</p>
+  <pre class="pc py" data-run data-t="Try it: a robust input loop" data-stdin="ten|0|13|5">while True:
+    text = input("Quantity (1-12): ")
+    try:
+        qty = int(text)
+    except ValueError:
+        print(repr(text), "isn't a whole number")
+        continue
+    if 1 &lt;= qty &lt;= 12:
+        break
+    print(qty, "is out of range")
+print("Ordered", qty)</pre>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Exception</th><th>Typical cause</th></tr>
+   <tr><td class="mono">ValueError</td><td><span class="mono">int("abc")</span>, <span class="mono">int("4.5")</span></td></tr>
+   <tr><td class="mono">ZeroDivisionError</td><td>Dividing by zero, e.g. the average of an empty list</td></tr>
+   <tr><td class="mono">IndexError</td><td>An index past the end of a list</td></tr>
+   <tr><td class="mono">KeyError</td><td>A dictionary key that doesn't exist</td></tr>
+   <tr><td class="mono">FileNotFoundError</td><td>Opening a missing file to read</td></tr>
+   <tr><td class="mono">TypeError</td><td><span class="mono">"Age " + 16</span></td></tr></table></div>
+  <div class="callout warnbox"><span class="k">Catch specific exceptions</span><p>A bare <span class="mono">except:</span> catches everything, including your own bugs, so problems are silently hidden. Name the exception you expect: <span class="mono">except ValueError:</span>.</p></div>
+ </section>
+ <section>
+  <h2>Guard clauses and less nesting</h2>
+  <p>Deeply nested ifs and loops are hard to follow. A <b>guard clause</b> deals with an invalid or special case at the top of a subprogram and returns immediately, so the main logic isn't buried.</p>
+  <div class="alw" data-w="refactor" data-ex="guard"></div>
+  <pre class="pc py" data-run data-t="Try it: guard clauses keep code flat">def mean(values):
+    if not values:              # guard: nothing to average
+        return None
+    return sum(values) / len(values)
+
+def first_word(text):
+    if not isinstance(text, str):
+        return ""
+    words = text.split()
+    if not words:
+        return ""
+    return words[0]
+
+print(mean([]), mean([2, 4]))
+print(repr(first_word("   ")), first_word("hello world"))</pre>
+  <div class="callout tip"><span class="k">Fewer nested loops too</span><p>A nested loop that searches a list inside another list can often be replaced by a set or dictionary lookup, which is flatter and faster: <span class="mono">if name in registered:</span>.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a9-3-testing">
+<div class="theory airy">
+ <section>
+  <h2>Types of error</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Type</th><th>What happens</th><th>Example</th></tr>
+   <tr><td>Syntax error</td><td>The program won't run at all; Python reports the line</td><td class="mono">if x &gt; 3</td></tr>
+   <tr><td>Runtime error</td><td>It runs, then crashes when it reaches the problem</td><td class="mono">nums[10]</td></tr>
+   <tr><td>Logic error</td><td>It runs to the end but gives the wrong result</td><td class="mono">(a + b / 2)</td></tr></table></div>
+  <pre class="pc py" data-run data-err data-t="Try it: read the error message">marks = [55, 72, 61]
+total = 0
+for i in range(len(marks) + 1):
+    total = total + marks[i]
+print(total / len(marks))</pre>
+  <p>The last line of the error message names the exception (<span class="mono">IndexError</span>) and the line above shows where. Logic errors give no message at all, which is why testing matters.</p>
+ </section>
+ <section>
+  <h2>Testing</h2>
+  <p>A <b>test plan</b> lists each test with its data, type and expected result, worked out <b>before</b> running. After running, the actual result is recorded. Any mismatch is a bug to fix, and every fix needs retesting.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Test</th><th>Data</th><th>Type</th><th>Expected</th><th>Actual</th></tr>
+   <tr><td>1</td><td>[39, 40, 41]</td><td>Boundary</td><td>2</td><td>1 ✗</td></tr>
+   <tr><td>2</td><td>[10, 20]</td><td>Normal</td><td>0</td><td>0 ✓</td></tr>
+   <tr><td>3</td><td>[]</td><td>Erroneous / extreme</td><td>0</td><td>0 ✓</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: automated tests with assert">def count_passes(marks):
+    count = 0
+    for m in marks:
+        if m &gt; 40:                    # the bug
+            count = count + 1
+    return count
+
+tests = [([10, 20], 0), ([], 0), ([39, 40, 41], 2)]
+for data, expected in tests:
+    actual = count_passes(data)
+    print(data, "expected", expected, "actual", actual, "✓" if actual == expected else "✗")</pre>
+  <p>Writing the tests as code means they can be rerun after every change in a second.</p>
+ </section>
+ <section>
+  <h2>Debugging</h2>
+  <p>To find a logic error, look at what the variables actually hold as the program runs: with <b>print statements</b>, a <b>trace table</b>, or a <b>debugger</b>. A debugger pauses at a <b>breakpoint</b> and shows every variable. Try it below: the loop should add up the numbers 1 to 5, but gives the wrong answer.</p>
+  <div class="alw" data-w="trace" data-bp data-bpl="4" data-vars="i,total" data-title="Try it: find the bug with a breakpoint" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"total":"0"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"total":"0","i":"1"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"total":"0","i":"1","square":"1"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"total":"1","i":"1","square":"1"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"total":"1","i":"2","square":"1"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"total":"1","i":"2","square":"4"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"total":"3","i":"2","square":"4"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"total":"3","i":"3","square":"4"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"total":"3","i":"3","square":"9"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"total":"6","i":"3","square":"9"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"total":"6","i":"4","square":"9"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"total":"6","i":"4","square":"16"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"total":"10","i":"4","square":"16"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"total":"10","i":"4","square":"16"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"Total: 10\n","ret":null}]'><pre>total = 0
+for i in range(1, 5):
+    square = i * i
+    total = total + i
+print("Total:", total)</pre></div>
+  <p>Watching <span class="mono">i</span> shows it stops at 4: <span class="mono">range(1, 5)</span> excludes 5. The fix is <span class="mono">range(1, 6)</span>.</p>
+  <div class="callout tip"><span class="k">A debugging routine</span><p>1. Reproduce the bug with a specific input. 2. Work out what the variables <i>should</i> be. 3. Step through and find the first point where they differ. 4. Fix that one thing. 5. Rerun every test.</p></div>
+ </section>
+ <section>
+  <h2>Reviewing and refining</h2>
+  <p>Once the program works, review it against the requirements: does it do everything asked, in the format asked? Then <b>refine</b> it: clearer names, constants for magic numbers, guard clauses instead of nesting, a library function instead of hand-written code. Rerun the tests after each change to be sure nothing broke.</p>
+ </section>
+</div>
+</template>
