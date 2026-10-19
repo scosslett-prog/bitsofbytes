@@ -713,12 +713,13 @@ ALW.queue=function(el){const N=6;let Q,front,rear,count,circ=el.dataset.mode==="
 /* flowchart: add up numbers until 0 */
 ALW.flow=function(el){const M=alId("fl");let IN=[5,3,8,0],W=600;
   const N={s:[150,22,"term","Start"],z:[150,78,"proc","total ← 0"],i:[150,134,"io","INPUT x"],d:[150,196,"dec","x = 0?"],p:[150,262,"proc","total ← total + x"],o:[150,330,"io","OUTPUT total"],e:[150,390,"term","Stop"]};
-  const build=()=>{const S=[];let total=null,x=null,q=IN.slice(),out="";const p=(n,t)=>S.push({n,total,x,q:q.slice(),out,t});
+  const PY=["total = 0","x = int(input(\"Number: \"))","while x != 0:","    total = total + x","    x = int(input(\"Number: \"))","print(total)"],py="py" in el.dataset;
+  const build=()=>{const S=[];let total=null,x=null,q=IN.slice(),out="",ins=0;const LN={z:1,d:3,p:4,o:6};const p=(n,t)=>S.push({n,total,x,q:q.slice(),out,t,ln:n==="i"?(ins++?5:2):LN[n]||0});
     p("s","The algorithm starts.");total=0;p("z","total is set to 0.");
     for(let g=0;g<20;g++){x=q.length?q.shift():0;p("i",`The next input, ${x}, is stored in x.`);const z=x===0;p("d",`Is x = 0? ${z?"<b>Yes</b>, so leave the loop.":"<b>No</b>, so carry on."}`);if(z)break;total+=x;p("p",`total = ${total-x} + ${x} = ${total}. Then back to the input.`)}
     out=String(total);p("o",`The total, ${total}, is output.`);p("e","The algorithm stops.");return S};
   let S=build(),K=0,ctl;
-  el.innerHTML=alH("Try it: follow the flowchart","step by step")+`<div class="alctl"><label>Inputs <input type="text" value="${IN.join(", ")}" data-in style="width:10em"></label><span class="alnote">the last one should be 0</span></div><div class="alg2"><div data-svg></div><div style="display:flex;flex-direction:column;gap:8px"><div class="alpanel"><span class="eyebrow">Variables</span><table class="altab" data-v></table></div><div class="alpanel"><span class="eyebrow">Input still to come</span><div class="alcells" data-q></div></div><div class="alpanel"><span class="eyebrow">Output</span><pre class="alout" data-o></pre></div></div></div><p class="almsg" data-m></p><div class="alctl" data-ctl></div>`;
+  el.innerHTML=alH("Try it: follow the flowchart","step by step")+`<div class="alctl"><label>Inputs <input type="text" value="${IN.join(", ")}" data-in style="width:10em"></label><span class="alnote">the last one should be 0</span></div><div class="alg2"><div data-svg></div><div style="display:flex;flex-direction:column;gap:8px">${py?`<div class="alpanel"><span class="eyebrow">The same algorithm in Python</span><div class="alcode" data-py></div></div>`:""}<div class="alpanel"><span class="eyebrow">Variables</span><table class="altab" data-v></table></div><div class="alpanel"><span class="eyebrow">Input still to come</span><div class="alcells" data-q></div></div><div class="alpanel"><span class="eyebrow">Output</span><pre class="alout" data-o></pre></div></div></div><p class="almsg" data-m></p><div class="alctl" data-ctl></div>`;
   const shape=([x,y,t,txt],on)=>{const c=on?"on":t==="dec"?"bi":t==="io"?"bw":t==="term"?"b3":"b";
     if(t==="term")return `<rect x="${x-55}" y="${y-17}" width="110" height="34" rx="17" class="${c}"/><text x="${x}" y="${y+5}" class="s c" style="fill:var(--ink)">${txt}</text>`;
     if(t==="io")return `<path d="M${x-62} ${y-17} L${x+74} ${y-17} L${x+62} ${y+17} L${x-74} ${y+17} Z" class="${c}"/><text x="${x}" y="${y+5}" class="s c" style="fill:var(--ink)">${txt}</text>`;
@@ -732,7 +733,8 @@ ALW.flow=function(el){const M=alId("fl");let IN=[5,3,8,0],W=600;
      <path d="M214 196 H262 V330 H226" class="l" marker-end="url(#${M})"/><text x="222" y="188" class="s">Yes</text>
      ${Object.entries(N).map(([k2,n])=>shape(n,k2===s.n)).join("")}</svg>`;
     el.querySelector("[data-v]").innerHTML=`<tr><th>total</th><th>x</th></tr><tr><td>${s.total===null?"–":s.total}</td><td>${s.x===null?"–":s.x}</td></tr>`;
-    el.querySelector("[data-q]").innerHTML=s.q.length?s.q.map(v=>`<div class="alcell">${v}</div>`).join(""):`<span class="alnote">none</span>`;el.querySelector("[data-o]").textContent=s.out||"";el.querySelector("[data-m]").innerHTML=s.t};
+    el.querySelector("[data-q]").innerHTML=s.q.length?s.q.map(v=>`<div class="alcell">${v}</div>`).join(""):`<span class="alnote">none</span>`;el.querySelector("[data-o]").textContent=s.out||"";el.querySelector("[data-m]").innerHTML=s.t;
+    if(py)el.querySelector("[data-py]").innerHTML=PY.map((l,i)=>`<div class="${s.ln===i+1?"cur":""}"><i>${i+1}</i>${l.replace(/</g,"&lt;")}</div>`).join("")};
   ctl=alStepper(el.querySelector("[data-ctl]"),()=>S.length,go,{ms:1300});
   el.querySelector("[data-in]").addEventListener("change",e=>{const v=e.target.value.split(/[,\s]+/).map(Number).filter(x=>Number.isFinite(x)).slice(0,8);IN=v.length?v:[0];S=build();ctl.set(0)})};
 

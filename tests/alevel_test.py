@@ -57,7 +57,9 @@ with sync_playwright() as p:
     bad=A.evaluate('''ALL_LESSONS.flatMap(l=>(l.acts||[]).filter(a=>a.type!=="py").map(a=>{try{const g=GEN[a.gen];const q=g.call(a);return (q&&(q.length||q.prompt||q.q))?null:l.id+" "+a.id}catch(e){return l.id+" "+a.id+": "+e.message}})).filter(Boolean)''')
     ok('all A-Level activities generate', not bad, bad)
     A.evaluate('location.hash="l-a1-1-components"'); A.wait_for_timeout(300); A.screenshot(path=SHOT+'al-components.png', full_page=True)
-    ok('all Unit 1 lessons loaded', A.evaluate('ALL_LESSONS.length')>=43, A.evaluate('ALL_LESSONS.length'))
+    ok('all Unit 1 lessons loaded', A.evaluate('ALL_LESSONS.filter(l=>/^a[1-6]-/.test(l.id)).length')>=43, A.evaluate('ALL_LESSONS.length'))
+    ok('all Unit 2 lessons loaded', A.evaluate('ALL_LESSONS.filter(l=>/^a([7-9]|10)-/.test(l.id)).length')>=29, A.evaluate('ALL_LESSONS.length'))
+    ok('every lesson has at least 3 activities', A.evaluate('ALL_LESSONS.every(l=>(l.acts||[]).length>=3)'), A.evaluate('ALL_LESSONS.filter(l=>(l.acts||[]).length<3).map(l=>l.id)'))
     # every lesson page renders with its theory, diagrams and runnable examples
     bad=[]
     for lid in A.evaluate('ALL_LESSONS.map(l=>l.id)'):

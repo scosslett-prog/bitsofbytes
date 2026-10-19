@@ -1,0 +1,480 @@
+<template id="th-a10-1-abstraction">
+<div class="theory airy">
+ <section>
+  <h2>Abstraction: hiding the detail</h2>
+  <p><b>Abstraction</b> means ignoring detail that doesn't matter right now. In programming, the main tool for it is the <b>subprogram</b>: once <span class="mono">is_leap(year)</span> exists, the rest of the program only needs to know what goes in and what comes out (its <b>interface</b>), not how it works (its <b>implementation</b>).</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Interface (what callers see)</th><th>Implementation (hidden)</th></tr>
+   <tr><td class="mono">len(s)</td><td>Takes a sequence, returns a whole number</td><td>How Python counts the items</td></tr>
+   <tr><td class="mono">random.randint(1, 6)</td><td>Takes two limits, returns a whole number between them</td><td>The pseudo-random number generator</td></tr>
+   <tr><td class="mono">is_leap(year)</td><td>Takes a year, returns True or False</td><td>The rules about 4, 100 and 400</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: building on an abstraction">def is_leap(year):
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+def days_in_month(month, year):
+    if month == 2 and is_leap(year):     # no need to know the leap year rules here
+        return 29
+    return DAYS[month - 1]
+
+for y in [2023, 2024, 1900, 2000]:
+    print(y, "February has", days_in_month(2, y), "days")</pre>
+  <div class="callout tip"><span class="k">Change the inside, not the outside</span><p>Because callers depend only on the interface, you can rewrite a subprogram's implementation, to fix a bug or make it faster, without changing any code that calls it.</p></div>
+ </section>
+ <section>
+  <h2>Decomposition and comment-first coding</h2>
+  <p><b>Decomposition</b> breaks a problem into parts. Inside a single subprogram you can decompose the algorithm by writing its steps as <b>comments first</b>, checking the steps make sense, and then writing the code under each one. The comments stay as documentation.</p>
+  <pre class="pc py" data-run data-t="Try it: comments first, then code">def is_leap(year):
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+def days_in_month(month, year):
+    if month == 2 and is_leap(year):
+        return 29
+    return DAYS[month - 1]
+
+def day_of_year(day, month, year):
+    # start a running total at 0
+    total = 0
+    # for each month before this one, add its number of days
+    for m in range(1, month):
+        total = total + days_in_month(m, year)
+    # add the day of this month
+    total = total + day
+    # return the total
+    return total
+
+print(day_of_year(1, 3, 2024), day_of_year(25, 12, 2026))</pre>
+  <div class="alw" data-w="trace" data-stack data-vars="m,total" data-title="Try it: abstractions calling abstractions"><pre>def is_leap(year):
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+
+def days_in_month(month, year):
+    if month == 2 and is_leap(year):
+        return 29
+    return [31, 28, 31][month - 1]
+
+def day_of_year(day, month, year):
+    total = 0
+    for m in range(1, month):
+        total = total + days_in_month(m, year)
+    return total + day
+
+print(day_of_year(5, 3, 2024))</pre></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-1-patterns">
+<div class="theory airy">
+ <section>
+  <h2>Pattern recognition</h2>
+  <p>Most programs are built from a small number of standard patterns. Once you recognise that 'cheapest flight' is the same problem as 'highest score' with the comparison flipped, you can reuse a solution you already trust.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Pattern</th><th>Shape of the code</th><th>Problems it solves</th></tr>
+   <tr><td>Running total</td><td class="mono">total = 0 … total = total + x</td><td>Bills, sums, averages</td></tr>
+   <tr><td>Counting</td><td class="mono">count = 0 … if test: count = count + 1</td><td>How many passed, how many are empty</td></tr>
+   <tr><td>Maximum / minimum</td><td class="mono">best = first … if x &gt; best: best = x</td><td>Highest score, cheapest flight</td></tr>
+   <tr><td>Linear search</td><td class="mono">for … if match: return i</td><td>Is this username taken? Where is Ben?</td></tr>
+   <tr><td>Frequency table</td><td class="mono">counts[key] = counts.get(key, 0) + 1</td><td>Word counts, votes, survey answers</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: same pattern, different problems">temps = [12.5, 9.0, 14.2, 7.8]
+flights = {"Paris": 89, "Rome": 64, "Oslo": 120}
+
+coldest = temps[0]
+for t in temps:
+    if t &lt; coldest:
+        coldest = t
+print("Coldest:", coldest)
+
+cheapest = None
+for city, price in flights.items():
+    if cheapest is None or price &lt; flights[cheapest]:
+        cheapest = city
+print("Cheapest flight:", cheapest)</pre>
+ </section>
+ <section>
+  <h2>Generalisation</h2>
+  <p><b>Generalisation</b> turns a solution to one problem into a solution for a whole family. The usual way is to replace fixed values with <b>parameters</b>. A <b>default parameter</b> keeps the common case simple.</p>
+  <pre class="pc py" data-run data-t="Try it: from specific to general">def count_teenagers(ages):            # specific: 13 and 19 are fixed
+    n = 0
+    for a in ages:
+        if 13 &lt;= a &lt;= 19:
+            n = n + 1
+    return n
+
+def count_between(values, low, high):  # general: the limits are parameters
+    n = 0
+    for v in values:
+        if low &lt;= v &lt;= high:
+            n = n + 1
+    return n
+
+ages = [12, 13, 17, 19, 20, 15]
+marks = [39, 40, 100, 72, 101]
+print(count_teenagers(ages), count_between(ages, 13, 19))
+print("Valid passes:", count_between(marks, 40, 100))</pre>
+  <pre class="pc py" data-run data-t="Try it: default parameters">def box(width, height, ch="#"):
+    line = ch * width
+    return "\n".join([line] * height)
+
+print(box(5, 2))          # uses the default "#"
+print(box(3, 3, "*"))     # overrides it</pre>
+  <div class="callout tip"><span class="k">One function, one set of tests</span><p>Three near-identical functions mean three places for bugs and three places to update. One general function is tested once and fixed once.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-2-flowcode">
+<div class="theory airy">
+ <section>
+  <h2>Reading an algorithm</h2>
+  <p>In the exam, algorithms may be given in words, as structured English, as pseudocode or as a flowchart. Your job is to turn them into working Python. Each part maps to a Python construct.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Flowchart / algorithm</th><th>Python</th></tr>
+   <tr><td>Start / Stop (rounded)</td><td>The beginning and end of the program or function</td></tr>
+   <tr><td>INPUT x (parallelogram)</td><td class="mono">x = int(input("x: "))</td></tr>
+   <tr><td>OUTPUT total (parallelogram)</td><td class="mono">print(total)</td></tr>
+   <tr><td>total ← total + x (rectangle)</td><td class="mono">total = total + x</td></tr>
+   <tr><td>Decision with paths that rejoin</td><td class="mono">if … else</td></tr>
+   <tr><td>Decision with an arrow back up</td><td class="mono">while</td> loop</tr>
+   <tr><td>"Repeat 10 times"</td><td class="mono">for i in range(10):</td></tr>
+   <tr><td>= and ≠ in a test</td><td class="mono">==</td> and <span class="mono">!=</span></td></tr></table></div>
+ </section>
+ <section>
+  <h2>A flowchart and its code</h2>
+  <p>Step through the flowchart and watch the matching line of Python. Notice that the input appears <b>twice</b> in the code: once before the loop and once at the end of the loop body, because the flowchart's arrow goes back to the input before the decision is checked again.</p>
+  <div class="alw" data-w="flow" data-py></div>
+  <pre class="pc py" data-run data-t="Try it: the flowchart as Python" data-stdin="5|3|8|0">total = 0
+x = int(input("Number: "))
+while x != 0:
+    total = total + x
+    x = int(input("Number: "))
+print(total)</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Forgetting the second input inside the loop means x never changes, so the loop never ends. When a decision loops back to an input, the input must be repeated at the end of the loop body.</p></div>
+ </section>
+ <section>
+  <h2>From structured English</h2>
+  <p>Structured English is a numbered list of precise steps. Translate one step at a time, keeping the comments.</p>
+  <pre class="pc py" data-run data-t="Try it: step by step" data-stdin="12|30|7|-1"># 1. Set highest to -1 and count to 0
+highest = -1
+count = 0
+# 2. Input a score
+score = int(input("Score: "))
+# 3. While the score isn't -1: update highest, add 1 to count, input the next score
+while score != -1:
+    if score &gt; highest:
+        highest = score
+    count = count + 1
+    score = int(input("Score: "))
+# 4. Output the results
+if count == 0:
+    print("No scores")
+else:
+    print("Highest:", highest)
+    print("Count:", count)</pre>
+  <div class="callout tip"><span class="k">Trace before you type</span><p>Run the algorithm by hand with a couple of inputs first and write down the expected output. Then you know exactly what your program must print, and can tell at once if it's wrong.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-3-linear">
+<div class="theory airy">
+ <section>
+  <h2>Linear search</h2>
+  <p>A <b>linear search</b> checks each item in turn from the start. It works on <b>any</b> list, sorted or not. It should <b>exit early</b>: as soon as the target is found, there's no point checking the rest.</p>
+  <pre class="pc py" data-run data-t="Try it: linear search">def linear_search(items, target):
+    for i in range(len(items)):
+        if items[i] == target:
+            return i          # early exit: found
+    return -1                 # checked everything: not found
+
+names = ["Eve", "Ben", "Ana", "Cai"]
+print(linear_search(names, "Ana"))
+print(linear_search(names, "Zed"))</pre>
+  <div class="alw" data-w="trace" data-vars="i,target" data-title="Try it: watch it exit early"><pre>def linear_search(items, target):
+    for i in range(len(items)):
+        if items[i] == target:
+            return i
+    return -1
+
+print(linear_search([7, 3, 9, 3, 5], 9))</pre></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Putting <span class="mono">return -1</span> in an <span class="mono">else</span> inside the loop returns after checking only the first item. "Not found" can only be decided <b>after</b> the loop has checked everything.</p></div>
+ </section>
+ <section>
+  <h2>Early exit on a sorted list</h2>
+  <p>If the list is sorted, the search can also give up as soon as it reaches an item <b>bigger</b> than the target, because everything after it is bigger too.</p>
+  <pre class="pc py" data-run data-t="Try it: two kinds of early exit">def sorted_search(items, target):
+    checks = 0
+    for i in range(len(items)):
+        checks = checks + 1
+        if items[i] == target:
+            return i, checks
+        if items[i] &gt; target:
+            return -1, checks      # it can't be further on
+    return -1, checks
+
+data = [3, 8, 12, 20, 31, 40, 55, 60]
+print("Find 20:", sorted_search(data, 20))
+print("Find 10:", sorted_search(data, 10))
+print("Find 99:", sorted_search(data, 99))</pre>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Case</th><th>Comparisons for n items</th></tr>
+   <tr><td>Best case: target first</td><td>1</td></tr>
+   <tr><td>Worst case: target last or missing (unsorted)</td><td>n</td></tr>
+   <tr><td>Average when found</td><td>about n / 2</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Variations</h2>
+  <pre class="pc py" data-run data-t="Try it: searching records, counting, a while loop">pupils = [["Ana", "10B"], ["Ben", "11A"], ["Cai", "10C"]]
+
+def find_form(pupils, name):
+    for record in pupils:
+        if record[0].lower() == name.lower():   # compare one field
+            return record[1]
+    return "Not found"
+
+def count_matches(items, target):               # no early exit: must see them all
+    count = 0
+    for x in items:
+        if x == target:
+            count = count + 1
+    return count
+
+items = [4, 9, 2, 9]
+i, found = 0, False
+while i &lt; len(items) and not found:             # while loop with a flag
+    if items[i] == 2:
+        found = True
+    else:
+        i = i + 1
+
+print(find_form(pupils, "ben"), count_matches(items, 9), i, found)</pre>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-3-binary">
+<div class="theory airy">
+ <section>
+  <h2>Binary search</h2>
+  <p>On a <b>sorted</b> list, <b>binary search</b> checks the middle item. If it's not the target, half the list can be thrown away: the target must be in the half on the correct side. This repeats until the target is found or nothing is left.</p>
+  <div class="alw" data-w="search"></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Items</th><th>Linear search (worst)</th><th>Binary search (worst)</th></tr>
+   <tr><td>15</td><td>15</td><td>4</td></tr>
+   <tr><td>1,000</td><td>1,000</td><td>10</td></tr>
+   <tr><td>1,000,000</td><td>1,000,000</td><td>20</td></tr></table></div>
+ </section>
+ <section>
+  <h2>Iterative binary search</h2>
+  <pre class="pc py" data-run data-t="Try it: iterative binary search">def binary_search(items, target):
+    low = 0
+    high = len(items) - 1
+    while low &lt;= high:
+        mid = (low + high) // 2
+        if items[mid] == target:
+            return mid
+        elif items[mid] &lt; target:
+            low = mid + 1         # discard the lower half
+        else:
+            high = mid - 1        # discard the upper half
+    return -1                     # low has passed high: not there
+
+data = [3, 8, 12, 15, 21, 27, 34, 42, 49, 57]
+print(binary_search(data, 42), binary_search(data, 3), binary_search(data, 40))</pre>
+  <div class="alw" data-w="trace" data-vars="low,high,mid" data-title="Try it: trace the pointers"><pre>items = [3, 8, 12, 15, 21, 27, 34, 42, 49, 57]
+target = 15
+low = 0
+high = len(items) - 1
+while low &lt;= high:
+    mid = (low + high) // 2
+    if items[mid] == target:
+        print("Found at", mid)
+        break
+    elif items[mid] &lt; target:
+        low = mid + 1
+    else:
+        high = mid - 1</pre></div>
+  <div class="callout warnbox"><span class="k">Off-by-one traps</span><p>The condition must be <span class="mono">low &lt;= high</span>, not <span class="mono">&lt;</span>, or a range of one item is never checked. And the pointers must move <b>past</b> mid (<span class="mono">mid + 1</span>, <span class="mono">mid - 1</span>); setting <span class="mono">high = mid</span> can loop forever.</p></div>
+ </section>
+ <section>
+  <h2>Recursive binary search</h2>
+  <p>The same algorithm can be written <b>recursively</b>: search the middle, then call the function again on the half that's left. There are two base cases: found, or <span class="mono">low &gt; high</span> (not there).</p>
+  <div class="alw" data-w="trace" data-stack data-vars="low,high,mid" data-title="Try it: recursive binary search"><pre>def bsearch(items, target, low, high):
+    if low &gt; high:
+        return -1
+    mid = (low + high) // 2
+    if items[mid] == target:
+        return mid
+    if items[mid] &lt; target:
+        return bsearch(items, target, mid + 1, high)
+    return bsearch(items, target, low, mid - 1)
+
+data = [3, 8, 12, 15, 21, 27, 34]
+print(bsearch(data, 27, 0, len(data) - 1))</pre></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-3-bubble">
+<div class="theory airy">
+ <section>
+  <h2>Bubble sort</h2>
+  <p><b>Bubble sort</b> passes through the list comparing each pair of neighbours and swapping them if they're in the wrong order. After the first pass the largest item has "bubbled" to the end. Two improvements are required by the specification:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Improvement</th><th>How</th><th>Why</th></tr>
+   <tr><td>Shrinking upper bound</td><td>After each pass, <span class="mono">n = n - 1</span>, and compare only up to index <span class="mono">n - 2</span></td><td>The end of the list is already in its final place</td></tr>
+   <tr><td>Early exit</td><td>A <span class="mono">swapped</span> flag; stop after a pass with no swaps</td><td>No swaps means the list is sorted</td></tr></table></div>
+  <div class="alw" data-w="sort" data-kind="bubble"></div>
+ </section>
+ <section>
+  <h2>In Python</h2>
+  <pre class="pc py" data-run data-t="Try it: bubble sort with both improvements">def bubble_sort(items):
+    n = len(items)
+    swapped = True
+    passes = 0
+    while swapped:
+        swapped = False
+        passes = passes + 1
+        for j in range(n - 1):
+            if items[j] &gt; items[j + 1]:
+                items[j], items[j + 1] = items[j + 1], items[j]
+                swapped = True
+        n = n - 1                  # the last item is now in place
+    return passes
+
+for data in [[31, 12, 47, 8, 25, 19], [1, 2, 3, 5, 4], [1, 2, 3, 4]]:
+    p = bubble_sort(data)
+    print(data, "in", p, "passes")</pre>
+  <div class="alw" data-w="trace" data-vars="n,j,swapped,items" data-ms="700" data-title="Try it: trace a bubble sort"><pre>items = [5, 1, 4, 2]
+n = len(items)
+swapped = True
+while swapped:
+    swapped = False
+    for j in range(n - 1):
+        if items[j] &gt; items[j + 1]:
+            items[j], items[j + 1] = items[j + 1], items[j]
+            swapped = True
+    n = n - 1
+print(items)</pre></div>
+  <div class="callout tip"><span class="k">Python's swap</span><p><span class="mono">a, b = b, a</span> swaps in one line. Two separate assignments (<span class="mono">a = b</span> then <span class="mono">b = a</span>) don't work: the first overwrites a value before it's copied. In other languages you'd use a temporary variable.</p></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p><span class="mono">for j in range(len(items))</span> goes one too far: when j is the last index, <span class="mono">items[j + 1]</span> raises an IndexError. The last pair starts at index <span class="mono">n - 2</span>, so use <span class="mono">range(n - 1)</span>.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-3-insertion">
+<div class="theory airy">
+ <section>
+  <h2>Insertion sort</h2>
+  <p><b>Insertion sort</b> builds a sorted part at the start of the list. Each pass takes the next item, saves it as <span class="mono">current</span>, shifts every bigger item in the sorted part one place right, and drops <span class="mono">current</span> into the gap. It works <b>in place</b>: no second list is needed.</p>
+  <div class="alw" data-w="sort" data-kind="insertion"></div>
+ </section>
+ <section>
+  <h2>In Python</h2>
+  <pre class="pc py" data-run data-t="Try it: in-place insertion sort">def insertion_sort(items):
+    for i in range(1, len(items)):        # items[0] alone is already sorted
+        current = items[i]                # save it before it's overwritten
+        j = i - 1
+        while j &gt;= 0 and items[j] &gt; current:
+            items[j + 1] = items[j]       # shift right
+            j = j - 1
+        items[j + 1] = current            # drop into the gap
+
+data = [31, 12, 47, 8, 25, 19]
+insertion_sort(data)
+print(data)
+words = ["pear", "apple", "fig", "kiwi"]
+insertion_sort(words)
+print(words)</pre>
+  <div class="alw" data-w="trace" data-vars="i,current,j,items" data-ms="700" data-title="Try it: trace an insertion sort"><pre>items = [5, 2, 4, 1]
+for i in range(1, len(items)):
+    current = items[i]
+    j = i - 1
+    while j &gt;= 0 and items[j] &gt; current:
+        items[j + 1] = items[j]
+        j = j - 1
+    items[j + 1] = current
+print(items)</pre></div>
+  <div class="callout tip"><span class="k">Why j + 1?</span><p>When the while loop stops, <span class="mono">j</span> points at the item that is <b>not</b> bigger than current (or −1 at the start of the list). The gap is one place to its right.</p></div>
+ </section>
+ <section>
+  <h2>Bubble sort or insertion sort?</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Bubble sort</th><th>Insertion sort</th></tr>
+   <tr><td>Each pass</td><td>Moves the largest unsorted item to the end</td><td>Inserts the next item into the sorted start</td></tr>
+   <tr><td>Already sorted list</td><td>1 pass with early exit</td><td>n − 1 comparisons, no shifts</td></tr>
+   <tr><td>Nearly sorted list</td><td>Few passes</td><td>Very few shifts: usually faster</td></tr>
+   <tr><td>Reversed list</td><td>Slow</td><td>Slow</td></tr></table></div>
+  <p>Changing the comparison changes the order: <span class="mono">items[j] &lt; current</span> sorts largest first, and comparing <span class="mono">len(items[j])</span> or <span class="mono">items[j][1]</span> sorts by length or by a record's field.</p>
+ </section>
+</div>
+</template>
+
+<template id="th-a10-4-recursion2">
+<div class="theory airy">
+ <section>
+  <h2>Recursion in Python</h2>
+  <p>A <b>recursive</b> function solves a problem by calling itself on a smaller version of it. Every recursive function needs:</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Part</th><th>Job</th><th>In <span class="mono">factorial</span></th></tr>
+   <tr><td>Base case</td><td>Returns an answer directly, with no further call</td><td class="mono">if n == 1: return 1</td></tr>
+   <tr><td>Recursive case</td><td>Calls itself with an argument closer to the base case</td><td class="mono">return n * factorial(n - 1)</td></tr></table></div>
+  <div class="alw" data-w="trace" data-stack data-title="Try it: the call stack grows, then unwinds"><pre>def factorial(n):
+    if n == 1:
+        return 1
+    return n * factorial(n - 1)
+
+print(factorial(4))</pre></div>
+  <p>Each call gets its own <b>stack frame</b> with its own <span class="mono">n</span>. The calls pile up until the base case returns, then each frame finishes its multiplication and returns to the one below: the stack <b>unwinds</b>.</p>
+ </section>
+ <section>
+  <h2>Writing recursive functions</h2>
+  <p>Ask two questions: what's the simplest case I can answer straight away? And how can I express the answer using the answer to a slightly smaller problem?</p>
+  <pre class="pc py" data-run data-t="Try it: recursive patterns">def sum_to(n):                    # 1 + 2 + ... + n
+    if n == 0:
+        return 0
+    return n + sum_to(n - 1)
+
+def power(base, exp):             # base ** exp
+    if exp == 0:
+        return 1
+    return base * power(base, exp - 1)
+
+def reverse(s):                   # a string backwards
+    if s == "":
+        return ""
+    return reverse(s[1:]) + s[0]
+
+def digit_sum(n):                 # 472 → 4 + 7 + 2
+    if n &lt; 10:
+        return n
+    return n % 10 + digit_sum(n // 10)
+
+print(sum_to(100), power(2, 10), reverse("python"), digit_sum(472))</pre>
+  <pre class="pc py" data-run data-t="Try it: print before or after the call">def down(n):
+    if n == 0:
+        return
+    print(n, end=" ")    # before the call: on the way in
+    down(n - 1)
+
+def up(n):
+    if n == 0:
+        return
+    up(n - 1)
+    print(n, end=" ")    # after the call: on the way back out
+
+down(5)
+print()
+up(5)</pre>
+ </section>
+ <section>
+  <h2>When recursion goes wrong</h2>
+  <pre class="pc py" data-run data-t="Try it: a missing base case">import sys
+def count_down(n):
+    if n == 0:
+        return "done"
+    return count_down(n - 2)      # skips 0 when n is odd!
+
+print(count_down(6))
+try:
+    print(count_down(5))
+except RecursionError:
+    print("RecursionError: more than", sys.getrecursionlimit(), "calls deep")</pre>
+  <div class="callout warnbox"><span class="k">Recursion versus iteration</span><p>Any recursive function can be written with a loop. Recursion is often shorter and clearer for problems that are naturally self-similar (binary search, tree structures, factorials), but every call uses stack memory, so very deep recursion fails with a RecursionError where a loop wouldn't.</p></div>
+ </section>
+</div>
+</template>
