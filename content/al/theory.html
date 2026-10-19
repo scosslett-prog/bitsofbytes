@@ -13,6 +13,16 @@
   <p class="stepline"><b>3</b><span>The CPU decodes the instruction, then executes it. Executing it might read or write data, which lives in the same memory.</span></p>
   <p class="stepline"><b>4</b><span>The cycle repeats with the next instruction until the program ends.</span></p>
   <p>Each instruction is made of an <b>opcode</b> (what to do, such as ADD) and usually an <b>operand</b> (what to do it to, such as a value or an address).</p>
+  <h3>Instructions are just binary</h3>
+  <p>In memory, an instruction looks exactly like data. In a simple 8-bit design the first 4 bits might be the opcode and the last 4 the operand:</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Address</th><th>Binary in memory</th><th>Opcode</th><th>Operand</th><th>Meaning</th></tr>
+   <tr><td>0</td><td>0001 0110</td><td>0001</td><td>0110</td><td class="lbl">LDA 6: load the value at address 6</td></tr>
+   <tr><td>1</td><td>0010 0111</td><td>0010</td><td>0111</td><td class="lbl">ADD 7: add the value at address 7</td></tr>
+   <tr><td>2</td><td>0011 1000</td><td>0011</td><td>1000</td><td class="lbl">STO 8: store the result at address 8</td></tr>
+   <tr><td>6</td><td>0001 1001</td><td colspan="2">(data)</td><td class="lbl">the number 25</td></tr></table></div>
+  <p>Address 0 and address 6 both hold bit patterns starting 0001. Nothing in the memory says which is an instruction and which is a number: it depends only on whether the <b>PC</b> points at it. That's the stored-program concept in action, and it's also why a program with a bug can accidentally run data as if it were code.</p>
+  <h3>Getting a program into memory</h3>
+  <p>Programs are kept on <b>secondary storage</b> (an SSD or hard disk) because RAM loses its contents when the power goes off. When you open a program, the operating system's <b>loader</b> copies it into RAM and sets the PC to its first instruction. Only then can the CPU fetch and run it.</p>
  </section>
  <section id="sp-vn">
   <h2>von Neumann architecture</h2>
@@ -45,6 +55,7 @@
    <div class="keypts"><h3>Drawbacks</h3><ul><li><b>The von Neumann bottleneck:</b> an instruction and its data can't be fetched at the same time, because they share one bus. The CPU often waits.</li><li>Data and instructions look the same, so a bug (or an attack) can <b>overwrite instructions</b> with data.</li></ul></div>
   </div>
   <div class="callout tip"><span class="k">Exam tip</span><p>"Explain one drawback" wants a reason as well as a point: <i>instructions and data share the same bus <b>so</b> they can't be fetched at the same time, <b>which</b> limits the speed of the CPU.</i></p></div>
+  <div class="alw" data-w="vnbus"></div>
   <p>Unit 3 introduces the <b>Harvard architecture</b>, which fixes the bottleneck by giving instructions and data separate memories and buses.</p>
   <pre class="pc py" data-run data-t="Try it: a program is just data">program = ["LOAD 5", "ADD 3", "STORE total"]   # instructions held in a list, like memory
 data = {"total": 0}
@@ -85,6 +96,12 @@ for instruction in program:                         # fetch each one in turn
    <div class="keypts"><h3>Control bus</h3><p>Carries <b>control and timing signals</b>: memory read, memory write, the clock, interrupt requests, bus requests. <b>Bidirectional</b>.</p></div>
   </div>
   <p>The <b>width</b> of a bus is its number of wires. A wider <b>data bus</b> moves more bits per transfer. A wider <b>address bus</b> can reach more memory.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Wider data bus</h3><p>A 64-bit data bus moves 8 bytes in one transfer; a 32-bit bus needs two transfers for the same data. Wider usually means faster, because the CPU waits for memory less often.</p></div>
+   <div class="keypts"><h3>Wider address bus</h3><p>Each extra wire doubles the number of addresses. A 32-bit address bus can reach 4 GiB of byte-addressed memory; that's why older 32-bit computers couldn't use more than 4 GiB of RAM.</p></div>
+  </div>
+  <h3>Why I/O controllers?</h3>
+  <p>Devices work at very different speeds, voltages and data formats from the CPU. An <b>I/O controller</b> sits between a device and the buses: it converts signals, holds data in a small buffer until the CPU is ready, and raises an <b>interrupt</b> when it needs attention. That way the CPU doesn't have to wait for a slow device such as a printer.</p>
  </section>
  <section>
   <h2>How much memory can be addressed?</h2>
@@ -96,6 +113,7 @@ for instruction in program:                         # fetch each one in turn
   <p class="stepline"><b>Step 2</b><span>Each holds 1 byte, so the addressable memory is 2<sup>20</sup> bytes = <b>1 MiB</b>.</span></p>
   <p>If each location held a 4-byte word, multiply by 4: 2<sup>20</sup> × 4 = 4 MiB.</p>
   <div class="callout tip"><span class="k">Expression</span><p>Addressable memory = <b>2<sup>address bus width</sup> × size of each location</b>. Adding one wire <b>doubles</b> the addressable memory.</p></div>
+  <div class="alw" data-w="addr" data-n="20"></div>
   <pre class="pc py" data-run data-t="Try it: change the bus width">bus_width = 20          # bits on the address bus
 locations = 2 ** bus_width
 print(locations, "locations")
@@ -133,6 +151,7 @@ print(locations // 1024, "KiB if each location is 1 byte")</pre>
    <tr><td class="lbl">Arithmetic logic unit (ALU)</td><td>Does arithmetic (add, subtract, shifts) and logic (AND, OR, XOR, NOT, comparisons). It takes two operands, A and B, and an opcode, and outputs a result and status flags.</td></tr>
    <tr><td class="lbl">General-purpose registers</td><td>Hold data being worked on, so it doesn't have to go back to memory. ARM processors have R0 to R12.</td></tr>
    <tr><td class="lbl">Clock</td><td>Produces regular pulses. Each pulse moves the CPU on one step. Clock speed is measured in hertz (GHz = billions of cycles a second).</td></tr></table></div>
+  <p>The control unit decodes each instruction using the CPU's <b>instruction set</b>: the list of every operation the CPU can carry out, each with its own binary opcode. It then sends the right <b>control signals</b> in the right order: for example "copy the PC into the MAR", "memory read", "ALU: add". A 3 GHz clock gives the control unit three billion of these steps every second.</p>
  </section>
  <section>
   <h2>Special-purpose registers</h2>
@@ -145,6 +164,16 @@ print(locations // 1024, "KiB if each location is 1 byte")</pre>
    <tr><td class="lbl">Stack pointer (SP)</td><td>The address of the <b>top of the stack</b> in memory, used for subroutine calls and returns.</td></tr>
    <tr><td class="lbl">Status register (SR)</td><td><b>Flags</b> about the last result: zero (Z), negative (N), carry (C), overflow (V). Conditional jumps test these flags.</td></tr></table></div>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>The <b>PC</b> holds an <b>address</b>, not an instruction. The instruction itself ends up in the <b>CIR</b>.</p></div>
+ </section>
+ <section>
+  <h2>The status register flags</h2>
+  <p>After each ALU operation, the status register records facts about the result in single bits called <b>flags</b>. Later instructions, such as "branch if equal", test these flags to make decisions.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Flag</th><th>Set to 1 when…</th><th>Example</th></tr>
+   <tr><td class="lbl">N (negative)</td><td>the top bit of the result is 1 (negative in two's complement)</td><td>5 − 9 gives a negative result</td></tr>
+   <tr><td class="lbl">Z (zero)</td><td>the result is zero</td><td>comparing 7 with 7 (7 − 7 = 0), so the values are equal</td></tr>
+   <tr><td class="lbl">C (carry)</td><td>a carry goes out of the top bit (or a borrow is needed)</td><td>200 + 100 in 8 bits: 300 doesn't fit</td></tr>
+   <tr><td class="lbl">V (overflow)</td><td>a signed result is outside the range that can be stored</td><td>100 + 60 = 160, above +127</td></tr></table></div>
+  <div class="alw" data-w="alu"></div>
   <div class="callout tip"><span class="k">Why so many registers?</span><p>Registers are the fastest storage there is. Keeping addresses, instructions and results in registers means the CPU touches slow main memory as little as possible.</p></div>
  </section>
 </div>
@@ -161,6 +190,9 @@ print(locations // 1024, "KiB if each location is 1 byte")</pre>
    <tr><td class="mono">MAR ← [PC]</td><td>The <b>contents</b> of the PC (square brackets) are copied into the MAR (the arrow points to where they go)</td></tr>
    <tr><td class="mono">PC ← [PC] + 1</td><td>The PC is incremented</td></tr>
    <tr><td class="mono">[CIR]</td><td>The contents of the CIR are decoded and executed</td></tr></table></div>
+ </section>
+ <section>
+  <div class="alw" data-w="fde"></div>
  </section>
  <section>
   <h2>Fetch</h2>
@@ -197,6 +229,10 @@ print(locations // 1024, "KiB if each location is 1 byte")</pre>
    <line x1="180" y1="172" x2="116" y2="172" class="l" marker-end="url(#fdA)"/><text x="148" y="164" class="s c">5</text>
    <path d="M40 74 C10 110, 10 110, 40 120" class="ld"/><text x="65" y="118" class="s c">4 PC+1</text>
   </svg><figcaption>The fetch stage, numbered as in the steps above.</figcaption></figure>
+  <h3>Jumps and loops</h3>
+  <p>A <b>jump</b> (branch) instruction works by overwriting the PC during its execute stage. The next fetch then reads from the new address instead of the next one in sequence. A <b>conditional</b> jump only does this if a flag in the status register is set — for example, "jump if zero" — which is how IF statements and loops work at machine level.</p>
+  <h3>How fast?</h3>
+  <p>Each register transfer takes at least one clock pulse, so one instruction needs several ticks. A modern CPU runs billions of cycles a second and overlaps the stages of different instructions (pipelining, in Unit 3), so it completes billions of instructions every second.</p>
   <div class="callout tip"><span class="k">Exam tip</span><p>"Describe the fetch stage" usually carries 4 or 5 marks. Name the <b>registers</b>, the <b>buses</b> and the <b>read signal</b>, in order. Register transfer notation is a quick, precise way to do it.</p></div>
   <pre class="pc py" data-run data-t="Try it: a tiny fetch-decode-execute loop">memory = ["LOAD 7", "ADD 5", "PRINT", "HALT"]
 pc, acc = 0, 0
@@ -238,9 +274,17 @@ while True:
    <tr><td class="lbl">Secondary storage</td><td>Terabytes</td><td>Non-volatile SSDs and hard disks; thousands of times slower than RAM</td></tr></table></div>
  </section>
  <section>
+  <h2>Why a hierarchy works</h2>
+  <p>The difference in speed between the levels is enormous. Scale it up so that reading a register takes one second, and the rest of the hierarchy looks like this:</p>
+  <div class="alw" data-w="memscale"></div>
+ </section>
+ <section>
   <h2>How it works: hits and misses</h2>
   <p>When the CPU needs some data, it checks the fastest level first. If the data is there, it's a <b>hit</b>. If not, it's a <b>miss</b>, and the next level down is checked. When the data is found, a copy is placed in the faster levels, ready for next time.</p>
   <div class="callout"><span class="k">Key idea</span><h3>Locality of reference</h3><p>Programs tend to reuse the same data and instructions again soon (<b>temporal locality</b>, e.g. a loop) and to use addresses near ones they've just used (<b>spatial locality</b>, e.g. stepping through an array). So most requests are hits, and the CPU rarely waits for slow memory.</p></div>
+  <p>When data is fetched from RAM into cache, a whole <b>block</b> of neighbouring bytes (a cache line, often 64 bytes) comes with it. That's spatial locality at work: the next item the program needs is probably already in the cache.</p>
+  <p>Try requesting data in the demo below. Each level checked costs more time; a miss in every cache means a slow trip to RAM.</p>
+  <div class="cachedemo" id="cachedemo"></div>
  </section>
  <section>
   <h2>Benefits and drawbacks</h2>
@@ -283,8 +327,12 @@ while True:
    <tr><td class="lbl">Distance</td><td>Long distances</td><td>Short distances only</td></tr>
    <tr><td class="lbl">Cost</td><td>Cheaper cables and connectors</td><td>More wires, so dearer and bulkier</td></tr>
    <tr><td class="lbl">Used for</td><td>USB, networking, SATA, PCI Express lanes</td><td>Buses inside the CPU and on the motherboard</td></tr></table></div>
+  <div class="alw" data-w="serpar"></div>
+  <h3>Skew and crosstalk</h3>
+  <p><b>Skew</b>: no two wires are exactly the same, so over a long cable the bits sent together on a parallel link arrive at slightly different times. If the receiver reads the byte before the slowest bit arrives, it gets the wrong value. <b>Crosstalk</b>: a changing signal in one wire induces a small current in the wire next to it, which can flip a bit. Both get worse with longer cables and faster clocks.</p>
   <div class="callout"><span class="k">Why serial has taken over</span><p>Parallel looks faster because it sends more bits per tick. But skew and crosstalk limit how fast its clock can run. A single serial line can be clocked so much faster that modern serial links beat old parallel ones, over longer cables, with fewer errors.</p></div>
   <div class="callout tip"><span class="k">Exam tip</span><p>To justify a choice, link the method to the <b>scenario</b>: distance, speed needed, cost and the risk of errors.</p></div>
+  <p class="vfoot">Fast modern links often use several serial lanes side by side (PCI Express can use 1, 4, 8 or 16 lanes). Each lane is serial with its own timing, so there's no skew between bits, but the lanes together still give a very high transfer rate.</p>
  </section>
 </div>
 </template>
@@ -310,6 +358,9 @@ while True:
    <tr><td class="lbl">Process management</td><td>Starts and ends processes, <b>schedules</b> them so they share the CPU, and handles <b>interrupts</b>.</td></tr>
    <tr><td class="lbl">Memory management</td><td>Decides where programs and data go in RAM, keeps track of free memory, <b>protects</b> each process's memory, and uses <b>virtual memory</b> when RAM is full.</td></tr></table></div>
   <div class="callout"><span class="k">Key idea</span><p>All five roles come down to <b>sharing limited resources</b> (CPU time, memory, devices, files) between users and programs safely and efficiently.</p></div>
+  <div class="alw" data-w="osroles"></div>
+  <h3>Device drivers and buffers</h3>
+  <p>There are thousands of different printers, graphics cards and keyboards. Rather than the OS knowing about all of them, each manufacturer supplies a <b>device driver</b>: software that translates the OS's general requests ("print this page") into the exact commands that device understands. A <b>buffer</b> is an area of memory that holds data travelling between a fast part of the system and a slow one, so neither has to wait for the other.</p>
   <div class="callout tip"><span class="k">Exam tip</span><p>Questions often describe a situation, e.g. "a student can't open a teacher's files". Name the role (<b>user management</b>) <b>and</b> say how the OS does it (<b>access rights</b> on each file).</p></div>
  </section>
 </div>
@@ -332,6 +383,7 @@ while True:
   </svg><figcaption>Each block is one time slice. The narrow gaps are context switches.</figcaption></figure>
   <h3>Context switching</h3>
   <p>To pause a process and resume it later, the OS must remember exactly where it was. A <b>context switch</b> saves the running process's <b>context</b> (the contents of the PC, the other registers and the status flags) and loads the saved context of the next process. Context switching is pure <b>overhead</b>: no useful work happens while it's going on.</p>
+  <div class="mtdemo" id="mtdemo"></div>
  </section>
  <section>
   <h2>Interrupts</h2>
@@ -348,6 +400,8 @@ while True:
   <p class="stepline"><b>4</b><span>The PC is loaded with the address of the matching <b>interrupt service routine (ISR)</b>, found in a table of ISR addresses (the interrupt vector table).</span></p>
   <p class="stepline"><b>5</b><span>The ISR runs. A <b>higher</b>-priority interrupt can interrupt it; a lower one waits.</span></p>
   <p class="stepline"><b>6</b><span>When the ISR ends, the saved registers are <b>popped</b> off the stack and the original task carries on exactly where it stopped.</span></p>
+  <div class="alw" data-w="irq"></div>
+  <p>Try raising a keyboard interrupt, then a power failure while the keyboard ISR is still running. The power failure is more urgent, so it interrupts the ISR: two sets of registers end up on the stack, and they're restored in reverse order.</p>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>The CPU does <b>not</b> stop mid-instruction. It finishes the current cycle first, then checks for interrupts.</p></div>
   <div class="callout tip"><span class="k">Why the stack?</span><p>Interrupts can be <b>nested</b>. A stack is last in, first out, so the most recently interrupted task is the first one resumed.</p></div>
  </section>
@@ -373,6 +427,7 @@ while True:
    <line x1="335" y1="190" x2="265" y2="78" class="l" marker-end="url(#psA)"/><text x="200" y="140" class="s">I/O completes</text>
    <line x1="500" y1="74" x2="570" y2="186" class="l" marker-end="url(#psA)"/><text x="560" y="130" class="s">finishes</text>
   </svg><figcaption>A blocked process can't go straight to running: it goes back to the ready queue first.</figcaption></figure>
+  <div class="alw" data-w="states"></div>
  </section>
  <section>
   <h2>Scheduling algorithms</h2>
@@ -382,6 +437,16 @@ while True:
    <tr><td class="lbl">First-come, first-served</td><td>Runs processes to completion in arrival order</td><td>Simple; no starvation</td><td>Short jobs can be stuck behind a long one</td></tr>
    <tr><td class="lbl">Shortest job first</td><td>Runs the process with the shortest burst time next</td><td>Lowest average waiting time</td><td>Burst times must be known; long jobs can <b>starve</b></td></tr>
    <tr><td class="lbl">Multi-level queue</td><td>Separate queues by type or priority (e.g. system, interactive, batch), each with its own algorithm</td><td>Suits a mix of process types</td><td>Low-priority queues can starve; more complex</td></tr></table></div>
+  <h3>Round robin</h3>
+  <p>Ready processes wait in a queue. The one at the front runs for one <b>time slice</b> (say 20 ms); if it hasn't finished, a timer interrupt stops it and it joins the <b>back</b> of the queue. Nobody waits long for their next turn, which makes it ideal when many people or programs need a quick response. The choice of time slice matters: too short and much of the CPU's time is wasted on context switches; too long and it behaves like first-come, first-served.</p>
+  <h3>First-come, first-served</h3>
+  <p>Processes run in the order they arrive, each one <b>to completion</b>. It's simple and fair in one sense (no one is overtaken), but one long job at the front makes every short job behind it wait: the "convoy effect".</p>
+  <h3>Shortest job first</h3>
+  <p>Whenever the CPU becomes free, the ready process with the <b>shortest burst time</b> runs next. Getting short jobs out of the way gives the lowest possible average waiting time. But the OS has to <b>estimate</b> burst times (usually from how the process behaved before), and a long job can wait forever if short jobs keep arriving: <b>starvation</b>.</p>
+  <h3>Multi-level queue</h3>
+  <p>Processes are sorted into separate queues, for example <b>system</b> processes, <b>interactive</b> programs and <b>batch</b> jobs (such as overnight backups). Each queue has its own algorithm — round robin for interactive, first-come first-served for batch — and higher queues always go first. Batch jobs only run when nothing more urgent is waiting, so they can starve if the system is busy.</p>
+  <div class="alw" data-w="sched"></div>
+  <p>Change the burst times or arrival times, then compare the average waiting time for each algorithm.</p>
  </section>
  <section>
   <h2>Worked example</h2>
@@ -439,6 +504,7 @@ while queue:
    <rect x="460" y="212" width="100" height="26" class="bw"/><text x="510" y="230" class="s c">7 · other</text></g>
    <line x1="120" y1="110" x2="194" y2="110" class="l" marker-end="url(#pgA)"/><line x1="320" y1="110" x2="454" y2="110" class="l" marker-end="url(#pgA)"/>
   </svg><figcaption>The pages of one process scattered across free frames.</figcaption></figure>
+  <p>When the CPU uses an address, it's split into a <b>page number</b> and an <b>offset</b> within the page. The page table turns the page number into a frame number; the offset stays the same. This translation happens on every memory access, so it's done in hardware.</p>
  </section>
  <section>
   <h2>Segmentation</h2>
@@ -452,6 +518,8 @@ while queue:
  <section>
   <h2>Virtual memory</h2>
   <p>When RAM is full, the OS uses part of <b>secondary storage</b> as if it were extra RAM. Pages that <b>haven't been used recently</b> are <b>swapped out</b> to disk, and swapped back in when they're needed.</p>
+  <p>If a program uses a page that's on disk, a <b>page fault</b> occurs: the OS pauses the process, swaps the page into a free frame (swapping another out if necessary), updates the page table and lets the process carry on.</p>
+  <div class="alw" data-w="paging"></div>
   <div class="kpgrid2">
    <div class="keypts"><h3>Benefits</h3><ul><li>More programs can be open than RAM alone could hold.</li><li>A program bigger than RAM can still run.</li></ul></div>
    <div class="keypts"><h3>Drawbacks</h3><ul><li>Secondary storage is thousands of times slower than RAM.</li><li>If pages are swapped constantly, the computer spends more time swapping than working: <b>disk thrashing</b>. The fix is more RAM.</li></ul></div>
@@ -460,6 +528,18 @@ while queue:
  <section>
   <h2>Stack frames</h2>
   <p>Each time a subroutine is <b>called</b>, a <b>stack frame</b> is pushed onto the call stack. It holds the <b>return address</b> (where to carry on afterwards), the <b>parameters</b> and the <b>local variables</b>. When the subroutine <b>returns</b>, its frame is popped and the CPU jumps to the return address.</p>
+  <div class="alw" data-w="trace" data-stack data-vars="t" data-title="Try it: stack frames" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":11,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]"}}],"out":"","ret":null},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"0"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"0","w":"3","h":"4"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"0","w":"3","h":"4"}},{"fn":"area","loc":{"w":"3","h":"4"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"0","w":"3","h":"4"}},{"fn":"area","loc":{"w":"3","h":"4","result":"12"}}],"out":"","ret":null},{"e":"return","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"0","w":"3","h":"4"}},{"fn":"area","loc":{"w":"3","h":"4","result":"12"}}],"out":"","ret":"12"},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"12","w":"3","h":"4"}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"12","w":"2","h":"5"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"12","w":"2","h":"5"}},{"fn":"area","loc":{"w":"2","h":"5"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"12","w":"2","h":"5"}},{"fn":"area","loc":{"w":"2","h":"5","result":"10"}}],"out":"","ret":null},{"e":"return","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"12","w":"2","h":"5"}},{"fn":"area","loc":{"w":"2","h":"5","result":"10"}}],"out":"","ret":"10"},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"22","w":"2","h":"5"}}],"out":"","ret":null},{"e":"line","line":9,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"22","w":"2","h":"5"}}],"out":"","ret":null},{"e":"return","line":9,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"total_area","loc":{"rooms":"[(3, 4), (2, 5)]","t":"22","w":"2","h":"5"}}],"out":"","ret":"22"},{"e":"end","line":null,"stack":[],"out":"22\n","ret":null}]'><pre>def area(w, h):
+    result = w * h
+    return result
+
+def total_area(rooms):
+    t = 0
+    for w, h in rooms:
+        t = t + area(w, h)
+    return t
+
+print(total_area([(3, 4), (2, 5)]))</pre></div>
+  <p>Each call pushes a frame holding its parameters and local variables; when the function returns, its frame is popped and the program carries on in the frame below.</p>
   <p>If too many frames are pushed, for example by recursion that never reaches its base case, the stack runs out of space: a <b>stack overflow</b>.</p>
   <pre class="pc py" data-run data-t="Try it: watch the stack grow">def countdown(n):
     print("frame for n =", n)
@@ -483,6 +563,9 @@ countdown(3)</pre>
   <p>1011 0101 = 128 + 32 + 16 + 4 + 1 = <b>181</b>. The leftmost bit is the <b>most significant bit (MSB)</b>; the rightmost is the <b>least significant bit (LSB)</b>.</p>
  </section>
  <section>
+  <div class="alw" data-w="bits" data-mode="unsigned" data-v="181"></div>
+ </section>
+ <section>
   <h2>Converting</h2>
   <h3>Denary → binary</h3>
   <p>Work from the left: if the place value fits into what's left, write 1 and subtract; otherwise write 0. For <b>200</b>: 128 fits (72 left), 64 fits (8 left), 32 no, 16 no, 8 fits (0 left), then 0s → <b>1100 1000</b>.</p>
@@ -491,6 +574,9 @@ countdown(3)</pre>
   <div class="tscroll"><table class="pvt mono"><tr><th>Binary</th><td>0011</td><td>1110</td></tr><tr><th>Denary</th><td>3</td><td>14</td></tr><tr><th>Hex</th><td><b>3</b></td><td><b>E</b></td></tr></table></div>
   <h3>Hexadecimal → denary</h3>
   <p>Hex place values are 256, 16, 1. So <b>3E</b> = 3 × 16 + 14 = <b>62</b>.</p>
+  <h3>Denary → hexadecimal</h3>
+  <p>Either convert to binary first and group into nibbles, or divide by 16: the quotient is the first hex digit and the remainder is the second. For <b>200</b>: 200 ÷ 16 = 12 remainder 8, and 12 is C, so 200 = <b>C8</b>. Check: 1100 1000 → C and 8 ✓</p>
+  <p>Hex works so neatly because 16 = 2<sup>4</sup>: every hex digit stands for exactly four bits, so conversion never needs any arithmetic beyond 0–15.</p>
   <div class="callout tip"><span class="k">Why hexadecimal?</span><p>It's much <b>shorter</b> than binary (two hex digits per byte), so it's easier to read, write and remember with fewer mistakes, and it converts to binary directly. You'll see it in colour codes (#FF8800), MAC addresses and memory addresses.</p></div>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>Hex doesn't use less memory: the computer still stores binary. Hex is only a way of <b>writing</b> it for people.</p></div>
   <pre class="pc py" data-run data-t="Try it: conversions in Python">n = 181
@@ -519,6 +605,9 @@ print(format(200, "08b"))        # 8-bit binary with leading zeros</pre>
    <tr><td class="lbl">gibi (Gi)</td><td>2<sup>30</sup></td><td class="lbl">giga (G)</td><td>10<sup>9</sup></td></tr>
    <tr><td class="lbl">tebi (Ti)</td><td>2<sup>40</sup></td><td class="lbl">tera (T)</td><td>10<sup>12</sup></td></tr></table></div>
   <div class="callout"><span class="k">Key idea</span><p>Use <b>binary prefixes</b> (KiB, MiB, GiB) for <b>memory capacity and file sizes</b>. Use <b>decimal prefixes</b> (kbps, Mbps, Gbps) for <b>transmission speeds</b>. A GiB is about 7% bigger than a GB.</p></div>
+  <p>This is why a "1 TB" drive shows up as about 931 GiB on a computer. The manufacturer counts in decimal (1 TB = 10<sup>12</sup> bytes), but the operating system often divides by 1024<sup>4</sup>. Nothing is missing: it's the same number of bytes in two different units.</p>
+  <div class="alw" data-w="units"></div>
+
   <h3>Worked examples</h3>
   <p class="stepline"><b>1</b><span>3 MiB in bytes: 3 × 1024 × 1024 = <b>3,145,728 bytes</b>.</span></p>
   <p class="stepline"><b>2</b><span>4 GiB in MiB: 4 × 1024 = <b>4,096 MiB</b>.</span></p>
@@ -538,6 +627,10 @@ print(format(200, "08b"))        # 8-bit binary with leading zeros</pre>
   <p>1111 1011 = −128 + 64 + 32 + 16 + 8 + 2 + 1 = <b>−5</b>. If the MSB is 1 the number is negative; if it's 0 the number is positive and reads like ordinary binary.</p>
   <div class="facts3"><div><b>0111 1111</b><span>+127, the largest</span></div><div><b>0000 0000</b><span>0</span></div><div><b>1000 0000</b><span>−128, the smallest</span></div></div>
   <p>With n bits the range is <b>−2<sup>n−1</sup></b> to <b>2<sup>n−1</sup> − 1</b>: −128 to +127 in 8 bits.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Bits</th><th>Unsigned range</th><th>Two's complement range</th></tr><tr><td>4</td><td>0 to 15</td><td>−8 to +7</td></tr><tr><td>8</td><td>0 to 255</td><td>−128 to +127</td></tr><tr><td>16</td><td>0 to 65,535</td><td>−32,768 to +32,767</td></tr></table></div>
+  <p>The same 8 bits can mean different numbers: 1111 1011 is 251 unsigned but −5 in two's complement. The bits don't say which; the program decides how to interpret them.</p>
+  <div class="alw" data-w="bits" data-mode="twos" data-v="251"></div>
+
  </section>
  <section>
   <h2>Negation: flip and add 1</h2>
@@ -547,6 +640,7 @@ print(format(200, "08b"))        # 8-bit binary with leading zeros</pre>
   <p class="stepline"><b>Step 3</b><span>Add 1: <b>1111 1011</b> = −5.</span></p>
   <div class="callout tip"><span class="k">A shortcut</span><p>Copy bits from the right up to and including the first 1, then flip all the rest. 0000 0<b>101</b> → 1111 1<b>011</b>.</p></div>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>Don't forget to <b>pad to the full number of bits</b> before flipping. Flipping 101 gives 010, which is wrong; flipping 0000 0101 gives 1111 1010, which is right.</p></div>
+  <p>Try the <b>Negate</b> button in the register above: it flips every bit, then adds 1.</p>
   <h3>Why two's complement?</h3>
   <p>There is only <b>one zero</b>, and ordinary binary addition works for positive and negative numbers alike, so the ALU can subtract by adding the negative.</p>
   <pre class="pc py" data-run data-t="Try it: 8-bit two's complement">def to_twos(n):
@@ -579,6 +673,8 @@ print(from_twos("11111011"))</pre>
   <h3>Denary → binary (negative)</h3>
   <p>Write the positive version, then <b>flip and add 1</b> across all the bits. For <b>−2.375</b>: 0010.0110 → 1101.1001 → <b>1101.1010</b>.</p>
   <p>Check: −8 + 4 + 1 + ½ + ⅛ = −2.375 ✓</p>
+  <div class="alw" data-w="bits" data-mode="fixed" data-v="88" data-int="4"></div>
+  <p>Click bits to build values, move the binary point, and try typing 0.1 into the <b>Set to</b> box to see that it can only be approximated.</p>
  </section>
  <section>
   <h2>Range and precision</h2>
@@ -605,6 +701,7 @@ print(0.5 + 0.25)         # halves and quarters are exact</pre>
    <tr><th>+</th><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td></tr>
    <tr><th>=</th><td><b>1</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>1</b></td></tr></table></div>
   <p>106 + 23 = 129 → <b>1000 0001</b>. As unsigned binary that's right. As 8-bit two's complement it reads as −127: the answer has <b>overflowed</b> into the sign bit.</p>
+  <div class="alw" data-w="add" data-a="106" data-b="23"></div>
  </section>
  <section>
   <h2>Subtraction</h2>
@@ -612,6 +709,7 @@ print(0.5 + 0.25)         # halves and quarters are exact</pre>
   <p class="stepline"><b>Step 1</b><span>45 − 18. Write 18: 0001 0010.</span></p>
   <p class="stepline"><b>Step 2</b><span>Negate: flip → 1110 1101, add 1 → 1110 1110 (−18).</span></p>
   <p class="stepline"><b>Step 3</b><span>Add 0010 1101 + 1110 1110 = 1 0001 1011. <b>Ignore the carry out</b> of the 8th bit: <b>0001 1011</b> = 27 ✓</span></p>
+  <p>Set the demo above to <b>−</b> and <b>Two's complement</b> to watch a subtraction: it negates the second number first, then adds.</p>
  </section>
  <section>
   <h2>Overflow and underflow</h2>
@@ -621,6 +719,7 @@ print(0.5 + 0.25)         # halves and quarters are exact</pre>
    <tr><td class="lbl">Two's complement addition</td><td>Two positives give a negative, or two negatives give a positive</td></tr>
    <tr><td class="lbl">Adding a positive and a negative</td><td>Overflow <b>can't</b> happen</td></tr></table></div>
   <p>The CPU records these in the <b>status register</b>: the <b>carry flag</b> (C) for a carry out of the MSB and the <b>overflow flag</b> (V) for signed overflow, so a program can detect them.</p>
+  <p><b>Underflow</b> also happens with fractions: in 8-bit fixed point with four fractional bits, the smallest positive value is 1/16. Halve 1/16 and the answer, 1/32, is too small to store: it becomes 0.</p>
   <div class="callout warnbox"><span class="k">Why it matters</span><p>Overflow gives wrong answers silently. A counter can wrap from 255 to 0, or a score from +127 to −128. Programs avoid this by using more bits or checking ranges.</p></div>
   <pre class="pc py" data-run data-t="Try it: an 8-bit register">reg = 250
 for i in range(8):
@@ -639,6 +738,7 @@ for i in range(8):
    <tr><td class="lbl">Logical left</td><td>Bits move left; 0s fill on the right. × 2 per place</td><td class="mono">0001 0110 → 0101 1000 (22 → 88)</td></tr>
    <tr><td class="lbl">Logical right</td><td>Bits move right; 0s fill on the left. ÷ 2 per place (rounding down) for unsigned numbers</td><td class="mono">0110 1100 → 0000 1101 (108 → 13)</td></tr>
    <tr><td class="lbl">Arithmetic right</td><td>Bits move right; the <b>sign bit is copied</b> in on the left, so signed numbers keep their sign</td><td class="mono">1110 0000 → 1111 1000 (−32 → −8)</td></tr></table></div>
+  <div class="alw" data-w="shift" data-v="22"></div>
   <div class="callout warnbox"><span class="k">Watch out</span><p>Bits shifted off the end are <b>lost</b>. Shifting left can lose 1s off the top (overflow); shifting right loses any remainder.</p></div>
  </section>
  <section>
@@ -649,6 +749,7 @@ for i in range(8):
    <div class="keypts"><h3>OR: set</h3><p class="mono">1100 1010<br>OR 0000 0101<br>= 1100 1111</p><p>Mask 1 <b>sets</b> a bit to 1; mask 0 leaves it alone.</p></div>
    <div class="keypts"><h3>XOR: toggle</h3><p class="mono">1100 1010<br>XOR 1111 0000<br>= 0011 1010</p><p>Mask 1 <b>flips</b> a bit; mask 0 leaves it alone.</p></div>
   </div>
+  <div class="alw" data-w="mask"></div>
   <h3>In Python</h3>
   <p>Python's bitwise operators are <span class="mono">&amp;</span> (AND), <span class="mono">|</span> (OR), <span class="mono">^</span> (XOR), <span class="mono">&lt;&lt;</span> and <span class="mono">&gt;&gt;</span>. On negative integers, <span class="mono">&gt;&gt;</span> is an arithmetic shift.</p>
   <pre class="pc py" data-run data-t="Try it: masks on a status byte">status = 0b1100_1010
@@ -676,6 +777,10 @@ print(22 << 2, 108 >> 3, -32 >> 2)</pre>
   <h2>Unicode and UTF-8</h2>
   <p><b>Unicode</b> gives every character in every writing system, plus symbols and emoji, its own <b>code point</b>, written in hex like U+0041 ('A') or U+20AC ('€'). There are over a million possible code points.</p>
   <p><b>UTF-8</b> is the most common way of storing Unicode. It's <b>variable length</b>: 1 byte for ASCII characters (with the same codes as ASCII), and 2, 3 or 4 bytes for others.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Code points</th><th>Bytes</th><th>Bit pattern</th></tr><tr><td>U+0000 to U+007F</td><td>1</td><td>0xxxxxxx</td></tr><tr><td>U+0080 to U+07FF</td><td>2</td><td>110xxxxx 10xxxxxx</td></tr><tr><td>U+0800 to U+FFFF</td><td>3</td><td>1110xxxx 10xxxxxx 10xxxxxx</td></tr><tr><td>U+10000 and above</td><td>4</td><td>11110xxx 10xxxxxx ×3</td></tr></table></div>
+  <p>The first bits of each byte say how many bytes the character uses, and every continuation byte starts 10, so a program can always find where a character starts.</p>
+  <div class="alw" data-w="utf8"></div>
+
   <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>ASCII / extended ASCII</th><th>Unicode (UTF-8)</th></tr>
    <tr><td class="lbl">Characters</td><td>128 / 256</td><td>Over a million possible</td></tr>
    <tr><td class="lbl">Languages</td><td>English (plus one more set of symbols)</td><td>Every writing system, plus emoji</td></tr>
@@ -718,6 +823,8 @@ for ch in ["A", "é", "€", "😀"]:
    <tr><td class="lbl">Modem</td><td><b>Modulates and demodulates</b>: converts between the computer's digital data and the signal used on the line to the internet service provider.</td></tr>
    <tr><td class="lbl">Wireless access point</td><td>Lets wireless devices join a wired network using radio waves.</td></tr>
    <tr><td class="lbl">Home router</td><td>A router, switch, wireless access point, modem and firewall combined in one device.</td></tr></table></div>
+  <p>The first time a switch sees a device, it doesn't know which port that device is on, so it sends the frame out of every port. It notes the <b>source MAC address</b> of every frame it receives, so it quickly learns where each device is and then sends frames only where they need to go.</p>
+  <div class="alw" data-w="lan"></div>
  </section>
  <section>
   <h2>Transmission media</h2>
@@ -751,6 +858,7 @@ for ch in ["A", "é", "€", "😀"]:
    <tr><td class="lbl">Latency</td><td>The <b>delay</b> between sending data and it arriving</td><td>milliseconds (ms)</td></tr>
    <tr><td class="lbl">Range</td><td>How far the signal travels before it's too weak to use</td><td>metres, km</td></tr></table></div>
   <div class="callout"><span class="k">Key idea</span><p>Bandwidth is like the number of lanes on a motorway; latency is how long the journey takes. A connection can have high bandwidth and high latency (e.g. satellite), which is fine for downloads but bad for video calls and games.</p></div>
+  <div class="alw" data-w="bw"></div>
   <p>The transfer rate is usually below the bandwidth because of <b>congestion</b> (other users), <b>interference</b>, <b>distance</b>, and extra data such as packet headers and error checking.</p>
  </section>
  <section>
@@ -783,12 +891,14 @@ print(transfer_time(4000, 100) / 60, "minutes for a 4 GB film")</pre>
    <tr><td class="lbl">Changes?</td><td>Normally fixed</td><td colspan="2">Can change when the device moves network</td></tr>
    <tr><td class="lbl">Used for</td><td>Delivering frames <b>within</b> a local network</td><td colspan="2">Routing packets <b>between</b> networks</td></tr></table></div>
   <p>IPv4 has 2<sup>32</sup> ≈ 4.3 billion addresses, which isn't enough for every device in the world. <b>IPv6</b>, with 2<sup>128</sup> addresses, solves that. IPv6 addresses can be shortened: leading zeros in a group can be left out, and one run of all-zero groups can be written as <span class="mono">::</span>.</p>
+  <p>For example, <span class="mono">2001:0db8:0000:0000:0000:0000:0000:0042</span> shortens to <span class="mono">2001:db8::42</span>. Only one <span class="mono">::</span> is allowed, or you couldn't tell how many zero groups each one replaced.</p>
  </section>
  <section>
   <h2>Network and host parts</h2>
   <p>An IP address has two parts: the <b>network address</b>, shared by every device on that network, and the <b>host address</b>, which identifies one device. A <b>subnet mask</b> shows where the split is: 1s mark network bits, 0s mark host bits.</p>
   <div class="tscroll"><table class="pvt mono"><tr><th>IP address</th><td>192</td><td>168</td><td>1</td><td>20</td></tr><tr><th>Subnet mask</th><td>255</td><td>255</td><td>255</td><td>0</td></tr><tr><th>IP AND mask</th><td><b>192</b></td><td><b>168</b></td><td><b>1</b></td><td><b>0</b></td></tr></table></div>
   <p>ANDing the address with the mask gives the <b>network address</b>: 192.168.1.0. Two devices are on the same network if they give the same result. The mask 255.255.255.0 has 24 network bits, so it is often written <span class="mono">/24</span>, leaving 8 host bits.</p>
+  <div class="alw" data-w="subnet"></div>
   <div class="callout tip"><span class="k">How many hosts?</span><p>With h host bits there are 2<sup>h</sup> addresses. Two are reserved (the network address itself, and the broadcast address with all host bits 1), so 2<sup>h</sup> − 2 devices: 254 on a /24 network.</p></div>
   <pre class="pc py" data-run data-t="Try it: find the network address">ip = "10.1.4.77"
 mask = "255.255.0.0"
@@ -833,6 +943,7 @@ print(".".join(network))</pre>
   <p class="stepline"><b>2</b><span>Ana encrypts her message with <b>Ben's public key</b> and sends it.</span></p>
   <p class="stepline"><b>3</b><span>Only <b>Ben's private key</b> can decrypt it. Anyone who intercepts it, even with the public key, can't read it.</span></p>
   <div class="callout"><span class="k">Key idea</span><p>No secret ever has to be sent, so key exchange is solved. But asymmetric encryption is much <b>slower</b>, so secure websites use it only to agree a <b>symmetric</b> key, then switch to fast symmetric encryption for the rest of the session.</p></div>
+  <div class="alw" data-w="keys"></div>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>You encrypt with the <b>receiver's public</b> key, not your own private key.</p></div>
  </section>
 </div>
@@ -847,6 +958,8 @@ print(".".join(network))</pre>
    <tr><th>Cipher</th><td><b>Q</b></td><td><b>W</b></td><td><b>E</b></td><td><b>R</b></td><td><b>T</b></td><td><b>Y</b></td><td><b>U</b></td><td><b>I</b></td><td><b>O</b></td><td><b>P</b></td><td><b>A</b></td><td><b>S</b></td><td><b>D</b></td><td><b>F</b></td><td><b>G</b></td><td><b>H</b></td><td><b>J</b></td><td><b>K</b></td><td><b>L</b></td><td><b>Z</b></td><td><b>X</b></td><td><b>C</b></td><td><b>V</b></td><td><b>B</b></td><td><b>N</b></td><td><b>M</b></td></tr></table></div>
   <p><b>Encrypt</b>: find each plaintext letter on the top row and write the letter below it. CACHE → <b>EQEIT</b>.<br><b>Decrypt</b>: find each ciphertext letter on the bottom row and write the letter above. LZQEA → <b>STACK</b>.</p>
   <p>There are 26! (about 4 × 10<sup>26</sup>) possible keys, far too many to try one by one. But the cipher is still easy to break by <b>frequency analysis</b>: E is the most common letter in English, then T, A, O…, so the most common ciphertext letter probably stands for E.</p>
+  <div class="alw" data-w="subst"></div>
+
  </section>
  <section>
   <h2>The Vernam cipher</h2>
@@ -858,6 +971,7 @@ print(".".join(network))</pre>
    <tr><th>XOR → ciphertext</th><td></td><td><b>1001 1110</b></td></tr>
    <tr><th>Ciphertext XOR key</th><td><b>H</b></td><td>0100 1000</td></tr></table></div>
   <p>XOR is its own inverse, so <b>decrypting is the same operation</b>: XOR the ciphertext with the same key and the plaintext comes back.</p>
+  <div class="alw" data-w="vernam"></div>
   <div class="callout"><span class="k">Key idea</span><h3>Perfect secrecy</h3><p>If the key is <b>truly random</b>, <b>at least as long as the message</b>, <b>kept secret</b> and <b>used only once</b>, every possible plaintext of that length is equally likely, so the ciphertext reveals nothing. It's the only cipher that's mathematically unbreakable.</p></div>
   <p>The drawback is practical: a key as long as all the data must be shared securely in advance and never reused.</p>
   <pre class="pc py" data-run data-t="Try it: the Vernam cipher">import random
@@ -910,6 +1024,8 @@ print("decrypted:", plain)</pre>
   <p>Each entity is written as its name followed by its attributes in brackets. The primary key is <b>underlined</b>; foreign keys are marked, here with an asterisk.</p>
   <div class="rtn">Student(<u>StudentID</u>, FirstName, Surname, DateOfBirth)<br>Course(<u>CourseID</u>, Title, Teacher)<br>Enrolment(<u>StudentID*</u>, <u>CourseID*</u>, DateJoined)</div>
   <div class="callout tip"><span class="k">Exam tip</span><p>The <b>foreign key always goes on the "many" side</b> of a 1:M relationship. Each order stores one CustomerID; a customer can't store a list of order numbers in one field.</p></div>
+  <div class="alw" data-w="erd"></div>
+
  </section>
 </div>
 </template>
@@ -936,6 +1052,7 @@ print("decrypted:", plain)</pre>
    <div class="keypts"><h3>Referential integrity</h3><p>Every foreign key value <b>matches a primary key</b> that exists in the linked table.</p><p class="vfoot">Broken by: an enrolment for course C99 that doesn't exist.</p></div>
    <div class="keypts"><h3>Domain integrity</h3><p>Every value is the <b>right data type</b> and within the <b>allowed range or set</b>.</p><p class="vfoot">Broken by: a Mark of 140 when marks are 0–100.</p></div>
   </div>
+  <div class="alw" data-w="integrity"></div>
   <div class="callout"><span class="k">Why use several tables?</span><p>Splitting data into linked tables means each fact is stored <b>once</b>. With one big table, a teacher's name might be typed in hundreds of rows; change it in one and miss another, and the data becomes <b>inconsistent</b>.</p></div>
   <p class="vfoot">In Unit 2 you'll build and query these tables with SQLite from Python.</p>
  </section>
@@ -956,6 +1073,9 @@ print("decrypted:", plain)</pre>
    <tr><td class="lbl">Insert at position</td><td class="mono">temps.insert(1, 9)</td><td>[14, 9, 17, 12, 19]</td></tr>
    <tr><td class="lbl">Delete by position</td><td class="mono">del temps[1]</td><td>[14, 12, 19]</td></tr>
    <tr><td class="lbl">Remove last</td><td class="mono">temps.pop()</td><td>returns 19; [14, 17, 12]</td></tr></table></div>
+ </section>
+ <section>
+  <div class="alw" data-w="list"></div>
  </section>
  <section>
   <h2>Two-dimensional arrays</h2>
@@ -1003,6 +1123,7 @@ for item, qty in stock.items():    # traverse
    <tr><td class="lbl">Intersection: in both</td><td class="mono">a &amp; b</td><td>{3, 4}</td></tr>
    <tr><td class="lbl">Difference: in a, not b</td><td class="mono">a - b</td><td>{1, 2}</td></tr>
    <tr><td class="lbl">Symmetric difference: in one only</td><td class="mono">a ^ b</td><td>{1, 2, 5}</td></tr></table></div>
+  <div class="alw" data-w="sets"></div>
  </section>
  <section>
   <h2>Choosing a structure</h2>
@@ -1048,6 +1169,7 @@ for item, qty in stock.items():    # traverse
    <tr><td class="lbl">peek()</td><td>Return the top item without removing it.</td></tr>
    <tr><td class="lbl">isEmpty() / isFull()</td><td>Check before popping / pushing.</td></tr>
    <tr><td class="lbl">Search</td><td>Look at each item from the top down to the bottom.</td></tr></table></div>
+  <div class="alw" data-w="stack"></div>
   <p>Uses: the <b>call stack</b> (return addresses and stack frames), <b>undo</b> in an editor, the back button in a browser, reversing data, and checking brackets match.</p>
   <pre class="pc py" data-run data-t="Try it: a stack in a fixed-length list">SIZE = 4
 stack = [None] * SIZE
@@ -1109,6 +1231,7 @@ print("top is now", top)</pre>
    <text x="280" y="100" class="ta s c">front</text><text x="120" y="100" class="ta s c">rear</text>
    <path d="M440 38 C440 0, 120 0, 120 36" class="ld" marker-end="url(#cqA)"/><text x="280" y="16" class="s c">wraps round</text>
   </svg></figure>
+  <div class="alw" data-w="queue"></div>
   <p>Uses: <b>print queues</b>, <b>keyboard buffers</b>, processes waiting for the CPU (round robin), and data packets waiting to be sent: anywhere things must be handled <b>in the order they arrive</b>.</p>
   <pre class="pc py" data-run data-t="Try it: a circular queue">SIZE = 5
 q = [None] * SIZE
@@ -1175,6 +1298,8 @@ print(q, "front", front, "rear", rear)</pre>
   </svg></figure>
   </div>
   <p>The flowchart on the right adds numbers until 0 is entered, then outputs the total. The arrow from the process back to the input makes a <b>loop</b>; the decision decides when it ends.</p>
+  <div class="alw" data-w="flow"></div>
+
  </section>
  <section>
   <h2>Finding and correcting errors</h2>
@@ -1214,6 +1339,13 @@ print(total)</pre>
    <tr><td>4</td><td>True</td><td>4</td><td>14</td><td></td></tr>
    <tr><td>0</td><td>False</td><td></td><td></td><td>14</td></tr></table></div>
   <p>The algorithm adds up the digits of n. <span class="mono">n % 10</span> gives the last digit and <span class="mono">n // 10</span> removes it.</p>
+  <div class="alw" data-w="trace" data-vars="n,total" data-title="Try it: the trace table builds itself" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{"n":"4721"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"4721","total":"0"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"4721","total":"0"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"4721","total":"1"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"472","total":"1"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"472","total":"1"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"472","total":"3"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"47","total":"3"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"47","total":"3"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"47","total":"10"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"4","total":"10"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{"n":"4","total":"10"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{"n":"4","total":"14"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{"n":"0","total":"14"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{"n":"0","total":"14"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"14\n","ret":null}]'><pre>n = 4721
+total = 0
+while n &gt; 0:
+    total = total + n % 10
+    n = n // 10
+print(total)</pre></div>
+  <p>Each time a variable changes, a value is written in its column. The highlighted line is the one <b>about to run</b>.</p>
   <div class="callout tip"><span class="k">How to trace</span><p>Give each variable a column, plus one for conditions and one for output. Move down a row when a value changes. Only write a value when it's <b>assigned</b>; a blank means "unchanged".</p></div>
  </section>
  <section>
@@ -1254,6 +1386,14 @@ print(factorial(4))</pre>
    <path d="M40 46 L40 80 L66 80" class="l" fill="none" marker-end="url(#rcA)"/><path d="M90 98 L90 132 L116 132" class="l" fill="none" marker-end="url(#rcA)"/><path d="M140 150 L140 184 L166 184" class="l" fill="none" marker-end="url(#rcA)"/>
    <text x="390" y="189" class="ta m">returns 1</text><text x="340" y="137" class="ta m">returns 2 × 1 = 2</text><text x="290" y="85" class="ta m">returns 3 × 2 = 6</text><text x="240" y="33" class="ta m">returns 4 × 6 = 24</text>
   </svg><figcaption>Calls go down to the base case; answers come back up.</figcaption></figure>
+  <div class="alw" data-w="trace" data-stack data-ms="1100" data-title="Try it: watch the call stack" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}},{"fn":"factorial","loc":{"n":"1"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}},{"fn":"factorial","loc":{"n":"1"}}],"out":"","ret":null},{"e":"return","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}},{"fn":"factorial","loc":{"n":"1"}}],"out":"","ret":"1"},{"e":"return","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}},{"fn":"factorial","loc":{"n":"2"}}],"out":"","ret":"2"},{"e":"return","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}},{"fn":"factorial","loc":{"n":"3"}}],"out":"","ret":"6"},{"e":"return","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"factorial","loc":{"n":"4"}}],"out":"","ret":"24"},{"e":"line","line":7,"stack":[{"fn":"&lt;module>","loc":{"answer":"24"}}],"out":"","ret":null},{"e":"end","line":null,"stack":[],"out":"24\n","ret":null}]'><pre>def factorial(n):
+    if n &lt;= 1:
+        return 1
+    return n * factorial(n - 1)
+
+answer = factorial(4)
+print(answer)</pre></div>
+  <p>Each call adds a frame with its own <span class="mono">n</span>. When the base case returns, each frame finishes its multiplication and is removed, last in, first out.</p>
   <div class="callout warnbox"><span class="k">Watch out</span><p>With no base case, or one that's never reached, the calls never stop. Each one adds a <b>stack frame</b>, until the stack runs out of space: a <b>stack overflow</b>. Python stops it with a RecursionError.</p></div>
   <div class="kpgrid2">
    <div class="keypts"><h3>Benefits</h3><ul><li>Natural and short for problems that are defined in terms of themselves (trees, nested folders, divide and conquer).</li></ul></div>
@@ -1287,6 +1427,7 @@ show(3)</pre>
    <tr><td>5</td><td>8</td><td>6</td><td>38</td><td>23 &lt; 38 → high = 5</td></tr>
    <tr><td>5</td><td>5</td><td>5</td><td>23</td><td>found at index 5</td></tr></table></div>
   <p>If <b>low</b> ever passes <b>high</b>, the range is empty and the target isn't in the list.</p>
+  <div class="alw" data-w="search"></div>
   <div class="callout"><span class="k">Key idea</span><p>Each comparison <b>halves</b> what's left. 1,000 items need at most about 10 comparisons (2<sup>10</sup> = 1024); a million need about 20. A linear search could need a million.</p></div>
   <h3>Recursive binary search</h3>
   <p>The same algorithm can call itself on the half that's left. The base cases are "found" and "range empty".</p>
@@ -1335,6 +1476,7 @@ while swapped:
             swapped = True
     p = p + 1
     print("after pass", p, items)</pre>
+  <div class="alw" data-w="sort" data-kind="bubble"></div>
   <div class="kpgrid2">
    <div class="keypts"><h3>Benefits</h3><ul><li>Simple to understand and code.</li><li>Sorts in place, needing no extra list.</li><li>Fast on lists that are already nearly sorted (with the flag).</li></ul></div>
    <div class="keypts"><h3>Drawbacks</h3><ul><li>Very slow on large lists: the work grows with the <b>square</b> of the size.</li><li>Worst case: a list in reverse order.</li></ul></div>
@@ -1364,6 +1506,7 @@ for i in range(1, len(items)):
         j = j - 1
     items[j + 1] = current          # insert
     print("after pass", i, items)</pre>
+  <div class="alw" data-w="sort" data-kind="insertion"></div>
  </section>
  <section>
   <h2>Comparing the two sorts</h2>
@@ -1399,6 +1542,9 @@ for i in range(1, len(items)):
   <p class="stepline"><b>1</b><span>NOT first: NOT A = 0.</span></p>
   <p class="stepline"><b>2</b><span>AND next: B AND C = 0 AND 1 = 0.</span></p>
   <p class="stepline"><b>3</b><span>OR last: 0 OR 0 = <b>0</b>.</span></p>
+ </section>
+ <section>
+  <div class="alw" data-w="logic" data-title="Try it: evaluate an expression" data-ex="NOT A OR B AND C|A AND NOT B|(A AND B) OR NOT C|A XOR B|NOT (A AND B)|A NAND B|A NOR B"></div>
  </section>
  <section>
   <h2>Writing expressions from a problem</h2>
@@ -1437,6 +1583,8 @@ print(not (a and b))   # NAND</pre>
    <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td><b>1</b></td></tr>
    <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td><b>1</b></td></tr></table></div>
   <div class="callout"><span class="k">Key idea</span><h3>Equivalent expressions</h3><p>Two expressions are <b>equivalent</b> if their output columns match in every row. De Morgan's laws are a famous pair: <b>NOT (A AND B) = NOT A OR NOT B</b>, and <b>NOT (A OR B) = NOT A AND NOT B</b>.</p></div>
+  <div class="alw" data-w="logic" data-title="Try it: build any truth table" data-ex="(A AND B) OR NOT C|(A AND NOT B) OR (B AND C)|NOT (A AND B)|NOT A OR NOT B|NOT (A OR B)|NOT A AND NOT B|(A OR B) AND NOT (A AND B)|A XOR B"></div>
+  <p>Compare <b>NOT (A AND B)</b> with <b>NOT A OR NOT B</b>: the output columns match, which proves De Morgan's law.</p>
   <pre class="pc py" data-run data-t="Try it: print a truth table">print("A B C | out")
 for a in (0, 1):
     for b in (0, 1):
@@ -1474,6 +1622,7 @@ for name, marks in students.items():
    <div class="keypts"><h3>SQL</h3><p class="mono">SELECT Name FROM Student<br>WHERE Average &gt; 70;</p><p>You state which data you want; the database management system decides how to find it.</p></div>
    <div class="keypts"><h3>Logic programming (Prolog)</h3><p class="mono">parent(ana, ben).<br>parent(ben, cai).<br>grandparent(X, Z) :-<br>&nbsp;&nbsp;parent(X, Y), parent(Y, Z).</p><p>You state <b>facts</b> and <b>rules</b>; a query such as <span class="mono">grandparent(ana, Who)</span> is answered from them.</p></div>
   </div>
+  <div class="alw" data-w="paradigm"></div>
   <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Procedural</th><th>Declarative</th></tr>
    <tr><td class="lbl">Describes</td><td>How: the steps</td><td>What: the result</td></tr>
    <tr><td class="lbl">Examples</td><td>Python, C, BASIC</td><td>SQL, Prolog</td></tr>
@@ -1506,6 +1655,7 @@ for name, marks in students.items():
    <tr><td class="lbl">Analysing</td><td>Statistical and machine learning tools to find patterns and make predictions</td></tr>
    <tr><td class="lbl">Networking</td><td>Fast, high-bandwidth networks to move data between collectors, servers and users</td></tr>
    <tr><td class="lbl">Securing</td><td>Encryption, access control and monitoring, since big data often includes personal information</td></tr></table></div>
+  <div class="alw" data-w="distrib"></div>
   <div class="callout warnbox"><span class="k">Think about</span><p>Big data raises questions about <b>privacy</b> (what's collected and who sees it), <b>consent</b>, and decisions being made about people from patterns that may be <b>biased</b>.</p></div>
  </section>
 </div>
@@ -1531,6 +1681,7 @@ for name, marks in students.items():
    <tr><td class="lbl">Cleaning</td><td>Removing <b>duplicates</b>, handling <b>missing values</b>, fixing <b>errors</b> and impossible values, making <b>formats consistent</b> (dates, capitals, units), and investigating <b>outliers</b>.</td></tr>
    <tr><td class="lbl">Analysis</td><td>Summary statistics (mean, median, range), grouping and counting, finding trends and correlations, machine learning.</td></tr>
    <tr><td class="lbl">Visualisation</td><td>Line graphs for change over time, bar charts to compare categories, scatter graphs for relationships, maps for location data, dashboards.</td></tr></table></div>
+  <div class="alw" data-w="clean"></div>
   <div class="callout tip"><span class="k">Garbage in, garbage out</span><p>Cleaning often takes the most time, but analysis of dirty data gives wrong conclusions, however clever the analysis.</p></div>
   <pre class="pc py" data-run data-t="Try it: clean, analyse, summarise">raw = ["14.2", "15.1", "", "16.4", "15.1", "error", "13.9"]
 clean = []
@@ -1575,6 +1726,12 @@ print("range:", max(clean) - min(clean))</pre>
    <g><circle cx="520" cy="148" r="7" class="bw"/><circle cx="536" cy="160" r="7" class="bw"/><circle cx="518" cy="172" r="7" class="bw"/></g>
    <g><circle cx="590" cy="170" r="7" class="bg"/><circle cx="605" cy="185" r="7" class="bg"/><circle cx="585" cy="190" r="7" class="bg"/></g>
   </svg><figcaption>Supervised learning predicts labels; unsupervised learning finds groups nobody defined.</figcaption></figure>
+  <h3>Supervised learning in action</h3>
+  <p>Train a model on labelled fruit, then test it on fruit it hasn't seen:</p>
+  <div class="mldemo" id="mldemo"></div>
+  <h3>Unsupervised learning in action</h3>
+  <div class="alw" data-w="cluster"></div>
+
   <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Supervised learning</th><th>Unsupervised learning</th></tr>
    <tr><td class="lbl">Training data</td><td><b>Labelled</b>: inputs with the correct answers</td><td><b>Unlabelled</b>: inputs only</td></tr>
    <tr><td class="lbl">Goal</td><td>Predict the label (classification) or a value (regression) for new data</td><td>Discover structure, e.g. <b>clusters</b> of similar items</td></tr>
@@ -1606,6 +1763,7 @@ print("range:", max(clean) - min(clean))</pre>
    <tr><td class="lbl">Accuracy</td><td>Output is <b>plausible</b>, not guaranteed true. Models can <b>hallucinate</b>: invent facts, quotes or references fluently.</td><td>Check important facts against reliable sources</td></tr>
    <tr><td class="lbl">Knowledge limits</td><td>Training data stops at a <b>knowledge cut-off</b>, and some topics are poorly covered.</td><td>Supply up-to-date information, or use tools such as search</td></tr>
    <tr><td class="lbl">Bias and subjectivity</td><td>The training text contains opinions, stereotypes and imbalances, which can appear in output.</td><td>Critical reading; testing and adjusting models; varied training data</td></tr></table></div>
+  <div class="alw" data-w="llm"></div>
   <div class="callout"><span class="k">Key idea</span><p>An LLM predicts language; it doesn't look facts up in a database. That's why it can explain things well and still be confidently wrong.</p></div>
   <div class="callout tip"><span class="k">Exam tip</span><p>For "explain a limitation" questions, give the limitation <b>and</b> its consequence, e.g. <i>the training data has a cut-off, <b>so</b> it may give out-of-date answers about recent events</i>.</p></div>
   <pre class="pc py" data-run data-t="Try it: a (very) small language model">import random
@@ -1645,6 +1803,15 @@ print(" ".join(out))</pre>
    <div class="keypts"><h3>Stepping</h3><p>Run one line at a time. <b>Step into</b> goes inside a called function; <b>step over</b> runs the function as a single step; <b>step out</b> finishes the current function.</p></div>
    <div class="keypts"><h3>Memory inspection</h3><p>See the current values of variables (a watch list), and sometimes the call stack and memory, while paused.</p></div>
   </div>
+  <div class="alw" data-w="trace" data-bp data-bpl="5" data-vars="n,total" data-title="Try it: use the debugger" data-steps='[{"e":"line","line":1,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":8,"stack":[{"fn":"&lt;module>","loc":{}}],"out":"","ret":null},{"e":"line","line":2,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"0"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"0","n":"4"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"4","n":"4"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"4","n":"6"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"10","n":"6"}}],"out":"","ret":null},{"e":"line","line":4,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"10","n":"8"}}],"out":"","ret":null},{"e":"line","line":3,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"18","n":"8"}}],"out":"","ret":null},{"e":"line","line":5,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"18","n":"8"}}],"out":"","ret":null},{"e":"line","line":6,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"18","n":"8","result":"7.0"}}],"out":"","ret":null},{"e":"return","line":6,"stack":[{"fn":"&lt;module>","loc":{}},{"fn":"average","loc":{"nums":"[4, 6, 8]","total":"18","n":"8","result":"7.0"}}],"out":"","ret":"7.0"},{"e":"end","line":null,"stack":[],"out":"7.0\n","ret":null}]'><pre>def average(nums):
+    total = 0
+    for n in nums:
+        total = total + n
+    result = total / len(nums) + 1
+    return result
+
+print(average([4, 6, 8]))</pre></div>
+  <p>The average of 4, 6 and 8 should be 6, but the program prints 7. Press <b>Continue to next breakpoint</b> to run straight to line 5, look at <span class="mono">total</span> in the watch panel, and spot the bug.</p>
   <div class="callout"><span class="k">Key idea</span><p>A debugger is an automatic trace table. Instead of working the values out by hand, you watch them change and spot the line where they first go wrong.</p></div>
   <pre class="pc py" data-run data-t="Try it: find the bug by printing values">def average(nums):
     total = 0
@@ -1671,6 +1838,7 @@ print(average([4, 6, 8]))</pre>
    <circle cx="260" cy="100" r="10" class="bw"/><circle cx="340" cy="100" r="10" class="bw"/><circle cx="420" cy="100" r="10" class="bw"/>
    <text x="560" y="72" class="s c">merge</text><text x="60" y="68" class="s c">commit</text>
   </svg></figure>
+  <div class="alw" data-w="git"></div>
   <div class="tscroll"><table class="pvt deftab"><tr><th>Idea</th><th>Meaning</th></tr>
    <tr><td class="lbl">Repository</td><td>The project's files plus their full history</td></tr>
    <tr><td class="lbl">Commit</td><td>A saved snapshot of changes, with a message saying what changed and why</td></tr>

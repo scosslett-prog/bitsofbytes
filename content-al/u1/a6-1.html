@@ -20,6 +20,7 @@
    <tr><td class="lbl">Analysing</td><td>Statistical and machine learning tools to find patterns and make predictions</td></tr>
    <tr><td class="lbl">Networking</td><td>Fast, high-bandwidth networks to move data between collectors, servers and users</td></tr>
    <tr><td class="lbl">Securing</td><td>Encryption, access control and monitoring, since big data often includes personal information</td></tr></table></div>
+  <div class="alw" data-w="distrib"></div>
   <div class="callout warnbox"><span class="k">Think about</span><p>Big data raises questions about <b>privacy</b> (what's collected and who sees it), <b>consent</b>, and decisions being made about people from patterns that may be <b>biased</b>.</p></div>
  </section>
 </div>
@@ -45,6 +46,7 @@
    <tr><td class="lbl">Cleaning</td><td>Removing <b>duplicates</b>, handling <b>missing values</b>, fixing <b>errors</b> and impossible values, making <b>formats consistent</b> (dates, capitals, units), and investigating <b>outliers</b>.</td></tr>
    <tr><td class="lbl">Analysis</td><td>Summary statistics (mean, median, range), grouping and counting, finding trends and correlations, machine learning.</td></tr>
    <tr><td class="lbl">Visualisation</td><td>Line graphs for change over time, bar charts to compare categories, scatter graphs for relationships, maps for location data, dashboards.</td></tr></table></div>
+  <div class="alw" data-w="clean"></div>
   <div class="callout tip"><span class="k">Garbage in, garbage out</span><p>Cleaning often takes the most time, but analysis of dirty data gives wrong conclusions, however clever the analysis.</p></div>
   <pre class="pc py" data-run data-t="Try it: clean, analyse, summarise">raw = ["14.2", "15.1", "", "16.4", "15.1", "error", "13.9"]
 clean = []
@@ -89,6 +91,12 @@ print("range:", max(clean) - min(clean))</pre>
    <g><circle cx="520" cy="148" r="7" class="bw"/><circle cx="536" cy="160" r="7" class="bw"/><circle cx="518" cy="172" r="7" class="bw"/></g>
    <g><circle cx="590" cy="170" r="7" class="bg"/><circle cx="605" cy="185" r="7" class="bg"/><circle cx="585" cy="190" r="7" class="bg"/></g>
   </svg><figcaption>Supervised learning predicts labels; unsupervised learning finds groups nobody defined.</figcaption></figure>
+  <h3>Supervised learning in action</h3>
+  <p>Train a model on labelled fruit, then test it on fruit it hasn't seen:</p>
+  <div class="mldemo" id="mldemo"></div>
+  <h3>Unsupervised learning in action</h3>
+  <div class="alw" data-w="cluster"></div>
+
   <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Supervised learning</th><th>Unsupervised learning</th></tr>
    <tr><td class="lbl">Training data</td><td><b>Labelled</b>: inputs with the correct answers</td><td><b>Unlabelled</b>: inputs only</td></tr>
    <tr><td class="lbl">Goal</td><td>Predict the label (classification) or a value (regression) for new data</td><td>Discover structure, e.g. <b>clusters</b> of similar items</td></tr>
@@ -120,6 +128,7 @@ print("range:", max(clean) - min(clean))</pre>
    <tr><td class="lbl">Accuracy</td><td>Output is <b>plausible</b>, not guaranteed true. Models can <b>hallucinate</b>: invent facts, quotes or references fluently.</td><td>Check important facts against reliable sources</td></tr>
    <tr><td class="lbl">Knowledge limits</td><td>Training data stops at a <b>knowledge cut-off</b>, and some topics are poorly covered.</td><td>Supply up-to-date information, or use tools such as search</td></tr>
    <tr><td class="lbl">Bias and subjectivity</td><td>The training text contains opinions, stereotypes and imbalances, which can appear in output.</td><td>Critical reading; testing and adjusting models; varied training data</td></tr></table></div>
+  <div class="alw" data-w="llm"></div>
   <div class="callout"><span class="k">Key idea</span><p>An LLM predicts language; it doesn't look facts up in a database. That's why it can explain things well and still be confidently wrong.</p></div>
   <div class="callout tip"><span class="k">Exam tip</span><p>For "explain a limitation" questions, give the limitation <b>and</b> its consequence, e.g. <i>the training data has a cut-off, <b>so</b> it may give out-of-date answers about recent events</i>.</p></div>
   <pre class="pc py" data-run data-t="Try it: a (very) small language model">import random
@@ -159,6 +168,15 @@ print(" ".join(out))</pre>
    <div class="keypts"><h3>Stepping</h3><p>Run one line at a time. <b>Step into</b> goes inside a called function; <b>step over</b> runs the function as a single step; <b>step out</b> finishes the current function.</p></div>
    <div class="keypts"><h3>Memory inspection</h3><p>See the current values of variables (a watch list), and sometimes the call stack and memory, while paused.</p></div>
   </div>
+  <div class="alw" data-w="trace" data-bp data-bpl="5" data-vars="n,total" data-title="Try it: use the debugger"><pre>def average(nums):
+    total = 0
+    for n in nums:
+        total = total + n
+    result = total / len(nums) + 1
+    return result
+
+print(average([4, 6, 8]))</pre></div>
+  <p>The average of 4, 6 and 8 should be 6, but the program prints 7. Press <b>Continue to next breakpoint</b> to run straight to line 5, look at <span class="mono">total</span> in the watch panel, and spot the bug.</p>
   <div class="callout"><span class="k">Key idea</span><p>A debugger is an automatic trace table. Instead of working the values out by hand, you watch them change and spot the line where they first go wrong.</p></div>
   <pre class="pc py" data-run data-t="Try it: find the bug by printing values">def average(nums):
     total = 0
@@ -185,6 +203,7 @@ print(average([4, 6, 8]))</pre>
    <circle cx="260" cy="100" r="10" class="bw"/><circle cx="340" cy="100" r="10" class="bw"/><circle cx="420" cy="100" r="10" class="bw"/>
    <text x="560" y="72" class="s c">merge</text><text x="60" y="68" class="s c">commit</text>
   </svg></figure>
+  <div class="alw" data-w="git"></div>
   <div class="tscroll"><table class="pvt deftab"><tr><th>Idea</th><th>Meaning</th></tr>
    <tr><td class="lbl">Repository</td><td>The project's files plus their full history</td></tr>
    <tr><td class="lbl">Commit</td><td>A saved snapshot of changes, with a message saying what changed and why</td></tr>

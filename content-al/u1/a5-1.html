@@ -31,6 +31,8 @@
   </svg></figure>
   </div>
   <p>The flowchart on the right adds numbers until 0 is entered, then outputs the total. The arrow from the process back to the input makes a <b>loop</b>; the decision decides when it ends.</p>
+  <div class="alw" data-w="flow"></div>
+
  </section>
  <section>
   <h2>Finding and correcting errors</h2>
@@ -70,6 +72,13 @@ print(total)</pre>
    <tr><td>4</td><td>True</td><td>4</td><td>14</td><td></td></tr>
    <tr><td>0</td><td>False</td><td></td><td></td><td>14</td></tr></table></div>
   <p>The algorithm adds up the digits of n. <span class="mono">n % 10</span> gives the last digit and <span class="mono">n // 10</span> removes it.</p>
+  <div class="alw" data-w="trace" data-vars="n,total" data-title="Try it: the trace table builds itself"><pre>n = 4721
+total = 0
+while n &gt; 0:
+    total = total + n % 10
+    n = n // 10
+print(total)</pre></div>
+  <p>Each time a variable changes, a value is written in its column. The highlighted line is the one <b>about to run</b>.</p>
   <div class="callout tip"><span class="k">How to trace</span><p>Give each variable a column, plus one for conditions and one for output. Move down a row when a value changes. Only write a value when it's <b>assigned</b>; a blank means "unchanged".</p></div>
  </section>
  <section>
@@ -110,6 +119,14 @@ print(factorial(4))</pre>
    <path d="M40 46 L40 80 L66 80" class="l" fill="none" marker-end="url(#rcA)"/><path d="M90 98 L90 132 L116 132" class="l" fill="none" marker-end="url(#rcA)"/><path d="M140 150 L140 184 L166 184" class="l" fill="none" marker-end="url(#rcA)"/>
    <text x="390" y="189" class="ta m">returns 1</text><text x="340" y="137" class="ta m">returns 2 × 1 = 2</text><text x="290" y="85" class="ta m">returns 3 × 2 = 6</text><text x="240" y="33" class="ta m">returns 4 × 6 = 24</text>
   </svg><figcaption>Calls go down to the base case; answers come back up.</figcaption></figure>
+  <div class="alw" data-w="trace" data-stack data-ms="1100" data-title="Try it: watch the call stack"><pre>def factorial(n):
+    if n &lt;= 1:
+        return 1
+    return n * factorial(n - 1)
+
+answer = factorial(4)
+print(answer)</pre></div>
+  <p>Each call adds a frame with its own <span class="mono">n</span>. When the base case returns, each frame finishes its multiplication and is removed, last in, first out.</p>
   <div class="callout warnbox"><span class="k">Watch out</span><p>With no base case, or one that's never reached, the calls never stop. Each one adds a <b>stack frame</b>, until the stack runs out of space: a <b>stack overflow</b>. Python stops it with a RecursionError.</p></div>
   <div class="kpgrid2">
    <div class="keypts"><h3>Benefits</h3><ul><li>Natural and short for problems that are defined in terms of themselves (trees, nested folders, divide and conquer).</li></ul></div>
@@ -143,6 +160,7 @@ show(3)</pre>
    <tr><td>5</td><td>8</td><td>6</td><td>38</td><td>23 &lt; 38 → high = 5</td></tr>
    <tr><td>5</td><td>5</td><td>5</td><td>23</td><td>found at index 5</td></tr></table></div>
   <p>If <b>low</b> ever passes <b>high</b>, the range is empty and the target isn't in the list.</p>
+  <div class="alw" data-w="search"></div>
   <div class="callout"><span class="k">Key idea</span><p>Each comparison <b>halves</b> what's left. 1,000 items need at most about 10 comparisons (2<sup>10</sup> = 1024); a million need about 20. A linear search could need a million.</p></div>
   <h3>Recursive binary search</h3>
   <p>The same algorithm can call itself on the half that's left. The base cases are "found" and "range empty".</p>
@@ -191,6 +209,7 @@ while swapped:
             swapped = True
     p = p + 1
     print("after pass", p, items)</pre>
+  <div class="alw" data-w="sort" data-kind="bubble"></div>
   <div class="kpgrid2">
    <div class="keypts"><h3>Benefits</h3><ul><li>Simple to understand and code.</li><li>Sorts in place, needing no extra list.</li><li>Fast on lists that are already nearly sorted (with the flag).</li></ul></div>
    <div class="keypts"><h3>Drawbacks</h3><ul><li>Very slow on large lists: the work grows with the <b>square</b> of the size.</li><li>Worst case: a list in reverse order.</li></ul></div>
@@ -220,6 +239,7 @@ for i in range(1, len(items)):
         j = j - 1
     items[j + 1] = current          # insert
     print("after pass", i, items)</pre>
+  <div class="alw" data-w="sort" data-kind="insertion"></div>
  </section>
  <section>
   <h2>Comparing the two sorts</h2>
@@ -255,6 +275,9 @@ for i in range(1, len(items)):
   <p class="stepline"><b>1</b><span>NOT first: NOT A = 0.</span></p>
   <p class="stepline"><b>2</b><span>AND next: B AND C = 0 AND 1 = 0.</span></p>
   <p class="stepline"><b>3</b><span>OR last: 0 OR 0 = <b>0</b>.</span></p>
+ </section>
+ <section>
+  <div class="alw" data-w="logic" data-title="Try it: evaluate an expression" data-ex="NOT A OR B AND C|A AND NOT B|(A AND B) OR NOT C|A XOR B|NOT (A AND B)|A NAND B|A NOR B"></div>
  </section>
  <section>
   <h2>Writing expressions from a problem</h2>
@@ -293,6 +316,8 @@ print(not (a and b))   # NAND</pre>
    <tr><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td><td><b>1</b></td></tr>
    <tr><td>1</td><td>1</td><td>1</td><td>1</td><td>0</td><td><b>1</b></td></tr></table></div>
   <div class="callout"><span class="k">Key idea</span><h3>Equivalent expressions</h3><p>Two expressions are <b>equivalent</b> if their output columns match in every row. De Morgan's laws are a famous pair: <b>NOT (A AND B) = NOT A OR NOT B</b>, and <b>NOT (A OR B) = NOT A AND NOT B</b>.</p></div>
+  <div class="alw" data-w="logic" data-title="Try it: build any truth table" data-ex="(A AND B) OR NOT C|(A AND NOT B) OR (B AND C)|NOT (A AND B)|NOT A OR NOT B|NOT (A OR B)|NOT A AND NOT B|(A OR B) AND NOT (A AND B)|A XOR B"></div>
+  <p>Compare <b>NOT (A AND B)</b> with <b>NOT A OR NOT B</b>: the output columns match, which proves De Morgan's law.</p>
   <pre class="pc py" data-run data-t="Try it: print a truth table">print("A B C | out")
 for a in (0, 1):
     for b in (0, 1):
@@ -330,6 +355,7 @@ for name, marks in students.items():
    <div class="keypts"><h3>SQL</h3><p class="mono">SELECT Name FROM Student<br>WHERE Average &gt; 70;</p><p>You state which data you want; the database management system decides how to find it.</p></div>
    <div class="keypts"><h3>Logic programming (Prolog)</h3><p class="mono">parent(ana, ben).<br>parent(ben, cai).<br>grandparent(X, Z) :-<br>&nbsp;&nbsp;parent(X, Y), parent(Y, Z).</p><p>You state <b>facts</b> and <b>rules</b>; a query such as <span class="mono">grandparent(ana, Who)</span> is answered from them.</p></div>
   </div>
+  <div class="alw" data-w="paradigm"></div>
   <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>Procedural</th><th>Declarative</th></tr>
    <tr><td class="lbl">Describes</td><td>How: the steps</td><td>What: the result</td></tr>
    <tr><td class="lbl">Examples</td><td>Python, C, BASIC</td><td>SQL, Prolog</td></tr>

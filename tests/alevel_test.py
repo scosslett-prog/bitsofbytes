@@ -65,6 +65,16 @@ with sync_playwright() as p:
         if not A.evaluate('!!document.querySelector(".theory") && !document.querySelector(".placeholder:not([hidden])")'): bad.append(lid)
         if A.evaluate('document.querySelectorAll("pre.pc.py[data-run]:not([data-ready])").length'): bad.append(lid+' (runnable not set up)')
     ok('every lesson renders its theory', not bad, bad)
+    # interactive widgets: every one starts, and clicking through its buttons raises no errors
+    nw=0;wbad=[]
+    for lid in A.evaluate('ALL_LESSONS.map(l=>l.id)'):
+        A.evaluate(f'location.hash="l-{lid}"'); A.wait_for_timeout(150)
+        info=A.evaluate('[...document.querySelectorAll("#app .alw")].map(w=>[w.dataset.w,!!w.dataset.on,w.children.length>0&&!/couldn.t start/.test(w.textContent)])')
+        for w,on,good in info:
+            nw+=1
+            if not(on and good): wbad.append(f'{lid}:{w}')
+        A.evaluate("""document.querySelectorAll('#app .alw').forEach(w=>{[...w.querySelectorAll('button:not([disabled])')].filter(b=>b.offsetParent&&b.dataset.s!=='play'&&!b.dataset.go).slice(0,8).forEach(b=>b.click())})""")
+    ok(f'all {nw} interactive widgets start', nw>=45 and not wbad, wbad)
     # a Code it task: the model solution passes the hidden tests
     A.evaluate('location.hash="l-a5-1-recursion"'); A.wait_for_selector('#act-py1',state='attached')
     A.click('[data-lgt=acts]'); A.click('#act-py1 .vhead'); A.wait_for_selector('.pytask textarea.pyed')

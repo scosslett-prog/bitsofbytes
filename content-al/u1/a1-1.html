@@ -13,6 +13,16 @@
   <p class="stepline"><b>3</b><span>The CPU decodes the instruction, then executes it. Executing it might read or write data, which lives in the same memory.</span></p>
   <p class="stepline"><b>4</b><span>The cycle repeats with the next instruction until the program ends.</span></p>
   <p>Each instruction is made of an <b>opcode</b> (what to do, such as ADD) and usually an <b>operand</b> (what to do it to, such as a value or an address).</p>
+  <h3>Instructions are just binary</h3>
+  <p>In memory, an instruction looks exactly like data. In a simple 8-bit design the first 4 bits might be the opcode and the last 4 the operand:</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Address</th><th>Binary in memory</th><th>Opcode</th><th>Operand</th><th>Meaning</th></tr>
+   <tr><td>0</td><td>0001 0110</td><td>0001</td><td>0110</td><td class="lbl">LDA 6: load the value at address 6</td></tr>
+   <tr><td>1</td><td>0010 0111</td><td>0010</td><td>0111</td><td class="lbl">ADD 7: add the value at address 7</td></tr>
+   <tr><td>2</td><td>0011 1000</td><td>0011</td><td>1000</td><td class="lbl">STO 8: store the result at address 8</td></tr>
+   <tr><td>6</td><td>0001 1001</td><td colspan="2">(data)</td><td class="lbl">the number 25</td></tr></table></div>
+  <p>Address 0 and address 6 both hold bit patterns starting 0001. Nothing in the memory says which is an instruction and which is a number: it depends only on whether the <b>PC</b> points at it. That's the stored-program concept in action, and it's also why a program with a bug can accidentally run data as if it were code.</p>
+  <h3>Getting a program into memory</h3>
+  <p>Programs are kept on <b>secondary storage</b> (an SSD or hard disk) because RAM loses its contents when the power goes off. When you open a program, the operating system's <b>loader</b> copies it into RAM and sets the PC to its first instruction. Only then can the CPU fetch and run it.</p>
  </section>
  <section id="sp-vn">
   <h2>von Neumann architecture</h2>
@@ -45,6 +55,7 @@
    <div class="keypts"><h3>Drawbacks</h3><ul><li><b>The von Neumann bottleneck:</b> an instruction and its data can't be fetched at the same time, because they share one bus. The CPU often waits.</li><li>Data and instructions look the same, so a bug (or an attack) can <b>overwrite instructions</b> with data.</li></ul></div>
   </div>
   <div class="callout tip"><span class="k">Exam tip</span><p>"Explain one drawback" wants a reason as well as a point: <i>instructions and data share the same bus <b>so</b> they can't be fetched at the same time, <b>which</b> limits the speed of the CPU.</i></p></div>
+  <div class="alw" data-w="vnbus"></div>
   <p>Unit 3 introduces the <b>Harvard architecture</b>, which fixes the bottleneck by giving instructions and data separate memories and buses.</p>
   <pre class="pc py" data-run data-t="Try it: a program is just data">program = ["LOAD 5", "ADD 3", "STORE total"]   # instructions held in a list, like memory
 data = {"total": 0}
@@ -85,6 +96,12 @@ for instruction in program:                         # fetch each one in turn
    <div class="keypts"><h3>Control bus</h3><p>Carries <b>control and timing signals</b>: memory read, memory write, the clock, interrupt requests, bus requests. <b>Bidirectional</b>.</p></div>
   </div>
   <p>The <b>width</b> of a bus is its number of wires. A wider <b>data bus</b> moves more bits per transfer. A wider <b>address bus</b> can reach more memory.</p>
+  <div class="kpgrid2">
+   <div class="keypts"><h3>Wider data bus</h3><p>A 64-bit data bus moves 8 bytes in one transfer; a 32-bit bus needs two transfers for the same data. Wider usually means faster, because the CPU waits for memory less often.</p></div>
+   <div class="keypts"><h3>Wider address bus</h3><p>Each extra wire doubles the number of addresses. A 32-bit address bus can reach 4 GiB of byte-addressed memory; that's why older 32-bit computers couldn't use more than 4 GiB of RAM.</p></div>
+  </div>
+  <h3>Why I/O controllers?</h3>
+  <p>Devices work at very different speeds, voltages and data formats from the CPU. An <b>I/O controller</b> sits between a device and the buses: it converts signals, holds data in a small buffer until the CPU is ready, and raises an <b>interrupt</b> when it needs attention. That way the CPU doesn't have to wait for a slow device such as a printer.</p>
  </section>
  <section>
   <h2>How much memory can be addressed?</h2>
@@ -96,6 +113,7 @@ for instruction in program:                         # fetch each one in turn
   <p class="stepline"><b>Step 2</b><span>Each holds 1 byte, so the addressable memory is 2<sup>20</sup> bytes = <b>1 MiB</b>.</span></p>
   <p>If each location held a 4-byte word, multiply by 4: 2<sup>20</sup> × 4 = 4 MiB.</p>
   <div class="callout tip"><span class="k">Expression</span><p>Addressable memory = <b>2<sup>address bus width</sup> × size of each location</b>. Adding one wire <b>doubles</b> the addressable memory.</p></div>
+  <div class="alw" data-w="addr" data-n="20"></div>
   <pre class="pc py" data-run data-t="Try it: change the bus width">bus_width = 20          # bits on the address bus
 locations = 2 ** bus_width
 print(locations, "locations")
@@ -133,6 +151,7 @@ print(locations // 1024, "KiB if each location is 1 byte")</pre>
    <tr><td class="lbl">Arithmetic logic unit (ALU)</td><td>Does arithmetic (add, subtract, shifts) and logic (AND, OR, XOR, NOT, comparisons). It takes two operands, A and B, and an opcode, and outputs a result and status flags.</td></tr>
    <tr><td class="lbl">General-purpose registers</td><td>Hold data being worked on, so it doesn't have to go back to memory. ARM processors have R0 to R12.</td></tr>
    <tr><td class="lbl">Clock</td><td>Produces regular pulses. Each pulse moves the CPU on one step. Clock speed is measured in hertz (GHz = billions of cycles a second).</td></tr></table></div>
+  <p>The control unit decodes each instruction using the CPU's <b>instruction set</b>: the list of every operation the CPU can carry out, each with its own binary opcode. It then sends the right <b>control signals</b> in the right order: for example "copy the PC into the MAR", "memory read", "ALU: add". A 3 GHz clock gives the control unit three billion of these steps every second.</p>
  </section>
  <section>
   <h2>Special-purpose registers</h2>
@@ -145,6 +164,16 @@ print(locations // 1024, "KiB if each location is 1 byte")</pre>
    <tr><td class="lbl">Stack pointer (SP)</td><td>The address of the <b>top of the stack</b> in memory, used for subroutine calls and returns.</td></tr>
    <tr><td class="lbl">Status register (SR)</td><td><b>Flags</b> about the last result: zero (Z), negative (N), carry (C), overflow (V). Conditional jumps test these flags.</td></tr></table></div>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>The <b>PC</b> holds an <b>address</b>, not an instruction. The instruction itself ends up in the <b>CIR</b>.</p></div>
+ </section>
+ <section>
+  <h2>The status register flags</h2>
+  <p>After each ALU operation, the status register records facts about the result in single bits called <b>flags</b>. Later instructions, such as "branch if equal", test these flags to make decisions.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Flag</th><th>Set to 1 when…</th><th>Example</th></tr>
+   <tr><td class="lbl">N (negative)</td><td>the top bit of the result is 1 (negative in two's complement)</td><td>5 − 9 gives a negative result</td></tr>
+   <tr><td class="lbl">Z (zero)</td><td>the result is zero</td><td>comparing 7 with 7 (7 − 7 = 0), so the values are equal</td></tr>
+   <tr><td class="lbl">C (carry)</td><td>a carry goes out of the top bit (or a borrow is needed)</td><td>200 + 100 in 8 bits: 300 doesn't fit</td></tr>
+   <tr><td class="lbl">V (overflow)</td><td>a signed result is outside the range that can be stored</td><td>100 + 60 = 160, above +127</td></tr></table></div>
+  <div class="alw" data-w="alu"></div>
   <div class="callout tip"><span class="k">Why so many registers?</span><p>Registers are the fastest storage there is. Keeping addresses, instructions and results in registers means the CPU touches slow main memory as little as possible.</p></div>
  </section>
 </div>
@@ -161,6 +190,9 @@ print(locations // 1024, "KiB if each location is 1 byte")</pre>
    <tr><td class="mono">MAR ← [PC]</td><td>The <b>contents</b> of the PC (square brackets) are copied into the MAR (the arrow points to where they go)</td></tr>
    <tr><td class="mono">PC ← [PC] + 1</td><td>The PC is incremented</td></tr>
    <tr><td class="mono">[CIR]</td><td>The contents of the CIR are decoded and executed</td></tr></table></div>
+ </section>
+ <section>
+  <div class="alw" data-w="fde"></div>
  </section>
  <section>
   <h2>Fetch</h2>
@@ -197,6 +229,10 @@ print(locations // 1024, "KiB if each location is 1 byte")</pre>
    <line x1="180" y1="172" x2="116" y2="172" class="l" marker-end="url(#fdA)"/><text x="148" y="164" class="s c">5</text>
    <path d="M40 74 C10 110, 10 110, 40 120" class="ld"/><text x="65" y="118" class="s c">4 PC+1</text>
   </svg><figcaption>The fetch stage, numbered as in the steps above.</figcaption></figure>
+  <h3>Jumps and loops</h3>
+  <p>A <b>jump</b> (branch) instruction works by overwriting the PC during its execute stage. The next fetch then reads from the new address instead of the next one in sequence. A <b>conditional</b> jump only does this if a flag in the status register is set — for example, "jump if zero" — which is how IF statements and loops work at machine level.</p>
+  <h3>How fast?</h3>
+  <p>Each register transfer takes at least one clock pulse, so one instruction needs several ticks. A modern CPU runs billions of cycles a second and overlaps the stages of different instructions (pipelining, in Unit 3), so it completes billions of instructions every second.</p>
   <div class="callout tip"><span class="k">Exam tip</span><p>"Describe the fetch stage" usually carries 4 or 5 marks. Name the <b>registers</b>, the <b>buses</b> and the <b>read signal</b>, in order. Register transfer notation is a quick, precise way to do it.</p></div>
   <pre class="pc py" data-run data-t="Try it: a tiny fetch-decode-execute loop">memory = ["LOAD 7", "ADD 5", "PRINT", "HALT"]
 pc, acc = 0, 0
@@ -238,9 +274,17 @@ while True:
    <tr><td class="lbl">Secondary storage</td><td>Terabytes</td><td>Non-volatile SSDs and hard disks; thousands of times slower than RAM</td></tr></table></div>
  </section>
  <section>
+  <h2>Why a hierarchy works</h2>
+  <p>The difference in speed between the levels is enormous. Scale it up so that reading a register takes one second, and the rest of the hierarchy looks like this:</p>
+  <div class="alw" data-w="memscale"></div>
+ </section>
+ <section>
   <h2>How it works: hits and misses</h2>
   <p>When the CPU needs some data, it checks the fastest level first. If the data is there, it's a <b>hit</b>. If not, it's a <b>miss</b>, and the next level down is checked. When the data is found, a copy is placed in the faster levels, ready for next time.</p>
   <div class="callout"><span class="k">Key idea</span><h3>Locality of reference</h3><p>Programs tend to reuse the same data and instructions again soon (<b>temporal locality</b>, e.g. a loop) and to use addresses near ones they've just used (<b>spatial locality</b>, e.g. stepping through an array). So most requests are hits, and the CPU rarely waits for slow memory.</p></div>
+  <p>When data is fetched from RAM into cache, a whole <b>block</b> of neighbouring bytes (a cache line, often 64 bytes) comes with it. That's spatial locality at work: the next item the program needs is probably already in the cache.</p>
+  <p>Try requesting data in the demo below. Each level checked costs more time; a miss in every cache means a slow trip to RAM.</p>
+  <div class="cachedemo" id="cachedemo"></div>
  </section>
  <section>
   <h2>Benefits and drawbacks</h2>
@@ -283,8 +327,12 @@ while True:
    <tr><td class="lbl">Distance</td><td>Long distances</td><td>Short distances only</td></tr>
    <tr><td class="lbl">Cost</td><td>Cheaper cables and connectors</td><td>More wires, so dearer and bulkier</td></tr>
    <tr><td class="lbl">Used for</td><td>USB, networking, SATA, PCI Express lanes</td><td>Buses inside the CPU and on the motherboard</td></tr></table></div>
+  <div class="alw" data-w="serpar"></div>
+  <h3>Skew and crosstalk</h3>
+  <p><b>Skew</b>: no two wires are exactly the same, so over a long cable the bits sent together on a parallel link arrive at slightly different times. If the receiver reads the byte before the slowest bit arrives, it gets the wrong value. <b>Crosstalk</b>: a changing signal in one wire induces a small current in the wire next to it, which can flip a bit. Both get worse with longer cables and faster clocks.</p>
   <div class="callout"><span class="k">Why serial has taken over</span><p>Parallel looks faster because it sends more bits per tick. But skew and crosstalk limit how fast its clock can run. A single serial line can be clocked so much faster that modern serial links beat old parallel ones, over longer cables, with fewer errors.</p></div>
   <div class="callout tip"><span class="k">Exam tip</span><p>To justify a choice, link the method to the <b>scenario</b>: distance, speed needed, cost and the risk of errors.</p></div>
+  <p class="vfoot">Fast modern links often use several serial lanes side by side (PCI Express can use 1, 4, 8 or 16 lanes). Each lane is serial with its own timing, so there's no skew between bits, but the lanes together still give a very high transfer rate.</p>
  </section>
 </div>
 </template>

@@ -25,6 +25,8 @@
    <tr><td class="lbl">Modem</td><td><b>Modulates and demodulates</b>: converts between the computer's digital data and the signal used on the line to the internet service provider.</td></tr>
    <tr><td class="lbl">Wireless access point</td><td>Lets wireless devices join a wired network using radio waves.</td></tr>
    <tr><td class="lbl">Home router</td><td>A router, switch, wireless access point, modem and firewall combined in one device.</td></tr></table></div>
+  <p>The first time a switch sees a device, it doesn't know which port that device is on, so it sends the frame out of every port. It notes the <b>source MAC address</b> of every frame it receives, so it quickly learns where each device is and then sends frames only where they need to go.</p>
+  <div class="alw" data-w="lan"></div>
  </section>
  <section>
   <h2>Transmission media</h2>
@@ -58,6 +60,7 @@
    <tr><td class="lbl">Latency</td><td>The <b>delay</b> between sending data and it arriving</td><td>milliseconds (ms)</td></tr>
    <tr><td class="lbl">Range</td><td>How far the signal travels before it's too weak to use</td><td>metres, km</td></tr></table></div>
   <div class="callout"><span class="k">Key idea</span><p>Bandwidth is like the number of lanes on a motorway; latency is how long the journey takes. A connection can have high bandwidth and high latency (e.g. satellite), which is fine for downloads but bad for video calls and games.</p></div>
+  <div class="alw" data-w="bw"></div>
   <p>The transfer rate is usually below the bandwidth because of <b>congestion</b> (other users), <b>interference</b>, <b>distance</b>, and extra data such as packet headers and error checking.</p>
  </section>
  <section>
@@ -90,12 +93,14 @@ print(transfer_time(4000, 100) / 60, "minutes for a 4 GB film")</pre>
    <tr><td class="lbl">Changes?</td><td>Normally fixed</td><td colspan="2">Can change when the device moves network</td></tr>
    <tr><td class="lbl">Used for</td><td>Delivering frames <b>within</b> a local network</td><td colspan="2">Routing packets <b>between</b> networks</td></tr></table></div>
   <p>IPv4 has 2<sup>32</sup> ≈ 4.3 billion addresses, which isn't enough for every device in the world. <b>IPv6</b>, with 2<sup>128</sup> addresses, solves that. IPv6 addresses can be shortened: leading zeros in a group can be left out, and one run of all-zero groups can be written as <span class="mono">::</span>.</p>
+  <p>For example, <span class="mono">2001:0db8:0000:0000:0000:0000:0000:0042</span> shortens to <span class="mono">2001:db8::42</span>. Only one <span class="mono">::</span> is allowed, or you couldn't tell how many zero groups each one replaced.</p>
  </section>
  <section>
   <h2>Network and host parts</h2>
   <p>An IP address has two parts: the <b>network address</b>, shared by every device on that network, and the <b>host address</b>, which identifies one device. A <b>subnet mask</b> shows where the split is: 1s mark network bits, 0s mark host bits.</p>
   <div class="tscroll"><table class="pvt mono"><tr><th>IP address</th><td>192</td><td>168</td><td>1</td><td>20</td></tr><tr><th>Subnet mask</th><td>255</td><td>255</td><td>255</td><td>0</td></tr><tr><th>IP AND mask</th><td><b>192</b></td><td><b>168</b></td><td><b>1</b></td><td><b>0</b></td></tr></table></div>
   <p>ANDing the address with the mask gives the <b>network address</b>: 192.168.1.0. Two devices are on the same network if they give the same result. The mask 255.255.255.0 has 24 network bits, so it is often written <span class="mono">/24</span>, leaving 8 host bits.</p>
+  <div class="alw" data-w="subnet"></div>
   <div class="callout tip"><span class="k">How many hosts?</span><p>With h host bits there are 2<sup>h</sup> addresses. Two are reserved (the network address itself, and the broadcast address with all host bits 1), so 2<sup>h</sup> − 2 devices: 254 on a /24 network.</p></div>
   <pre class="pc py" data-run data-t="Try it: find the network address">ip = "10.1.4.77"
 mask = "255.255.0.0"
@@ -140,6 +145,7 @@ print(".".join(network))</pre>
   <p class="stepline"><b>2</b><span>Ana encrypts her message with <b>Ben's public key</b> and sends it.</span></p>
   <p class="stepline"><b>3</b><span>Only <b>Ben's private key</b> can decrypt it. Anyone who intercepts it, even with the public key, can't read it.</span></p>
   <div class="callout"><span class="k">Key idea</span><p>No secret ever has to be sent, so key exchange is solved. But asymmetric encryption is much <b>slower</b>, so secure websites use it only to agree a <b>symmetric</b> key, then switch to fast symmetric encryption for the rest of the session.</p></div>
+  <div class="alw" data-w="keys"></div>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>You encrypt with the <b>receiver's public</b> key, not your own private key.</p></div>
  </section>
 </div>
@@ -154,6 +160,8 @@ print(".".join(network))</pre>
    <tr><th>Cipher</th><td><b>Q</b></td><td><b>W</b></td><td><b>E</b></td><td><b>R</b></td><td><b>T</b></td><td><b>Y</b></td><td><b>U</b></td><td><b>I</b></td><td><b>O</b></td><td><b>P</b></td><td><b>A</b></td><td><b>S</b></td><td><b>D</b></td><td><b>F</b></td><td><b>G</b></td><td><b>H</b></td><td><b>J</b></td><td><b>K</b></td><td><b>L</b></td><td><b>Z</b></td><td><b>X</b></td><td><b>C</b></td><td><b>V</b></td><td><b>B</b></td><td><b>N</b></td><td><b>M</b></td></tr></table></div>
   <p><b>Encrypt</b>: find each plaintext letter on the top row and write the letter below it. CACHE → <b>EQEIT</b>.<br><b>Decrypt</b>: find each ciphertext letter on the bottom row and write the letter above. LZQEA → <b>STACK</b>.</p>
   <p>There are 26! (about 4 × 10<sup>26</sup>) possible keys, far too many to try one by one. But the cipher is still easy to break by <b>frequency analysis</b>: E is the most common letter in English, then T, A, O…, so the most common ciphertext letter probably stands for E.</p>
+  <div class="alw" data-w="subst"></div>
+
  </section>
  <section>
   <h2>The Vernam cipher</h2>
@@ -165,6 +173,7 @@ print(".".join(network))</pre>
    <tr><th>XOR → ciphertext</th><td></td><td><b>1001 1110</b></td></tr>
    <tr><th>Ciphertext XOR key</th><td><b>H</b></td><td>0100 1000</td></tr></table></div>
   <p>XOR is its own inverse, so <b>decrypting is the same operation</b>: XOR the ciphertext with the same key and the plaintext comes back.</p>
+  <div class="alw" data-w="vernam"></div>
   <div class="callout"><span class="k">Key idea</span><h3>Perfect secrecy</h3><p>If the key is <b>truly random</b>, <b>at least as long as the message</b>, <b>kept secret</b> and <b>used only once</b>, every possible plaintext of that length is equally likely, so the ciphertext reveals nothing. It's the only cipher that's mathematically unbreakable.</p></div>
   <p>The drawback is practical: a key as long as all the data must be shared securely in advance and never reused.</p>
   <pre class="pc py" data-run data-t="Try it: the Vernam cipher">import random

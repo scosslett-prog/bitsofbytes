@@ -19,6 +19,9 @@
    <tr><td class="lbl">Process management</td><td>Starts and ends processes, <b>schedules</b> them so they share the CPU, and handles <b>interrupts</b>.</td></tr>
    <tr><td class="lbl">Memory management</td><td>Decides where programs and data go in RAM, keeps track of free memory, <b>protects</b> each process's memory, and uses <b>virtual memory</b> when RAM is full.</td></tr></table></div>
   <div class="callout"><span class="k">Key idea</span><p>All five roles come down to <b>sharing limited resources</b> (CPU time, memory, devices, files) between users and programs safely and efficiently.</p></div>
+  <div class="alw" data-w="osroles"></div>
+  <h3>Device drivers and buffers</h3>
+  <p>There are thousands of different printers, graphics cards and keyboards. Rather than the OS knowing about all of them, each manufacturer supplies a <b>device driver</b>: software that translates the OS's general requests ("print this page") into the exact commands that device understands. A <b>buffer</b> is an area of memory that holds data travelling between a fast part of the system and a slow one, so neither has to wait for the other.</p>
   <div class="callout tip"><span class="k">Exam tip</span><p>Questions often describe a situation, e.g. "a student can't open a teacher's files". Name the role (<b>user management</b>) <b>and</b> say how the OS does it (<b>access rights</b> on each file).</p></div>
  </section>
 </div>
@@ -41,6 +44,7 @@
   </svg><figcaption>Each block is one time slice. The narrow gaps are context switches.</figcaption></figure>
   <h3>Context switching</h3>
   <p>To pause a process and resume it later, the OS must remember exactly where it was. A <b>context switch</b> saves the running process's <b>context</b> (the contents of the PC, the other registers and the status flags) and loads the saved context of the next process. Context switching is pure <b>overhead</b>: no useful work happens while it's going on.</p>
+  <div class="mtdemo" id="mtdemo"></div>
  </section>
  <section>
   <h2>Interrupts</h2>
@@ -57,6 +61,8 @@
   <p class="stepline"><b>4</b><span>The PC is loaded with the address of the matching <b>interrupt service routine (ISR)</b>, found in a table of ISR addresses (the interrupt vector table).</span></p>
   <p class="stepline"><b>5</b><span>The ISR runs. A <b>higher</b>-priority interrupt can interrupt it; a lower one waits.</span></p>
   <p class="stepline"><b>6</b><span>When the ISR ends, the saved registers are <b>popped</b> off the stack and the original task carries on exactly where it stopped.</span></p>
+  <div class="alw" data-w="irq"></div>
+  <p>Try raising a keyboard interrupt, then a power failure while the keyboard ISR is still running. The power failure is more urgent, so it interrupts the ISR: two sets of registers end up on the stack, and they're restored in reverse order.</p>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>The CPU does <b>not</b> stop mid-instruction. It finishes the current cycle first, then checks for interrupts.</p></div>
   <div class="callout tip"><span class="k">Why the stack?</span><p>Interrupts can be <b>nested</b>. A stack is last in, first out, so the most recently interrupted task is the first one resumed.</p></div>
  </section>
@@ -82,6 +88,7 @@
    <line x1="335" y1="190" x2="265" y2="78" class="l" marker-end="url(#psA)"/><text x="200" y="140" class="s">I/O completes</text>
    <line x1="500" y1="74" x2="570" y2="186" class="l" marker-end="url(#psA)"/><text x="560" y="130" class="s">finishes</text>
   </svg><figcaption>A blocked process can't go straight to running: it goes back to the ready queue first.</figcaption></figure>
+  <div class="alw" data-w="states"></div>
  </section>
  <section>
   <h2>Scheduling algorithms</h2>
@@ -91,6 +98,16 @@
    <tr><td class="lbl">First-come, first-served</td><td>Runs processes to completion in arrival order</td><td>Simple; no starvation</td><td>Short jobs can be stuck behind a long one</td></tr>
    <tr><td class="lbl">Shortest job first</td><td>Runs the process with the shortest burst time next</td><td>Lowest average waiting time</td><td>Burst times must be known; long jobs can <b>starve</b></td></tr>
    <tr><td class="lbl">Multi-level queue</td><td>Separate queues by type or priority (e.g. system, interactive, batch), each with its own algorithm</td><td>Suits a mix of process types</td><td>Low-priority queues can starve; more complex</td></tr></table></div>
+  <h3>Round robin</h3>
+  <p>Ready processes wait in a queue. The one at the front runs for one <b>time slice</b> (say 20 ms); if it hasn't finished, a timer interrupt stops it and it joins the <b>back</b> of the queue. Nobody waits long for their next turn, which makes it ideal when many people or programs need a quick response. The choice of time slice matters: too short and much of the CPU's time is wasted on context switches; too long and it behaves like first-come, first-served.</p>
+  <h3>First-come, first-served</h3>
+  <p>Processes run in the order they arrive, each one <b>to completion</b>. It's simple and fair in one sense (no one is overtaken), but one long job at the front makes every short job behind it wait: the "convoy effect".</p>
+  <h3>Shortest job first</h3>
+  <p>Whenever the CPU becomes free, the ready process with the <b>shortest burst time</b> runs next. Getting short jobs out of the way gives the lowest possible average waiting time. But the OS has to <b>estimate</b> burst times (usually from how the process behaved before), and a long job can wait forever if short jobs keep arriving: <b>starvation</b>.</p>
+  <h3>Multi-level queue</h3>
+  <p>Processes are sorted into separate queues, for example <b>system</b> processes, <b>interactive</b> programs and <b>batch</b> jobs (such as overnight backups). Each queue has its own algorithm — round robin for interactive, first-come first-served for batch — and higher queues always go first. Batch jobs only run when nothing more urgent is waiting, so they can starve if the system is busy.</p>
+  <div class="alw" data-w="sched"></div>
+  <p>Change the burst times or arrival times, then compare the average waiting time for each algorithm.</p>
  </section>
  <section>
   <h2>Worked example</h2>
@@ -148,6 +165,7 @@ while queue:
    <rect x="460" y="212" width="100" height="26" class="bw"/><text x="510" y="230" class="s c">7 · other</text></g>
    <line x1="120" y1="110" x2="194" y2="110" class="l" marker-end="url(#pgA)"/><line x1="320" y1="110" x2="454" y2="110" class="l" marker-end="url(#pgA)"/>
   </svg><figcaption>The pages of one process scattered across free frames.</figcaption></figure>
+  <p>When the CPU uses an address, it's split into a <b>page number</b> and an <b>offset</b> within the page. The page table turns the page number into a frame number; the offset stays the same. This translation happens on every memory access, so it's done in hardware.</p>
  </section>
  <section>
   <h2>Segmentation</h2>
@@ -161,6 +179,8 @@ while queue:
  <section>
   <h2>Virtual memory</h2>
   <p>When RAM is full, the OS uses part of <b>secondary storage</b> as if it were extra RAM. Pages that <b>haven't been used recently</b> are <b>swapped out</b> to disk, and swapped back in when they're needed.</p>
+  <p>If a program uses a page that's on disk, a <b>page fault</b> occurs: the OS pauses the process, swaps the page into a free frame (swapping another out if necessary), updates the page table and lets the process carry on.</p>
+  <div class="alw" data-w="paging"></div>
   <div class="kpgrid2">
    <div class="keypts"><h3>Benefits</h3><ul><li>More programs can be open than RAM alone could hold.</li><li>A program bigger than RAM can still run.</li></ul></div>
    <div class="keypts"><h3>Drawbacks</h3><ul><li>Secondary storage is thousands of times slower than RAM.</li><li>If pages are swapped constantly, the computer spends more time swapping than working: <b>disk thrashing</b>. The fix is more RAM.</li></ul></div>
@@ -169,6 +189,18 @@ while queue:
  <section>
   <h2>Stack frames</h2>
   <p>Each time a subroutine is <b>called</b>, a <b>stack frame</b> is pushed onto the call stack. It holds the <b>return address</b> (where to carry on afterwards), the <b>parameters</b> and the <b>local variables</b>. When the subroutine <b>returns</b>, its frame is popped and the CPU jumps to the return address.</p>
+  <div class="alw" data-w="trace" data-stack data-vars="t" data-title="Try it: stack frames"><pre>def area(w, h):
+    result = w * h
+    return result
+
+def total_area(rooms):
+    t = 0
+    for w, h in rooms:
+        t = t + area(w, h)
+    return t
+
+print(total_area([(3, 4), (2, 5)]))</pre></div>
+  <p>Each call pushes a frame holding its parameters and local variables; when the function returns, its frame is popped and the program carries on in the frame below.</p>
   <p>If too many frames are pushed, for example by recursion that never reaches its base case, the stack runs out of space: a <b>stack overflow</b>.</p>
   <pre class="pc py" data-run data-t="Try it: watch the stack grow">def countdown(n):
     print("frame for n =", n)

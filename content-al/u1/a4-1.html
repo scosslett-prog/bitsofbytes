@@ -37,6 +37,8 @@
   <p>Each entity is written as its name followed by its attributes in brackets. The primary key is <b>underlined</b>; foreign keys are marked, here with an asterisk.</p>
   <div class="rtn">Student(<u>StudentID</u>, FirstName, Surname, DateOfBirth)<br>Course(<u>CourseID</u>, Title, Teacher)<br>Enrolment(<u>StudentID*</u>, <u>CourseID*</u>, DateJoined)</div>
   <div class="callout tip"><span class="k">Exam tip</span><p>The <b>foreign key always goes on the "many" side</b> of a 1:M relationship. Each order stores one CustomerID; a customer can't store a list of order numbers in one field.</p></div>
+  <div class="alw" data-w="erd"></div>
+
  </section>
 </div>
 </template>
@@ -63,6 +65,7 @@
    <div class="keypts"><h3>Referential integrity</h3><p>Every foreign key value <b>matches a primary key</b> that exists in the linked table.</p><p class="vfoot">Broken by: an enrolment for course C99 that doesn't exist.</p></div>
    <div class="keypts"><h3>Domain integrity</h3><p>Every value is the <b>right data type</b> and within the <b>allowed range or set</b>.</p><p class="vfoot">Broken by: a Mark of 140 when marks are 0–100.</p></div>
   </div>
+  <div class="alw" data-w="integrity"></div>
   <div class="callout"><span class="k">Why use several tables?</span><p>Splitting data into linked tables means each fact is stored <b>once</b>. With one big table, a teacher's name might be typed in hundreds of rows; change it in one and miss another, and the data becomes <b>inconsistent</b>.</p></div>
   <p class="vfoot">In Unit 2 you'll build and query these tables with SQLite from Python.</p>
  </section>
@@ -83,6 +86,9 @@
    <tr><td class="lbl">Insert at position</td><td class="mono">temps.insert(1, 9)</td><td>[14, 9, 17, 12, 19]</td></tr>
    <tr><td class="lbl">Delete by position</td><td class="mono">del temps[1]</td><td>[14, 12, 19]</td></tr>
    <tr><td class="lbl">Remove last</td><td class="mono">temps.pop()</td><td>returns 19; [14, 17, 12]</td></tr></table></div>
+ </section>
+ <section>
+  <div class="alw" data-w="list"></div>
  </section>
  <section>
   <h2>Two-dimensional arrays</h2>
@@ -130,6 +136,7 @@ for item, qty in stock.items():    # traverse
    <tr><td class="lbl">Intersection: in both</td><td class="mono">a &amp; b</td><td>{3, 4}</td></tr>
    <tr><td class="lbl">Difference: in a, not b</td><td class="mono">a - b</td><td>{1, 2}</td></tr>
    <tr><td class="lbl">Symmetric difference: in one only</td><td class="mono">a ^ b</td><td>{1, 2, 5}</td></tr></table></div>
+  <div class="alw" data-w="sets"></div>
  </section>
  <section>
   <h2>Choosing a structure</h2>
@@ -175,6 +182,7 @@ for item, qty in stock.items():    # traverse
    <tr><td class="lbl">peek()</td><td>Return the top item without removing it.</td></tr>
    <tr><td class="lbl">isEmpty() / isFull()</td><td>Check before popping / pushing.</td></tr>
    <tr><td class="lbl">Search</td><td>Look at each item from the top down to the bottom.</td></tr></table></div>
+  <div class="alw" data-w="stack"></div>
   <p>Uses: the <b>call stack</b> (return addresses and stack frames), <b>undo</b> in an editor, the back button in a browser, reversing data, and checking brackets match.</p>
   <pre class="pc py" data-run data-t="Try it: a stack in a fixed-length list">SIZE = 4
 stack = [None] * SIZE
@@ -236,6 +244,7 @@ print("top is now", top)</pre>
    <text x="280" y="100" class="ta s c">front</text><text x="120" y="100" class="ta s c">rear</text>
    <path d="M440 38 C440 0, 120 0, 120 36" class="ld" marker-end="url(#cqA)"/><text x="280" y="16" class="s c">wraps round</text>
   </svg></figure>
+  <div class="alw" data-w="queue"></div>
   <p>Uses: <b>print queues</b>, <b>keyboard buffers</b>, processes waiting for the CPU (round robin), and data packets waiting to be sent: anywhere things must be handled <b>in the order they arrive</b>.</p>
   <pre class="pc py" data-run data-t="Try it: a circular queue">SIZE = 5
 q = [None] * SIZE

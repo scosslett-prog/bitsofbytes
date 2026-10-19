@@ -9,6 +9,9 @@
   <p>1011 0101 = 128 + 32 + 16 + 4 + 1 = <b>181</b>. The leftmost bit is the <b>most significant bit (MSB)</b>; the rightmost is the <b>least significant bit (LSB)</b>.</p>
  </section>
  <section>
+  <div class="alw" data-w="bits" data-mode="unsigned" data-v="181"></div>
+ </section>
+ <section>
   <h2>Converting</h2>
   <h3>Denary → binary</h3>
   <p>Work from the left: if the place value fits into what's left, write 1 and subtract; otherwise write 0. For <b>200</b>: 128 fits (72 left), 64 fits (8 left), 32 no, 16 no, 8 fits (0 left), then 0s → <b>1100 1000</b>.</p>
@@ -17,6 +20,9 @@
   <div class="tscroll"><table class="pvt mono"><tr><th>Binary</th><td>0011</td><td>1110</td></tr><tr><th>Denary</th><td>3</td><td>14</td></tr><tr><th>Hex</th><td><b>3</b></td><td><b>E</b></td></tr></table></div>
   <h3>Hexadecimal → denary</h3>
   <p>Hex place values are 256, 16, 1. So <b>3E</b> = 3 × 16 + 14 = <b>62</b>.</p>
+  <h3>Denary → hexadecimal</h3>
+  <p>Either convert to binary first and group into nibbles, or divide by 16: the quotient is the first hex digit and the remainder is the second. For <b>200</b>: 200 ÷ 16 = 12 remainder 8, and 12 is C, so 200 = <b>C8</b>. Check: 1100 1000 → C and 8 ✓</p>
+  <p>Hex works so neatly because 16 = 2<sup>4</sup>: every hex digit stands for exactly four bits, so conversion never needs any arithmetic beyond 0–15.</p>
   <div class="callout tip"><span class="k">Why hexadecimal?</span><p>It's much <b>shorter</b> than binary (two hex digits per byte), so it's easier to read, write and remember with fewer mistakes, and it converts to binary directly. You'll see it in colour codes (#FF8800), MAC addresses and memory addresses.</p></div>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>Hex doesn't use less memory: the computer still stores binary. Hex is only a way of <b>writing</b> it for people.</p></div>
   <pre class="pc py" data-run data-t="Try it: conversions in Python">n = 181
@@ -45,6 +51,9 @@ print(format(200, "08b"))        # 8-bit binary with leading zeros</pre>
    <tr><td class="lbl">gibi (Gi)</td><td>2<sup>30</sup></td><td class="lbl">giga (G)</td><td>10<sup>9</sup></td></tr>
    <tr><td class="lbl">tebi (Ti)</td><td>2<sup>40</sup></td><td class="lbl">tera (T)</td><td>10<sup>12</sup></td></tr></table></div>
   <div class="callout"><span class="k">Key idea</span><p>Use <b>binary prefixes</b> (KiB, MiB, GiB) for <b>memory capacity and file sizes</b>. Use <b>decimal prefixes</b> (kbps, Mbps, Gbps) for <b>transmission speeds</b>. A GiB is about 7% bigger than a GB.</p></div>
+  <p>This is why a "1 TB" drive shows up as about 931 GiB on a computer. The manufacturer counts in decimal (1 TB = 10<sup>12</sup> bytes), but the operating system often divides by 1024<sup>4</sup>. Nothing is missing: it's the same number of bytes in two different units.</p>
+  <div class="alw" data-w="units"></div>
+
   <h3>Worked examples</h3>
   <p class="stepline"><b>1</b><span>3 MiB in bytes: 3 × 1024 × 1024 = <b>3,145,728 bytes</b>.</span></p>
   <p class="stepline"><b>2</b><span>4 GiB in MiB: 4 × 1024 = <b>4,096 MiB</b>.</span></p>
@@ -64,6 +73,10 @@ print(format(200, "08b"))        # 8-bit binary with leading zeros</pre>
   <p>1111 1011 = −128 + 64 + 32 + 16 + 8 + 2 + 1 = <b>−5</b>. If the MSB is 1 the number is negative; if it's 0 the number is positive and reads like ordinary binary.</p>
   <div class="facts3"><div><b>0111 1111</b><span>+127, the largest</span></div><div><b>0000 0000</b><span>0</span></div><div><b>1000 0000</b><span>−128, the smallest</span></div></div>
   <p>With n bits the range is <b>−2<sup>n−1</sup></b> to <b>2<sup>n−1</sup> − 1</b>: −128 to +127 in 8 bits.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Bits</th><th>Unsigned range</th><th>Two's complement range</th></tr><tr><td>4</td><td>0 to 15</td><td>−8 to +7</td></tr><tr><td>8</td><td>0 to 255</td><td>−128 to +127</td></tr><tr><td>16</td><td>0 to 65,535</td><td>−32,768 to +32,767</td></tr></table></div>
+  <p>The same 8 bits can mean different numbers: 1111 1011 is 251 unsigned but −5 in two's complement. The bits don't say which; the program decides how to interpret them.</p>
+  <div class="alw" data-w="bits" data-mode="twos" data-v="251"></div>
+
  </section>
  <section>
   <h2>Negation: flip and add 1</h2>
@@ -73,6 +86,7 @@ print(format(200, "08b"))        # 8-bit binary with leading zeros</pre>
   <p class="stepline"><b>Step 3</b><span>Add 1: <b>1111 1011</b> = −5.</span></p>
   <div class="callout tip"><span class="k">A shortcut</span><p>Copy bits from the right up to and including the first 1, then flip all the rest. 0000 0<b>101</b> → 1111 1<b>011</b>.</p></div>
   <div class="callout warnbox"><span class="k">A common mistake!</span><p>Don't forget to <b>pad to the full number of bits</b> before flipping. Flipping 101 gives 010, which is wrong; flipping 0000 0101 gives 1111 1010, which is right.</p></div>
+  <p>Try the <b>Negate</b> button in the register above: it flips every bit, then adds 1.</p>
   <h3>Why two's complement?</h3>
   <p>There is only <b>one zero</b>, and ordinary binary addition works for positive and negative numbers alike, so the ALU can subtract by adding the negative.</p>
   <pre class="pc py" data-run data-t="Try it: 8-bit two's complement">def to_twos(n):
@@ -105,6 +119,8 @@ print(from_twos("11111011"))</pre>
   <h3>Denary → binary (negative)</h3>
   <p>Write the positive version, then <b>flip and add 1</b> across all the bits. For <b>−2.375</b>: 0010.0110 → 1101.1001 → <b>1101.1010</b>.</p>
   <p>Check: −8 + 4 + 1 + ½ + ⅛ = −2.375 ✓</p>
+  <div class="alw" data-w="bits" data-mode="fixed" data-v="88" data-int="4"></div>
+  <p>Click bits to build values, move the binary point, and try typing 0.1 into the <b>Set to</b> box to see that it can only be approximated.</p>
  </section>
  <section>
   <h2>Range and precision</h2>

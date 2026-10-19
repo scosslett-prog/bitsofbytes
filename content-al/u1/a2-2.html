@@ -9,6 +9,7 @@
    <tr><th>+</th><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td><td>1</td></tr>
    <tr><th>=</th><td><b>1</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>0</b></td><td><b>1</b></td></tr></table></div>
   <p>106 + 23 = 129 → <b>1000 0001</b>. As unsigned binary that's right. As 8-bit two's complement it reads as −127: the answer has <b>overflowed</b> into the sign bit.</p>
+  <div class="alw" data-w="add" data-a="106" data-b="23"></div>
  </section>
  <section>
   <h2>Subtraction</h2>
@@ -16,6 +17,7 @@
   <p class="stepline"><b>Step 1</b><span>45 − 18. Write 18: 0001 0010.</span></p>
   <p class="stepline"><b>Step 2</b><span>Negate: flip → 1110 1101, add 1 → 1110 1110 (−18).</span></p>
   <p class="stepline"><b>Step 3</b><span>Add 0010 1101 + 1110 1110 = 1 0001 1011. <b>Ignore the carry out</b> of the 8th bit: <b>0001 1011</b> = 27 ✓</span></p>
+  <p>Set the demo above to <b>−</b> and <b>Two's complement</b> to watch a subtraction: it negates the second number first, then adds.</p>
  </section>
  <section>
   <h2>Overflow and underflow</h2>
@@ -25,6 +27,7 @@
    <tr><td class="lbl">Two's complement addition</td><td>Two positives give a negative, or two negatives give a positive</td></tr>
    <tr><td class="lbl">Adding a positive and a negative</td><td>Overflow <b>can't</b> happen</td></tr></table></div>
   <p>The CPU records these in the <b>status register</b>: the <b>carry flag</b> (C) for a carry out of the MSB and the <b>overflow flag</b> (V) for signed overflow, so a program can detect them.</p>
+  <p><b>Underflow</b> also happens with fractions: in 8-bit fixed point with four fractional bits, the smallest positive value is 1/16. Halve 1/16 and the answer, 1/32, is too small to store: it becomes 0.</p>
   <div class="callout warnbox"><span class="k">Why it matters</span><p>Overflow gives wrong answers silently. A counter can wrap from 255 to 0, or a score from +127 to −128. Programs avoid this by using more bits or checking ranges.</p></div>
   <pre class="pc py" data-run data-t="Try it: an 8-bit register">reg = 250
 for i in range(8):
@@ -43,6 +46,7 @@ for i in range(8):
    <tr><td class="lbl">Logical left</td><td>Bits move left; 0s fill on the right. × 2 per place</td><td class="mono">0001 0110 → 0101 1000 (22 → 88)</td></tr>
    <tr><td class="lbl">Logical right</td><td>Bits move right; 0s fill on the left. ÷ 2 per place (rounding down) for unsigned numbers</td><td class="mono">0110 1100 → 0000 1101 (108 → 13)</td></tr>
    <tr><td class="lbl">Arithmetic right</td><td>Bits move right; the <b>sign bit is copied</b> in on the left, so signed numbers keep their sign</td><td class="mono">1110 0000 → 1111 1000 (−32 → −8)</td></tr></table></div>
+  <div class="alw" data-w="shift" data-v="22"></div>
   <div class="callout warnbox"><span class="k">Watch out</span><p>Bits shifted off the end are <b>lost</b>. Shifting left can lose 1s off the top (overflow); shifting right loses any remainder.</p></div>
  </section>
  <section>
@@ -53,6 +57,7 @@ for i in range(8):
    <div class="keypts"><h3>OR: set</h3><p class="mono">1100 1010<br>OR 0000 0101<br>= 1100 1111</p><p>Mask 1 <b>sets</b> a bit to 1; mask 0 leaves it alone.</p></div>
    <div class="keypts"><h3>XOR: toggle</h3><p class="mono">1100 1010<br>XOR 1111 0000<br>= 0011 1010</p><p>Mask 1 <b>flips</b> a bit; mask 0 leaves it alone.</p></div>
   </div>
+  <div class="alw" data-w="mask"></div>
   <h3>In Python</h3>
   <p>Python's bitwise operators are <span class="mono">&amp;</span> (AND), <span class="mono">|</span> (OR), <span class="mono">^</span> (XOR), <span class="mono">&lt;&lt;</span> and <span class="mono">&gt;&gt;</span>. On negative integers, <span class="mono">&gt;&gt;</span> is an arithmetic shift.</p>
   <pre class="pc py" data-run data-t="Try it: masks on a status byte">status = 0b1100_1010
@@ -80,6 +85,10 @@ print(22 << 2, 108 >> 3, -32 >> 2)</pre>
   <h2>Unicode and UTF-8</h2>
   <p><b>Unicode</b> gives every character in every writing system, plus symbols and emoji, its own <b>code point</b>, written in hex like U+0041 ('A') or U+20AC ('€'). There are over a million possible code points.</p>
   <p><b>UTF-8</b> is the most common way of storing Unicode. It's <b>variable length</b>: 1 byte for ASCII characters (with the same codes as ASCII), and 2, 3 or 4 bytes for others.</p>
+  <div class="tscroll"><table class="pvt mono"><tr><th>Code points</th><th>Bytes</th><th>Bit pattern</th></tr><tr><td>U+0000 to U+007F</td><td>1</td><td>0xxxxxxx</td></tr><tr><td>U+0080 to U+07FF</td><td>2</td><td>110xxxxx 10xxxxxx</td></tr><tr><td>U+0800 to U+FFFF</td><td>3</td><td>1110xxxx 10xxxxxx 10xxxxxx</td></tr><tr><td>U+10000 and above</td><td>4</td><td>11110xxx 10xxxxxx ×3</td></tr></table></div>
+  <p>The first bits of each byte say how many bytes the character uses, and every continuation byte starts 10, so a program can always find where a character starts.</p>
+  <div class="alw" data-w="utf8"></div>
+
   <div class="tscroll"><table class="pvt deftab"><tr><th></th><th>ASCII / extended ASCII</th><th>Unicode (UTF-8)</th></tr>
    <tr><td class="lbl">Characters</td><td>128 / 256</td><td>Over a million possible</td></tr>
    <tr><td class="lbl">Languages</td><td>English (plus one more set of symbols)</td><td>Every writing system, plus emoji</td></tr>
