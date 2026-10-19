@@ -1,0 +1,211 @@
+<template id="th-a8-3-sqlcreate">
+<div class="theory airy">
+ <section>
+  <h2>Databases from Python</h2>
+  <p>A text file is fine for a short list, but searching, sorting and linking larger amounts of data is far easier in a <b>relational database</b>. Python's built-in <span class="mono">sqlite3</span> library lets a program create and use an SQLite database, which is stored as a single file. You talk to it in <b>SQL</b>.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Step</th><th>Python</th></tr>
+   <tr><td>1. Load the library</td><td class="mono">import sqlite3</td></tr>
+   <tr><td>2. Connect (creates the file if it's new)</td><td class="mono">con = sqlite3.connect("pets.db")</td></tr>
+   <tr><td>3. Make a cursor</td><td class="mono">cur = con.cursor()</td></tr>
+   <tr><td>4. Run SQL</td><td class="mono">cur.execute("…")</td></tr>
+   <tr><td>5. Save changes</td><td class="mono">con.commit()</td></tr>
+   <tr><td>6. Finish</td><td class="mono">con.close()</td></tr></table></div>
+  <div class="callout tip"><span class="k">In these lessons</span><p>The examples connect to <span class="mono">":memory:"</span>, a database held in RAM that disappears when the program ends, so every run starts fresh. In the exam you'll usually be given a <span class="mono">.db</span> file name instead; the code is otherwise the same.</p></div>
+ </section>
+ <section>
+  <h2>Creating tables</h2>
+  <p><span class="mono">CREATE TABLE</span> names the table and lists its fields, each with a data type. SQLite's main types are <b>INTEGER</b>, <b>REAL</b> and <b>TEXT</b>.</p>
+  <pre class="pc py" data-run data-t="Try it: create two linked tables">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+
+cur.execute("""CREATE TABLE Owner (
+    OwnerID INTEGER PRIMARY KEY,
+    Name TEXT,
+    Town TEXT)""")
+
+cur.execute("""CREATE TABLE Pet (
+    PetID INTEGER PRIMARY KEY,
+    Name TEXT,
+    Species TEXT,
+    Age INTEGER,
+    OwnerID INTEGER,
+    FOREIGN KEY (OwnerID) REFERENCES Owner(OwnerID))""")
+con.commit()
+
+for row in cur.execute("SELECT name FROM sqlite_master WHERE type = 'table'"):
+    print("Table:", row[0])
+for col in cur.execute("PRAGMA table_info(Pet)"):
+    print(" ", col[1], col[2], "(primary key)" if col[5] else "")
+con.close()</pre>
+  <p>The <b>primary key</b> uniquely identifies each record. The <b>foreign key</b> <span class="mono">Pet.OwnerID</span> holds an owner's primary key, which links every pet to one owner: a <b>one-to-many</b> relationship (one owner, many pets).</p>
+  <div class="alw" data-w="erd"></div>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Running <span class="mono">CREATE TABLE</span> on a table that already exists raises an error, which is a problem when a program is run a second time on the same file. Write <span class="mono">CREATE TABLE IF NOT EXISTS</span> to avoid it.</p></div>
+ </section>
+ <section>
+  <h2>The tables used in this section</h2>
+  <p>The rest of 8.3 uses these two tables.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th colspan="3">Owner</th></tr><tr><th>OwnerID</th><th>Name</th><th>Town</th></tr><tr><td>1</td><td>Ana</td><td>Leeds</td></tr><tr><td>2</td><td>Ben</td><td>York</td></tr><tr><td>3</td><td>Cai</td><td>Leeds</td></tr></table></div>
+  <div class="tscroll"><table class="pvt deftab"><tr><th colspan="5">Pet</th></tr><tr><th>PetID</th><th>Name</th><th>Species</th><th>Age</th><th>OwnerID</th></tr><tr><td>1</td><td>Rex</td><td>Dog</td><td>5</td><td>1</td></tr><tr><td>2</td><td>Tom</td><td>Cat</td><td>3</td><td>1</td></tr><tr><td>3</td><td>Bubbles</td><td>Fish</td><td>1</td><td>2</td></tr><tr><td>4</td><td>Luna</td><td>Cat</td><td>8</td><td>3</td></tr><tr><td>5</td><td>Max</td><td>Dog</td><td>2</td><td>3</td></tr></table></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-3-sqlmodify">
+<div class="theory airy">
+ <section>
+  <h2>Inserting records</h2>
+  <p><span class="mono">INSERT INTO</span> adds a record. Values come from Python through <b>? placeholders</b>, passed as a tuple after the SQL. <span class="mono">executemany()</span> runs the same statement for every tuple in a list.</p>
+  <pre class="pc py" data-run data-t="Try it: inserting records">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Owner (OwnerID INTEGER PRIMARY KEY, Name TEXT, Town TEXT)")
+
+cur.execute("INSERT INTO Owner VALUES (?, ?, ?)", (1, "Ana", "Leeds"))
+owners = [(2, "Ben", "York"), (3, "Cai", "Leeds")]
+cur.executemany("INSERT INTO Owner VALUES (?, ?, ?)", owners)
+cur.execute("INSERT INTO Owner (Name) VALUES (?)", ("Dev",))  # ID chosen for us
+con.commit()
+
+print(cur.execute("SELECT * FROM Owner").fetchall())</pre>
+  <div class="callout tip"><span class="k">A tuple of one</span><p>A single value still has to be passed as a tuple, so it needs a trailing comma: <span class="mono">("Dev",)</span>. Without it, <span class="mono">("Dev")</span> is just a string in brackets.</p></div>
+ </section>
+ <section>
+  <h2>Why placeholders matter</h2>
+  <p>It's tempting to build SQL by joining strings, but if the value comes from a user they can type text that changes the meaning of the statement. This is <b>SQL injection</b>. Placeholders pass the value separately, so it's always treated as data, never as SQL.</p>
+  <pre class="pc py" data-run data-t="Try it: an injection attack" data-stdin="x' OR '1'='1">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Users (Name TEXT, Secret TEXT)")
+cur.executemany("INSERT INTO Users VALUES (?, ?)", [("ana", "cat123"), ("ben", "pa55")])
+
+name = input("Username: ")
+unsafe = "SELECT * FROM Users WHERE Name = '" + name + "'"
+print("Joined into the SQL:", cur.execute(unsafe).fetchall())
+safe = cur.execute("SELECT * FROM Users WHERE Name = ?", (name,)).fetchall()
+print("With a placeholder:", safe)</pre>
+ </section>
+ <section>
+  <h2>Updating and deleting</h2>
+  <p><span class="mono">UPDATE</span> changes fields and <span class="mono">DELETE</span> removes whole records. The <span class="mono">WHERE</span> clause chooses which records are affected. <span class="mono">cur.rowcount</span> tells you how many were changed.</p>
+  <pre class="pc py" data-run data-t="Try it: update and delete">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Pet (PetID INTEGER PRIMARY KEY, Name TEXT, Species TEXT, Age INTEGER)")
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?, ?)",
+    [(1, "Rex", "Dog", 5), (2, "Tom", "Cat", 3), (3, "Bubbles", "Fish", 1), (4, "Luna", "Cat", 8)])
+
+cur.execute("UPDATE Pet SET Age = Age + 1 WHERE Species = 'Cat'")
+print("Updated", cur.rowcount, "rows")
+cur.execute("DELETE FROM Pet WHERE Name = ?", ("Bubbles",))
+print("Deleted", cur.rowcount, "row")
+con.commit()
+for row in cur.execute("SELECT * FROM Pet"):
+    print(row)</pre>
+  <div class="callout warnbox"><span class="k">Forget WHERE at your peril</span><p><span class="mono">UPDATE Pet SET Age = 1</span> sets <b>every</b> pet's age to 1, and <span class="mono">DELETE FROM Pet</span> empties the whole table. Always check the WHERE clause before you run a change.</p></div>
+  <div class="callout tip"><span class="k">Commit</span><p>Changes aren't written to the file until <span class="mono">con.commit()</span>. If the program crashes first, they are lost. Reading data with SELECT doesn't need a commit.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-3-sqlselect">
+<div class="theory airy">
+ <section>
+  <h2>SELECT queries</h2>
+  <p>A query is built from clauses that always come in this order. Only SELECT and FROM are required.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Clause</th><th>Job</th><th>Example</th></tr>
+   <tr><td class="mono">SELECT</td><td>Which fields</td><td class="mono">SELECT Name, Age</td></tr>
+   <tr><td class="mono">FROM</td><td>Which table</td><td class="mono">FROM Pet</td></tr>
+   <tr><td class="mono">WHERE</td><td>Which records</td><td class="mono">WHERE Species = 'Cat'</td></tr>
+   <tr><td class="mono">ORDER BY</td><td>Sort order</td><td class="mono">ORDER BY Age DESC</td></tr></table></div>
+  <p>In Python, <span class="mono">fetchall()</span> returns the result as a <b>list of tuples</b>, one tuple per row. <span class="mono">fetchone()</span> returns just the next row, or <span class="mono">None</span>. You can also loop straight over the cursor.</p>
+  <pre class="pc py" data-run data-t="Try it: queries on the Pet table">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Pet (PetID INTEGER PRIMARY KEY, Name TEXT, Species TEXT, Age INTEGER, OwnerID INTEGER)")
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?, ?, ?)", [(1, "Rex", "Dog", 5, 1),
+    (2, "Tom", "Cat", 3, 1), (3, "Bubbles", "Fish", 1, 2), (4, "Luna", "Cat", 8, 3), (5, "Max", "Dog", 2, 3)])
+
+print(cur.execute("SELECT Name, Age FROM Pet WHERE Species = 'Cat'").fetchall())
+print(cur.execute("SELECT Name FROM Pet ORDER BY Age DESC").fetchone())
+for name, age in cur.execute("SELECT Name, Age FROM Pet WHERE Age BETWEEN 2 AND 5 ORDER BY Name"):
+    print(f"{name} is {age}")</pre>
+ </section>
+ <section>
+  <h2>Conditions</h2>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Condition</th><th>Meaning</th></tr>
+   <tr><td class="mono">= &lt;&gt; &lt; &gt; &lt;= &gt;=</td><td>Comparisons (<span class="mono">&lt;&gt;</span> or <span class="mono">!=</span> means not equal)</td></tr>
+   <tr><td class="mono">AND / OR / NOT</td><td>Combine conditions</td></tr>
+   <tr><td class="mono">BETWEEN 2 AND 5</td><td>In the range, including both ends</td></tr>
+   <tr><td class="mono">LIKE 'B%'</td><td>Pattern: % is any number of characters, _ is exactly one</td></tr>
+   <tr><td class="mono">IN ('Cat', 'Dog')</td><td>Matches any value in the list</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: search with input" data-stdin="b">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Pet (Name TEXT, Species TEXT, Age INTEGER)")
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?)", [("Rex", "Dog", 5),
+    ("Tom", "Cat", 3), ("Bubbles", "Fish", 1), ("Luna", "Cat", 8), ("Max", "Dog", 2)])
+
+start = input("Names starting with: ")
+rows = cur.execute("SELECT Name FROM Pet WHERE Name LIKE ? ORDER BY Name", (start + "%",)).fetchall()
+if rows:
+    print("Found:", ", ".join(r[0] for r in rows))
+else:
+    print("None found")</pre>
+  <div class="callout tip"><span class="k">Getting plain values out</span><p>Each row is a tuple even when you select one field, so <span class="mono">[('Rex',), ('Max',)]</span> needs turning into a plain list: <span class="mono">[row[0] for row in rows]</span>.</p></div>
+ </section>
+</div>
+</template>
+
+<template id="th-a8-3-sqljoin">
+<div class="theory airy">
+ <section>
+  <h2>Aggregate functions</h2>
+  <p>An <b>aggregate function</b> works on many rows and returns a single value. With <span class="mono">GROUP BY</span>, it returns one value for each group instead.</p>
+  <div class="tscroll"><table class="pvt deftab"><tr><th>Function</th><th>Returns</th><th>On the Pet table</th></tr>
+   <tr><td class="mono">COUNT(*)</td><td>Number of rows</td><td class="mono">5</td></tr>
+   <tr><td class="mono">SUM(Age)</td><td>Total</td><td class="mono">19</td></tr>
+   <tr><td class="mono">AVG(Age)</td><td>Mean</td><td class="mono">3.8</td></tr>
+   <tr><td class="mono">MIN(Age) / MAX(Age)</td><td>Smallest / largest</td><td class="mono">1 / 8</td></tr></table></div>
+  <pre class="pc py" data-run data-t="Try it: aggregates and GROUP BY">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Pet (PetID INTEGER PRIMARY KEY, Name TEXT, Species TEXT, Age INTEGER, OwnerID INTEGER)")
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?, ?, ?)", [(1, "Rex", "Dog", 5, 1),
+    (2, "Tom", "Cat", 3, 1), (3, "Bubbles", "Fish", 1, 2), (4, "Luna", "Cat", 8, 3), (5, "Max", "Dog", 2, 3)])
+
+n, total, mean = cur.execute("SELECT COUNT(*), SUM(Age), AVG(Age) FROM Pet").fetchone()
+print(n, "pets, total age", total, "mean", mean)
+print("Cats:", cur.execute("SELECT COUNT(*) FROM Pet WHERE Species = 'Cat'").fetchone()[0])
+for species, count, oldest in cur.execute(
+        "SELECT Species, COUNT(*), MAX(Age) FROM Pet GROUP BY Species ORDER BY Species"):
+    print(f"{species}: {count}, oldest {oldest}")</pre>
+  <div class="callout tip"><span class="k">One value back</span><p>An aggregate query still returns a row tuple, so a single total needs <span class="mono">fetchone()[0]</span>.</p></div>
+ </section>
+ <section>
+  <h2>Joining tables</h2>
+  <p>The owner's name isn't in the Pet table, only their OwnerID. An <b>INNER JOIN</b> combines each pet with the owner whose primary key matches the pet's foreign key. When both tables have a field with the same name, write <span class="mono">Table.Field</span> to say which you mean.</p>
+  <pre class="pc py" data-run data-t="Try it: joining Pet and Owner" data-stdin="Leeds">import sqlite3
+con = sqlite3.connect(":memory:")
+cur = con.cursor()
+cur.execute("CREATE TABLE Owner (OwnerID INTEGER PRIMARY KEY, Name TEXT, Town TEXT)")
+cur.execute("CREATE TABLE Pet (PetID INTEGER PRIMARY KEY, Name TEXT, Species TEXT, Age INTEGER, OwnerID INTEGER)")
+cur.executemany("INSERT INTO Owner VALUES (?, ?, ?)", [(1, "Ana", "Leeds"), (2, "Ben", "York"), (3, "Cai", "Leeds")])
+cur.executemany("INSERT INTO Pet VALUES (?, ?, ?, ?, ?)", [(1, "Rex", "Dog", 5, 1),
+    (2, "Tom", "Cat", 3, 1), (3, "Bubbles", "Fish", 1, 2), (4, "Luna", "Cat", 8, 3), (5, "Max", "Dog", 2, 3)])
+
+town = input("Town: ")
+rows = cur.execute("""SELECT Pet.Name, Pet.Species, Owner.Name
+                      FROM Pet INNER JOIN Owner ON Pet.OwnerID = Owner.OwnerID
+                      WHERE Owner.Town = ?
+                      ORDER BY Pet.Name""", (town,)).fetchall()
+for pet, species, owner in rows:
+    print(f"{pet} the {species.lower()} belongs to {owner}")
+
+print(cur.execute("""SELECT Owner.Name, COUNT(*) FROM Owner
+                     INNER JOIN Pet ON Pet.OwnerID = Owner.OwnerID
+                     GROUP BY Owner.Name""").fetchall())</pre>
+  <div class="callout warnbox"><span class="k">A common mistake!</span><p>Leaving out the <span class="mono">ON</span> condition (or writing <span class="mono">FROM Pet, Owner</span> with no WHERE linking them) pairs <b>every</b> pet with <b>every</b> owner: 5 × 3 = 15 rows of nonsense.</p></div>
+ </section>
+</div>
+</template>
