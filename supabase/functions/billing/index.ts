@@ -10,6 +10,10 @@
 //        finance email (payable by card or bank transfer within 30 days). The licences work straight away;
 //        if the invoice isn't paid, Stripe cancels the subscription (Settings → Billing → Subscriptions and
 //        emails → "Manage invoices sent to customers") and the licences stop.
+//   { action: "set_licences", id, quantity }     teachers: change the number of licences on one of their
+//        subscriptions (row id from public.subscriptions). More licences are charged straight away for the
+//        rest of the year (to the card, or as an invoice emailed to the school); fewer gives a credit at renewal.
+//        The new total can't drop below the students already in the teacher's classes.
 //   A teacher's first licence purchase (card or invoice) also adds the yearly teacher subscription, if they
 //   don't already have full access; "seller" says whether it will (for a signed-in teacher).
 // Secrets (Supabase → Edge Functions → Secrets): STRIPE_SECRET_KEY, STRIPE_PRICE_LICENCE, STRIPE_PRICE_TEACHER,
@@ -98,7 +102,7 @@ async function saveRows(sub: Stripe.Subscription, user_id: string) {
     await admin.from("subscriptions").upsert({
       id: items.length === 1 ? sub.id : `${sub.id}:${plan}`, user_id, plan, status: sub.status, quantity: item.quantity ?? 1, price_id: priceId,
       interval: item.price.recurring?.interval ?? null, current_period_end: end ? new Date(end * 1000).toISOString() : null,
-      cancel_at_period_end: false, collection: sub.collection_method ?? "send_invoice", updated_at: new Date().toISOString(),
+      cancel_at_period_end: !!sub.cancel_at_period_end, collection: sub.collection_method ?? "send_invoice", updated_at: new Date().toISOString(),
     });
   }
 }
@@ -190,6 +194,45 @@ Deno.serve(async (req) => {
       // record it now too, so the licences show at once even before the webhook arrives
       await saveRows(sub, user.id);
       return reply(200, { teacher: withTeacher, number: inv.number, url: inv.hosted_invoice_url, pdf: inv.invoice_pdf, email, total: inv.total, currency: inv.currency, due: inv.due_date });
+    }
+
+    if (action === "set_licences") {
+      if (!["teacher", "admin"].includes(user.role)) return reply(403, { error: "Only teacher accounts have licences." });
+      const quantity = Math.floor(Number(body.quantity) || 0);
+      if (!(quantity >= 1 && quantity <= 1000)) return reply(400, { error: "Choose from 1 to 1000 licences." });
+      const sid = String(body.id ?? "").split(":")[0];
+      if (!/^sub_[A-Za-z0-9]+$/.test(sid)) return reply(400, { error: "That isn't one of your subscriptions." });
+      const sub = await stripe.subscriptions.retrieve(sid);
+      if (sub.metadata?.user_id !== user.id) return reply(403, { error: "That isn't one of your subscriptions." });
+      if (!["active", "trialing", "past_due"].includes(sub.status)) return reply(400, { error: "That subscription has ended. Buy new licences instead." });
+      const item = sub.items.data.find((i) => i.price.id === PRICES.licences) ?? (sub.items.data.length === 1 && sub.metadata?.plan === "licences" ? sub.items.data[0] : undefined);
+      if (!item) return reply(400, { error: "That subscription has no licences." });
+      const before = item.quantity ?? 0;
+      if (quantity === before) return reply(200, { quantity });
+      const [{ data: total }, { data: used }] = await Promise.all([admin.rpc("_licence_total", { t: user.id }), admin.rpc("_licences_used", { t: user.id })]);
+      if (Number(total ?? 0) - before + quantity < Number(used ?? 0))
+        return reply(400, { error: `${used} students are using licences in your classes, so you need at least ${Number(used) - Number(total ?? 0) + before} on this subscription. Remove students from a class first to go lower.` });
+      const more = quantity > before, byInvoice = sub.collection_method === "send_invoice";
+      let updated: Stripe.Subscription;
+      try {
+        updated = await stripe.subscriptions.update(sid, {
+          items: [{ id: item.id, quantity }],
+          proration_behavior: more ? "always_invoice" : "create_prorations",
+          ...(more && !byInvoice ? { payment_behavior: "error_if_incomplete" as const } : {}),
+        });
+      } catch (e) {
+        const msg = (e as { message?: string })?.message ?? "";
+        return reply(402, { error: /card|declin|payment/i.test(msg) ? `The payment didn't go through: ${msg}` : "The licences couldn't be changed. Please try again." });
+      }
+      let invoice: { url?: string | null; number?: string | null } | null = null;
+      if (more && byInvoice && updated.latest_invoice) {
+        let inv = await stripe.invoices.retrieve(typeof updated.latest_invoice === "string" ? updated.latest_invoice : updated.latest_invoice.id);
+        if (inv.status === "draft") inv = await stripe.invoices.finalizeInvoice(inv.id);
+        try { inv = await stripe.invoices.sendInvoice(inv.id); } catch (e) { console.warn("send invoice", e); }
+        invoice = { url: inv.hosted_invoice_url, number: inv.number };
+      }
+      await saveRows(updated, user.id);
+      return reply(200, { quantity, invoice, byInvoice });
     }
 
     if (action === "portal") {

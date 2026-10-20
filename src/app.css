@@ -529,6 +529,8 @@ html.tzopen,html.tzopen body{overflow:hidden}
 .admcode{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px;align-items:end}
 .admcode button{justify-self:start}
 .toffer form{margin-top:8px}
+.linkbtn{font:inherit;background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;cursor:pointer}
+.tlicedit{flex-direction:column;align-items:stretch!important;gap:6px}
 .tinvf{margin-top:4px}.tinvf .tbb{display:flex;gap:8px;flex-wrap:wrap}
 .tpz{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0;display:flex;flex-direction:column;gap:8px}
 .tpz legend{font-weight:600;padding:0 4px}

@@ -628,16 +628,35 @@ function licBilling(){const P=BOB.pay;if(!P.enabled)return "";
   const tline=T?`<p class="tsubline"><b>Teacher subscription</b> <span class="sub">${T.collection==="offer"?"from an offer code · ends":T.cancel_at_period_end?"ends":"renews"} ${T.current_period_end?fmtD(T.current_period_end):""}</span></p>`
     :P.access.staff&&!P.access.admin?`<p class="tsubline sub">Full access comes with your licences.</p>`
     :first?`<div class="msg tfirst"><b>Your first purchase includes your teacher subscription${tfee?` (${tfee} a year)`:""}.</b> It unlocks every lesson, activity and exam question for you; until then you can open the first lesson of each section.</div>`:"";
-  const subs=P.licenceSubs.map(x=>`<li><span><b>${plural(x.quantity,"licence")}</b> · ${inv(x)?"paid by invoice":"yearly subscription"}</span><span class="sub">${x.status==="past_due"?(inv(x)?"invoice overdue · ":"payment overdue · "):""}${x.cancel_at_period_end?"ends":"renews"} ${x.current_period_end?fmtD(x.current_period_end):""}</span></li>`).join("");
-  return `${tline}${subs?`<ul class="tlist tsubs">${subs}</ul>${card.length?`<button class="btn small" data-pay="portal" style="align-self:flex-start">Manage billing</button><p class="vfoot" style="margin:0">Change the number of licences, update your card, download invoices or cancel.</p>`:`<p class="vfoot" style="margin:0">Invoices are emailed to the school each year. To change or cancel, reply to the invoice email.</p>`}`:""}
-   <form id="buyForm" class="tbuy"><label for="buyn">${subs?"Buy more licences":"Number of licences"}<input type="number" id="buyn" min="1" max="1000" value="${TV.buy||10}" inputmode="numeric"></label>
-    <button class="btn primary" type="submit">Buy licences</button>
+  const subs=P.licenceSubs.map(x=>TV.licEdit===x.id?`<li class="tlicedit"><form data-licform="${esc(x.id)}" class="tinline"><label>Licences on this ${inv(x)?"invoice":"subscription"}<input type="number" min="1" max="1000" value="${x.quantity}" inputmode="numeric" data-licn></label><button class="btn small primary" type="submit">Save</button><button class="btn small" type="button" data-lic="cancel">Cancel</button></form>
+      <p class="vfoot" style="margin:0">Adding licences charges ${inv(x)?"the school (a new invoice is emailed)":"your card"} for the rest of this year straight away. Removing them gives a credit when it renews.</p><p class="err" data-licerr hidden></p></li>`
+    :`<li><span><b>${plural(x.quantity,"licence")}</b> · ${inv(x)?"paid by invoice":"yearly subscription"}</span><span class="sub">${x.status==="past_due"?(inv(x)?"invoice overdue · ":"payment overdue · "):""}${x.cancel_at_period_end?"ends":"renews"} ${x.current_period_end?fmtD(x.current_period_end):""}${x.cancel_at_period_end?"":` · <button class="linkbtn" data-lic="edit" data-id="${esc(x.id)}">Change number</button>`}</span></li>`).join("");
+  return `${tline}${subs?`<ul class="tlist tsubs">${subs}</ul>${card.length?`<button class="btn small" data-pay="portal" style="align-self:flex-start">Manage billing</button><p class="vfoot" style="margin:0">Update your card, download receipts, or cancel.</p>`:`<p class="vfoot" style="margin:0">Invoices are emailed to the school each year. To change or cancel, reply to the invoice email.</p>`}`:""}
+   ${TV.licOk?`<p class="msg ok" role="status">${TV.licOk}</p>`:""}
+   <form id="buyForm" class="tbuy"><label for="buyn">${subs?"Add more licences":"Number of licences"}<input type="number" id="buyn" min="1" max="1000" value="${TV.buy||10}" inputmode="numeric"></label>
+    <button class="btn primary" type="submit">${licTarget()?"Add licences":"Buy licences"}</button>
     <p class="vfoot" style="margin:0">${each?`${each} per student per year${first&&tfee?`, plus ${tfee} a year for your teacher subscription`:""}. `:""}Paid by card through Stripe and renewed each year; you can change the number or cancel at any time. One licence gives one student full access.</p></form>
    <p class="err" id="buyerr" hidden></p>`}
+/* the subscription that "Add licences" tops up: a live card subscription first, otherwise one paid by invoice */
+function licTarget(){const L=BOB.pay.licenceSubs.filter(x=>!x.cancel_at_period_end&&["active","trialing","past_due"].includes(x.status));
+  return L.find(x=>x.collection!=="send_invoice")||L[0]||null}
+async function licSet(id,q,done){const r=await BOB.pay.setLicences(id,q);await BOB.pay.load();await BOB.refreshContent().catch(()=>{});await SCH.load();
+  TV.licEdit=null;TV.licOk=`Done: ${plural(q,"licence")} on that ${r&&r.byInvoice?"invoice":"subscription"}.${r&&r.invoice&&r.invoice.url?` An invoice for the extra licences has been emailed to the school. <a href="${esc(r.invoice.url)}" target="_blank" rel="noopener">View it</a>`:""}`;if(done)done();tRender()}
 document.addEventListener("submit",e=>{if(e.target.id!=="buyForm")return;e.preventDefault();const n=Math.floor(+$("#buyn").value),x=$("#buyerr");
-  if(!(n>=1&&n<=1000)){x.textContent="Enter a number of licences from 1 to 1000.";x.hidden=false;return}TV.buy=n;
-  const b=e.target.querySelector("button");b.disabled=true;b.textContent="Opening checkout…";
+  if(!(n>=1&&n<=1000)){x.textContent="Enter a number of licences from 1 to 1000.";x.hidden=false;return}TV.buy=n;TV.licOk="";
+  const b=e.target.querySelector("button"),t=licTarget();
+  if(t){if(!confirm(`Add ${plural(n,"licence")} to your ${t.collection==="send_invoice"?"invoiced licences? A new invoice for the rest of this year will be emailed to the school.":"subscription? Your card will be charged now for the rest of this year."}`))return;
+    b.disabled=true;b.textContent="Adding…";licSet(t.id,t.quantity+n).catch(err=>{b.disabled=false;b.textContent="Add licences";x.textContent=err.message;x.hidden=false});return}
+  b.disabled=true;b.textContent="Opening checkout…";
   BOB.pay.checkout("licences",n).catch(err=>{b.disabled=false;b.textContent="Buy licences";x.textContent=err.message;x.hidden=false})});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-lic]");if(!b)return;
+  if(b.dataset.lic==="edit"){TV.licEdit=b.dataset.id;TV.licOk="";tRender()}else if(b.dataset.lic==="cancel"){TV.licEdit=null;tRender()}});
+document.addEventListener("submit",e=>{const f=e.target.closest&&e.target.closest("[data-licform]");if(!f)return;e.preventDefault();
+  const id=f.dataset.licform,q=Math.floor(+f.querySelector("[data-licn]").value),x=f.parentNode.querySelector("[data-licerr]"),cur=BOB.pay.licenceSubs.find(s=>s.id===id);
+  if(!(q>=1&&q<=1000)){x.textContent="Enter a number from 1 to 1000. To stop all of them, cancel the subscription.";x.hidden=false;return}
+  if(cur&&q>cur.quantity&&!confirm(`Add ${plural(q-cur.quantity,"licence")}? ${cur.collection==="send_invoice"?"A new invoice for the rest of this year will be emailed to the school.":"Your card will be charged now for the rest of this year."}`))return;
+  const b=f.querySelector("[type=submit]");b.disabled=true;b.textContent="Saving…";
+  licSet(id,q).catch(err=>{b.disabled=false;b.textContent="Save";x.textContent=err.message;x.hidden=false})});
 document.addEventListener("click",e=>{const b=e.target.closest('[data-pay="portal"]');if(!b)return;b.disabled=true;
   BOB.pay.portal().catch(err=>{b.disabled=false;alert(err.message)})});
 

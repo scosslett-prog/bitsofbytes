@@ -175,6 +175,10 @@ The functions are in `supabase/functions/` and are deployed with JWT checking tu
 - A teacher has full access while they have a live teacher subscription **or any licences**, so licences
   from an offer code or the admin unlock it too. Offer codes can also give months of teacher subscription.
 - Database: `supabase/migrations/20261020020000_teacher_plan.sql` (already applied).
+- Teachers add or remove licences themselves from the Licences panel (billing action `set_licences`).
+  Adding licences tops up their existing subscription and charges the rest of the year straight away (card,
+  or an invoice emailed to the school); removing them gives a credit at renewal. They can't go below the
+  number of students in their classes. Database: `supabase/migrations/20261020030000_licence_changes.sql`.
 
 ## Paying by invoice
 
