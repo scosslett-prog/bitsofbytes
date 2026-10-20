@@ -583,6 +583,8 @@ html.tzopen,html.tzopen body{overflow:hidden}
 /* ---------- A-Level preview ---------- */
 #albar{position:sticky;top:0;z-index:60;display:flex;justify-content:center;gap:8px 16px;flex-wrap:wrap;align-items:center;padding:7px 16px;background:#4C2FA8;color:#fff;font-size:.85rem;text-align:center}
 #albar b{margin-right:6px}#albar a{color:#fff;font-weight:600}
+#trialbar{display:flex;justify-content:center;gap:8px 16px;flex-wrap:wrap;align-items:center;padding:8px 16px;background:var(--info-soft);color:var(--ink);border-bottom:1px solid var(--line);font-size:.88rem;text-align:center}
+#trialbar b{margin-right:4px}
 html.course-al .nav{top:var(--albar-h,0px)}
 .papers.papers4{grid-template-columns:repeat(2,minmax(0,1fr))}
 @media (max-width:880px){.papers.papers4{grid-template-columns:1fr}}
