@@ -4,8 +4,8 @@
    marks, a puzzle from its best score. Optional practice (puzzles, flash cards, making cards) adds more.
    The total and rank are saved as user_progress kind 'pts' so the class leaderboard can read them. */
 S.pts=S.pts||{};
-const RW_RANKS=[[0,"Bit"],[150,"Nibble"],[400,"Byte"],[1000,"Kilobyte"],[2500,"Megabyte"],[5000,"Gigabyte"],[10000,"Terabyte"]];
-const RW_BITS=["1b","4b","8b","1K","1M","1G","1T"];
+const RW_RANKS=[[0,"Bit"],[150,"Nibble"],[400,"Byte"],[1000,"Kibibyte"],[2500,"Mebibyte"],[5000,"Gibibyte"],[10000,"Tebibyte"]];
+const RW_BITS=["1b","4b","8b","1Ki","1Mi","1Gi","1Ti"];
 function rwRank(p){let i=0;RW_RANKS.forEach(([min],k)=>{if(p>=min)i=k});const nx=RW_RANKS[i+1];
   return {i,name:RW_RANKS[i][1],min:RW_RANKS[i][0],next:nx?{name:nx[1],min:nx[0]}:null,pct:nx?Math.round((p-RW_RANKS[i][0])/(nx[0]-RW_RANKS[i][0])*100):100}}
 

@@ -181,7 +181,7 @@ The functions are in `supabase/functions/` and are deployed with JWT checking tu
 - Teachers choose which puzzle types a lesson assignment includes (tarsia, pairs match, memory pairs, crossword) when
   "Complete each lesson" is chosen. The choice is saved as `assignments.spec.pz`; older assignments with
   `spec.tz` mean the tarsia puzzle only.
-- Points, ranks (Bit → Terabyte) and achievements are worked out in `public/app/06r-rewards.js`
+- Points, ranks (Bit → Tebibyte, using the IEC binary prefixes from the syllabus) and achievements are worked out in `public/app/06r-rewards.js`
   from each student's best results, so nothing is earned twice. The total is saved for the class
   leaderboard, which teachers can switch off on the class's Progress tab.
 - Database: `supabase/migrations/20261019000000_puzzles_rewards.sql` (already applied to the live project).
