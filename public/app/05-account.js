@@ -166,6 +166,7 @@ function adminPage(){
   return `<div style="${accent(2)}"><div class="phead" style="padding-bottom:18px"><div class="eyebrow">Admin</div><h1>Admin</h1><p>Course content, the paywall, and teachers' licences.</p></div>${msg}
   ${BOB.course?`<section class="panel admsite"><h3>Course content and paywall</h3><p class="sub" style="margin:0">You're in the A-Level preview. To upload the IGCSE content or change the paywall, <a href="/#admin">go back to the IGCSE site</a>.</p></section>`:admSite(D.site)}
   ${admAlevel()}
+  ${admPeople(D)}
   <h2 class="admh">Licences</h2><p class="sub">Approve teachers' licence requests, or give licences directly. Approving adds the licences to the teacher's account straight away.</p>
   <section class="panel"><div class="trow"><h3>Requests waiting (${pend.length})</h3><button class="btn small" data-adm="reload">Refresh</button></div>
    ${pend.length?`<div class="tscroll"><table class="table"><thead><tr><th>Teacher</th><th>Licences</th><th>Message</th><th>Requested</th><th></th></tr></thead><tbody>
@@ -181,6 +182,47 @@ function adminPage(){
     ${D.teachers.map(t=>`<tr><td><b>${esc(t.name)}</b><br><span class="sub mono">${esc(t.email)}</span>${t.school?` <span class="sub">· ${esc(t.school)}</span>`:""}</td><td class="mono">${t.used}</td><td class="mono">${t.total}</td></tr>`).join("")}</tbody></table></div>`:`<p class="sub" style="margin:0">No teacher accounts yet.</p>`}</section></div>
   ${admCodes(D)}
   ${past.length?`<section class="panel" style="margin-top:16px"><h3>Recent decisions</h3><ul class="tlist">${past.map(r=>{const t=who(r.teacher);return `<li><span>${esc(t.name)} · ${plural(r.n,"licence")}</span><span class="chip ${r.status==="approved"?"sec":"start"}">${r.status==="approved"?"Approved":"Declined"} ${r.decided?dshort(r.decided):""}</span></li>`}).join("")}</ul></section>`:""}</div>`}
+/* everyone who has registered, and whether they pay */
+let ADMP={f:"all",q:"",n:100};
+const admFd=t=>t?new Date(t).toLocaleDateString("en-GB",{day:"numeric",month:"short",year:"numeric"}):"–";
+/* how a person has access: [key, short label, detail] */
+function admAccess(p){const end=x=>x&&x.end?` · ${x.cancel?"ends":"renews"} ${admFd(x.end)}`:"";
+  if(p.role==="admin")return ["admin","Admin","Full access"];
+  if(p.role==="teacher"){const T=p.teacher_sub,lic=`${p.licences||0} licence${p.licences===1?"":"s"} (${p.used||0} in use)`;
+    if(T)return ["paid",T.collection==="offer"?"Offer code":T.collection==="send_invoice"?"Paid · invoice":"Paid · card",`Teacher subscription${end(T)} · ${lic}`];
+    if(p.paid_licences)return ["paid",p.invoiced?"Paid · invoice":"Paid · card",lic];
+    if(p.licences)return ["free","Given licences",`${lic} · from you or an offer code`];
+    return ["none","Free trial","No licences"]}
+  if(p.sub)return ["paid","Subscribed",`${p.sub.interval==="month"?"Monthly":"Yearly"}${p.sub.status==="past_due"?" · payment overdue":""}${end(p.sub)}`];
+  if(p.class)return [p.class.licensed?"class":"none",p.class.licensed?"School class":"Class, no licences",`${p.class.name} · ${p.class.teacher}`];
+  return ["none","Free trial","Not subscribed"]}
+function admPeople(D){const P=D.people;if(!P)return `<h2 class="admh">People</h2><section class="panel"><p class="sub" style="margin:0">Run <span class="mono">supabase/migrations/20261020040000_admin_people.sql</span> to see everyone who has registered.</p></section>`;
+  const A=P.map(p=>({p,a:admAccess(p)})),T=A.filter(x=>x.p.role==="teacher"),S=A.filter(x=>x.p.role==="student");
+  const cnt=(L,k)=>L.filter(x=>x.a[0]===k).length;
+  const F={all:()=>true,teachers:x=>x.p.role==="teacher",students:x=>x.p.role==="student",paid:x=>x.a[0]==="paid",free:x=>x.a[0]==="none"}[ADMP.f]||(()=>true);
+  const q=ADMP.q.trim().toLowerCase(),rows=A.filter(F).filter(x=>!q||[x.p.name,x.p.email,x.p.school,x.p.class&&x.p.class.name].join(" ").toLowerCase().includes(q));
+  const chip={paid:"sec",class:"dev",free:"dev",admin:"none",none:"none"};
+  return `<h2 class="admh">People</h2><p class="sub">Everyone who has registered, and how they have access.</p>
+  <section class="panel admpeople">
+   <div class="admstats">
+    <div><b>${T.length}</b><span>teacher${T.length===1?"":"s"}</span><small>${cnt(T,"paid")} paying · ${cnt(T,"free")} given licences · ${cnt(T,"none")} free trial</small></div>
+    <div><b>${S.length}</b><span>student${S.length===1?"":"s"}</span><small>${cnt(S,"paid")} subscribed · ${cnt(S,"class")} in a licensed class · ${cnt(S,"none")} free trial</small></div>
+    <div><b>${A.filter(x=>x.a[0]==="paid").length}</b><span>paying account${A.filter(x=>x.a[0]==="paid").length===1?"":"s"}</span><small>${A.filter(x=>Date.now()-Date.parse(x.p.created_at)<7*864e5).length} joined in the last 7 days</small></div></div>
+   <div class="admpctl">${alSegP()}<input type="search" id="admpq" placeholder="Search name, email, school or class" value="${esc(ADMP.q)}" aria-label="Search people"><button class="btn small" data-adm="pcsv">Download CSV</button></div>
+   ${rows.length?`<div class="tscroll"><table class="table"><thead><tr><th>Name</th><th>Role</th><th>Access</th><th>Joined</th><th>Last active</th></tr></thead><tbody>
+    ${rows.slice(0,ADMP.n).map(({p,a})=>`<tr><td><b>${esc(p.name||"–")}</b><br><span class="sub mono">${esc(p.email||"")}</span>${p.school?`<br><span class="sub">${esc(p.school)}</span>`:""}</td>
+     <td>${p.role==="teacher"?"Teacher":p.role==="admin"?"Admin":"Student"}</td><td><span class="chip ${chip[a[0]]}">${esc(a[1])}</span><br><span class="sub">${esc(a[2])}</span></td>
+     <td class="sub">${admFd(p.created_at)}</td><td class="sub">${p.last_active?admFd(p.last_active):"–"}</td></tr>`).join("")}</tbody></table></div>
+    ${rows.length>ADMP.n?`<button class="btn small" data-adm="pmore" style="margin-top:10px">Show more (${rows.length-ADMP.n} more)</button>`:""}`:`<p class="sub" style="margin:0">Nobody matches.</p>`}
+  </section>`}
+const alSegP=()=>`<div class="seg" role="group" aria-label="Show">${[["all","Everyone"],["teachers","Teachers"],["students","Students"],["paid","Paying"],["free","Free trial"]].map(([k,l])=>`<button type="button" data-admpf="${k}" aria-pressed="${ADMP.f===k}">${l}</button>`).join("")}</div>`;
+function admPeopleCSV(){const P=(SC.admin&&SC.admin.people)||[],q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const lines=[["Name","Email","Role","School","Access","Details","Joined","Last active"].join(",")].concat(P.map(p=>{const a=admAccess(p);
+    return [p.name,p.email,p.role,p.school,a[1],a[2],p.created_at?p.created_at.slice(0,10):"",p.last_active?p.last_active.slice(0,10):""].map(q).join(",")}));
+  const b=new Blob([lines.join("\n")],{type:"text/csv"}),u=URL.createObjectURL(b),l=document.createElement("a");l.href=u;l.download=`bits-of-bytes-people-${new Date().toISOString().slice(0,10)}.csv`;document.body.append(l);l.click();l.remove();setTimeout(()=>URL.revokeObjectURL(u),2000)}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-admpf]");if(!b)return;ADMP.f=b.dataset.admpf;ADMP.n=100;tRender()});
+document.addEventListener("input",e=>{if(e.target.id!=="admpq")return;ADMP.q=e.target.value;ADMP.n=100;const pos=e.target.selectionStart;tRender();const i=$("#admpq");if(i){i.focus();try{i.setSelectionRange(pos,pos)}catch(x){}}});
+
 /* offer codes: teachers type one into their Licences panel to get free licences */
 const admNewCode=()=>"BOB-"+Array.from({length:6},()=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*32)]).join("");
 let ADMCODE=null;
@@ -268,6 +310,8 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-adm]");if(
   if(a==="reload"){SC.admin=null;ADM={err:"",ok:""};tRender();adminLoad();return}
   if(a==="upload"){admUpload();return}
   if(a==="alup"){admAlUpload();return}
+  if(a==="pcsv"){admPeopleCSV();return}
+  if(a==="pmore"){ADMP.n+=200;tRender();return}
   if(a==="codeoff"||a==="codeon"){const on=a==="codeon";if(on||confirm(`Turn off ${v}? Teachers who already used it keep their licences.`))admDo(()=>BOB.school.admin.setCodeActive(v,on),`${v} is ${on?"on":"off"}.`);return}
   if(a==="paywall"){const on=v==="on";if(confirm(on?"Turn the paywall on? People without a subscription or a licensed class will only see the first lesson of each section.":"Turn the paywall off? Everyone will be able to open every lesson."))
     admDo(async()=>{await BOB.school.admin.setPayments(on);await BOB.refreshContent()},on?"The paywall is on.":"The paywall is off.");return}

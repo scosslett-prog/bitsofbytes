@@ -526,6 +526,10 @@ html.tzopen,html.tzopen body{overflow:hidden}
 .pzmc:focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:12px}
 @media (prefers-reduced-motion:reduce){.pzmc{transition:none}}
 @media (max-width:560px){.pzmem{--pzcols:3!important;gap:7px}.pzmc{aspect-ratio:3/4}.pzmface{font-size:.8rem;padding:6px}}
+.admstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-bottom:14px}
+.admstats>div{display:flex;flex-direction:column;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.admstats b{font:700 1.6rem/1.1 var(--display)}.admstats span{font-weight:600}.admstats small{color:var(--muted);margin-top:4px}
+.admpctl{display:flex;gap:8px 12px;flex-wrap:wrap;align-items:center;margin-bottom:12px}.admpctl input{flex:1 1 220px;min-width:0}
 .admcode{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px 14px;align-items:end}
 .admcode button{justify-self:start}
 .toffer form{margin-top:8px}

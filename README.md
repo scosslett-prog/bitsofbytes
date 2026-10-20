@@ -191,6 +191,13 @@ The functions are in `supabase/functions/` and are deployed with JWT checking tu
   unpaid invoice cancels the subscription after a few days past due; the licences then stop.
 - Database: `supabase/migrations/20261020010000_invoice_subscriptions.sql` (already applied).
 
+## People (admin page)
+
+- The Admin page lists everyone who has registered (`admin_people()`, admin only): role, school, when they
+  joined and were last active, and how they have access (subscribed, school class, paying teacher, given
+  licences, or free trial). Filter, search, and download it as a CSV.
+- Database: `supabase/migrations/20261020040000_admin_people.sql` (already applied).
+
 ## Offer codes (free licences)
 
 - On the Admin page, **Offer codes** makes a code with a number of licences for each teacher, an optional

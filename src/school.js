@@ -140,9 +140,12 @@ export function createSchool(api, getUser) {
       const site = await db.rpc('admin_site', {}).catch((e) => ({ error: e.message }));
       /* offer codes (missing if the offer codes database step hasn't been run yet) */
       const codes = await db.select('offer_codes', { order: [['created_at', 'desc']] }).catch(() => null);
+      /* everyone registered and how they have access (missing if that database step hasn't been run) */
+      const people = await db.rpc('admin_people', {}).catch(() => null);
       SC.admin = {
         site,
         codes,
+        people,
         req: rq.map((r) => ({ id: r.id, teacher: r.teacher_id, n: r.quantity, msg: r.message, status: r.status, date: ms(r.created_at), decided: ms(r.decided_at) })),
         teachers: teachers.map((t, i) => Object.assign(person(t), { total: counts[i] ? counts[i].total : 0, used: counts[i] ? counts[i].used : 0 })),
       };

@@ -53,6 +53,7 @@ RPC = {  # name: (kind, [(arg, type)])
     'admin_finish_content': ('void', [('theory_ids', 'text[]'), ('paper_ids', 'text[]'), ('question_ids', 'text[]')]),
     'class_leaderboard': ('set', [('c', 'uuid')]),
     'redeem_offer_code': ('scalar', [('c', 'text')]),
+    'admin_people': ('scalar', []),
     'admin_course': ('scalar', [('c', 'text')]), 'admin_put_course_file': ('void', [('c', 'text'), ('n', 'text'), ('body', 'text')]),
     'reassign': ('scalar', [('a', 'uuid'), ('students', 'uuid[]'), ('due', 'date'), ('note', 'text'), ('prev', 'jsonb')]),
 }
