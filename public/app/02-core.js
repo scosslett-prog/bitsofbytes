@@ -203,7 +203,7 @@ function sbMeta(l,k){const pl=(n,w)=>`${n} ${w}${n===1?"":"s"}`;
     return {st:"fo",t:[f?`flash cards best ${f.best}%`:"",e.att?`${e.att}/${e.n} exam questions`:""].filter(Boolean).join(" · ")||`Flash cards${e.n?" and exam questions":""} · optional`}}
   if(k==="tz"){const ts=typeof pzTypesFor==="function"?pzTypesFor(l):["tarsia"],d=ts.filter(t=>typeof pzDone==="function"?pzDone(l.id,t):tzDone(l.id)).length,
       set=typeof pzRequired==="function"?ts.filter(t=>pzRequired(l,t)&&!pzDone(l.id,t)).length:0;
-    return {st:d===ts.length?"ok":set?"":d?"part":"fo",t:set?`${set} set by your teacher · ${d} of ${ts.length} solved`:d?`${d} of ${ts.length} solved`:`${ts.length===3?"Tarsia, pairs match and crossword":ts.map(t=>PZ_NAME?PZ_NAME[t]:t).join(" and ")} · bonus points`}}
+    return {st:d===ts.length?"ok":set?"":d?"part":"fo",t:set?`${set} set by your teacher · ${d} of ${ts.length} solved`:d?`${d} of ${ts.length} solved`:`${ts.length} puzzle${ts.length>1?"s":""} · bonus points`}}
   return {st:"",t:""}}
 function sbDraw(l){const side=$(".lside.grouped");if(!side)return;
   side.querySelectorAll(".lgrp").forEach(g=>{const k=g.dataset.lg,open=SBOPEN[l.id]===k,m=sbMeta(l,k),h=g.querySelector(".lghead");

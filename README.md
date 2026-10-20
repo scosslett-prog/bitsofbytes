@@ -173,11 +173,12 @@ The functions are in `supabase/functions/` and are deployed with JWT checking tu
   `public/app/06p-tarsia-pairs.js`, one line per pair (`half | other half`), at least 18 per lesson,
   and no half may appear twice in a lesson. Some number lessons make fresh pairs every time.
   The puzzle itself is `public/app/06q-tarsia.js`.
-- Each lesson also has a **pairs match** (8 pairs from the same tarsia pairs) and a **crossword**
+- Each lesson also has a **pairs match** (8 pairs from the same tarsia pairs), **memory pairs** (6 pairs on
+  face-down cards; only misses of a pair already seen cost points) and a **crossword**
   (answers from the lesson's key terms and any tarsia pair whose term is one to three words), in
   `public/app/06t-puzzles.js`. A few number-only lessons have too few words for a crossword and just skip it.
-  Results are saved beside the tarsia ones as `<lesson id>-m` and `<lesson id>-x` (no database change needed).
-- Teachers choose which puzzle types a lesson assignment includes (tarsia, pairs match, crossword) when
+  Results are saved beside the tarsia ones as `<lesson id>-m`, `-g` (memory) and `-x` (no database change needed).
+- Teachers choose which puzzle types a lesson assignment includes (tarsia, pairs match, memory pairs, crossword) when
   "Complete each lesson" is chosen. The choice is saved as `assignments.spec.pz`; older assignments with
   `spec.tz` mean the tarsia puzzle only.
 - Points, ranks (Bit → Terabyte) and achievements are worked out in `public/app/06r-rewards.js`

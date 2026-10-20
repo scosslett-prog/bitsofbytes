@@ -1,20 +1,22 @@
-/* ================= more puzzles: pairs match and crossword, one of each per lesson =================
+/* ================= more puzzles: pairs match, memory pairs and crossword, one of each per lesson =================
    Both sit beside the tarsia puzzle (06q-tarsia.js) in each lesson's Puzzles group, and teachers can
    choose which puzzle types an assignment includes (04-school.js).
    Pairs match: tap a term, then its meaning. Pairs come from the lesson's tarsia pairs (06p-tarsia-pairs.js).
+   Memory pairs: the same pairs on face-down cards; turn two over at a time to find a term and its meaning.
    Crossword: answers are the lesson's key terms (l.v) and any tarsia pair with a one-to-three word term.
-   Results are kept beside the tarsia ones: S.tz["<lesson id>-m"] (pairs match) and S.tz["<lesson id>-x"]
+   Results are kept beside the tarsia ones: S.tz["<lesson id>-m"] (pairs match), "-g" (memory pairs) and S.tz["<lesson id>-x"]
    (crossword), as {best, last, attempts, secs, date}. */
-const PZ_TYPES=[["tarsia","Tarsia puzzle"],["match","Pairs match"],["cross","Crossword"]];
+const PZ_TYPES=[["tarsia","Tarsia puzzle"],["match","Pairs match"],["memory","Memory pairs"],["cross","Crossword"]];
 const PZ_NAME=Object.fromEntries(PZ_TYPES);
-const PZ_KEY={match:"m",cross:"x"};
+const PZ_KEY={match:"m",memory:"g",cross:"x"};
+const PZ_MEM_N=6;
 const PZ_MATCH_N=8;
 const pzRes=(lid,t)=>t==="tarsia"?null:S.tz[lid+"-"+PZ_KEY[t]]||null;
 const pzDone=(lid,t)=>t==="tarsia"?tzDone(lid):!!pzRes(lid,t);
 const pzBest=(lid,t)=>t==="tarsia"?tzBest(lid):(pzRes(lid,t)||{}).best||0;
 /* the results that count as "done since a date" (for reassigned work) */
 const pzResults=(lid,t)=>t==="tarsia"?["e","c"].map(m=>S.tz[lid+"-"+m]).filter(Boolean):[pzRes(lid,t)].filter(Boolean);
-function pzHas(l,t){if(!l)return false;if(t==="tarsia"||t==="match")return tzHas(l);if(t==="cross")return pzWords(l).length>=4&&!!pzCrossOK(l);return false}
+function pzHas(l,t){if(!l)return false;if(t==="tarsia"||t==="match"||t==="memory")return tzHas(l);if(t==="cross")return pzWords(l).length>=4&&!!pzCrossOK(l);return false}
 /* a crossword needs at least 4 words that actually cross; checked once per lesson */
 const pzCrossOK=l=>l._pzok!=null?l._pzok:(l._pzok=!!pzBuild(pzWords(l)));
 const pzTypesFor=l=>PZ_TYPES.map(x=>x[0]).filter(t=>pzHas(l,t));
@@ -78,6 +80,8 @@ function pzBuild(words,max=10,lim=13){let best=null;
 
 /* ---------- making each puzzle ---------- */
 function pzMake(l,t){const base={lid:l.id,t,start:Date.now(),secs:0,bad:0,solved:false,msg:"",msgBad:false};
+  if(t==="memory"){const pairs=tzPairs(l,PZ_MEM_N).map((p,i)=>({i,a:pzStrip(p[0]),b:pzStrip(p[1])}));
+    return {...base,pairs,cards:shuffle(pairs.flatMap(p=>[{i:p.i,s:"a"},{i:p.i,s:"b"}])),up:[],got:new Set(),seen:new Set(),moves:0,lock:false}}
   if(t==="match"){const pairs=tzPairs(l,PZ_MATCH_N).map((p,i)=>({i,a:pzStrip(p[0]),b:pzStrip(p[1])}));
     return {...base,pairs,left:shuffle(pairs.map(p=>p.i)),right:shuffle(pairs.map(p=>p.i)),got:new Set(),sel:null,wrong:null}}
   let X=null;for(let i=0;i<8&&!X;i++)X=pzBuild(pzWords(l));return X?{...base,X,cur:null,dir:"a",reveals:0}:null}
@@ -86,7 +90,7 @@ let PZ=null;const PZKEEP={};
 function pzOpen(l,t){const key=l.id+"-"+t;let P=PZKEEP[key];if(!P||P.solved)P=PZKEEP[key]=pzMake(l,t);if(!P)return;PZ=P;
   document.getElementById("tzov")?.remove();
   const o=document.createElement("div");o.id="tzov";o.className="pzov pz-"+t;o.setAttribute("style",accent(l.topic.ch.paper));o.setAttribute("role","dialog");o.setAttribute("aria-modal","true");o.setAttribute("aria-label",`${PZ_NAME[t]}: ${l.title}`);
-  o.innerHTML=`<div class="tzbar"><div class="tzttl"><span class="eyebrow">${PZ_NAME[t]}${t==="match"?` · ${P.pairs.length} pairs`:` · ${P.X.words.length} words`}</span><b>${esc(l.title)}</b></div>
+  o.innerHTML=`<div class="tzbar"><div class="tzttl"><span class="eyebrow">${PZ_NAME[t]}${P.pairs?` · ${P.pairs.length} pairs`:` · ${P.X.words.length} words`}</span><b>${esc(l.title)}</b></div>
     <div class="tzstat"><span id="pztime" class="mono">0:00</span><span id="pzcount" class="mono"></span></div>
     <div class="tzbtns">${t==="cross"?`<button class="btn small" data-pz="reveal" id="pzreveal" title="Show the selected word (costs 10 points)">Reveal word</button><button class="btn small primary" data-pz="check" id="pzcheck">Check</button>`:""}<button class="btn small" data-pz="again" title="Start a new puzzle">New</button><button class="iconbtn" data-pz="close" aria-label="Close the puzzle" title="Close"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></svg></button></div></div>
    <p class="tzmsg" id="pzmsg" aria-live="polite"></p>
@@ -98,13 +102,14 @@ function pzOpen(l,t){const key=l.id+"-"+t;let P=PZKEEP[key];if(!P||P.solved)P=PZ
 function pzClose(){document.getElementById("tzov")?.remove();document.documentElement.classList.remove("tzopen");
   if(PZ&&!PZ.solved)PZ.secs=Math.round((Date.now()-PZ.start)/1000);PZ=null;clearInterval(pzOpen.tick);render()}
 function pzMsg(){const P=PZ,m=$("#pzmsg");if(!P||!m)return;
-  m.innerHTML=P.msg||(P.t==="match"?"Tap a term, then the meaning that goes with it. Each wrong match costs 10 points.":"Tap a square or a clue, then type. Tap the same square again to switch between across and down.");
+  m.innerHTML=P.msg||(P.t==="memory"?"Turn over two cards. If one is a term and the other is its meaning, they stay face up. Remember where things are: missing a pair you've already seen costs 10 points.":P.t==="match"?"Tap a term, then the meaning that goes with it. Each wrong match costs 10 points.":"Tap a square or a clue, then type. Tap the same square again to switch between across and down.");
   m.className="tzmsg"+(P.solved?" ok":P.msgBad?" bad":"")}
-function pzDraw(){const P=PZ,st=$("#pzstage");if(!P||!st)return;if(P.t==="match")pzDrawMatch(st);else pzDrawCross(st);pzMsg()}
+function pzDraw(){const P=PZ,st=$("#pzstage");if(!P||!st)return;if(P.t==="match")pzDrawMatch(st);else if(P.t==="memory")pzDrawMem(st);else pzDrawCross(st);pzMsg()}
 function pzWin(){const P=PZ;P.solved=true;P.secs=Math.round((Date.now()-P.start)/1000);
-  const pct=P.t==="match"?Math.max(30,100-10*P.bad):Math.max(30,100-10*P.bad-10*P.reveals);
+  /* memory: only avoidable misses cost points (see pzFlip) */
+  const pct=P.t==="memory"?Math.max(30,100-10*P.bad):P.t==="match"?Math.max(30,100-10*P.bad):Math.max(30,100-10*P.bad-10*P.reveals);
   pzSave(P.lid,P.t,pct,P.secs);delete PZKEEP[P.lid+"-"+P.t];
-  P.msg=`<b>Solved!</b> ${pct}% · ${pzTime(P.secs)}${P.bad?` · ${P.bad} ${P.t==="match"?"wrong match":"check"}${P.bad>1?"es":""}${P.t==="cross"?" found mistakes":""}`:" · no mistakes"}${P.reveals?` · ${P.reveals} word${P.reveals>1?"s":""} revealed`:""}. <button class="btn small primary" data-pz="again">New puzzle</button>`;
+  P.msg=`<b>Solved!</b> ${pct}% · ${pzTime(P.secs)}${P.t==="memory"?` · ${P.moves} turn${P.moves===1?"":"s"}${P.bad?` · ${P.bad} avoidable miss${P.bad>1?"es":""}`:" · no avoidable misses"}`:P.bad?` · ${P.bad} ${P.t==="match"?"wrong match":"check"}${P.bad>1?"es":""}${P.t==="cross"?" found mistakes":""}`:" · no mistakes"}${P.reveals?` · ${P.reveals} word${P.reveals>1?"s":""} revealed`:""}. <button class="btn small primary" data-pz="again">New puzzle</button>`;
   P.msgBad=false;pzDraw();$("#tzov")?.classList.add("won")}
 
 /* ---------- pairs match ---------- */
@@ -119,6 +124,24 @@ function pzPick(side,i){const P=PZ;if(!P||P.solved||P.got.has(i))return;P.wrong=
   else{P.bad++;P.wrong={[other.side]:other.i,[side]:i};P.msg=`Not a pair. ${P.bad} wrong match${P.bad>1?"es":""} so far.`;P.msgBad=true;
     setTimeout(()=>{if(PZ===P&&P.wrong&&P.wrong[side]===i){P.wrong=null;pzDraw()}},700)}
   pzDraw()}
+
+/* ---------- memory pairs ---------- */
+function pzDrawMem(st){const P=PZ;
+  st.innerHTML=`<div class="pzmem" style="--pzcols:${P.cards.length>12?5:4}">${P.cards.map((c,k)=>{const p=P.pairs[c.i],face=P.got.has(c.i)||P.up.includes(k);
+    return `<button class="pzmc${face?" up":""}${P.got.has(c.i)?" got":""}${P.miss&&P.miss.includes(k)?" bad":""}" data-pz="flip" data-k="${k}"${P.got.has(c.i)||P.solved?" disabled":""} aria-label="${face?`${c.s==="a"?"Term":"Meaning"}: ${esc(c.s==="a"?p.a:p.b)}`:`Card ${k+1}, face down`}">
+     <span class="pzmback" aria-hidden="true"></span><span class="pzmface"><small>${c.s==="a"?"Term":"Meaning"}</small>${esc(c.s==="a"?p.a:p.b)}</span></button>`}).join("")}</div>`;
+  const c=$("#pzcount");if(c)c.textContent=`${P.got.size}/${P.pairs.length} found · ${P.moves} turn${P.moves===1?"":"s"}`}
+function pzFlip(k){const P=PZ;if(!P||P.solved||P.lock)return;const c=P.cards[k];if(!c||P.got.has(c.i)||P.up.includes(k))return;
+  P.miss=null;P.up.push(k);
+  if(P.up.length<2){P.msg="";P.msgBad=false;pzDraw();return}
+  P.moves++;const [x,y]=P.up.map(j=>P.cards[j]);
+  if(x.i===y.i&&x.s!==y.s){P.got.add(x.i);P.up=[];P.msg=`<b>Pair found:</b> ${esc(P.pairs[x.i].a)} → ${esc(P.pairs[x.i].b)}`;P.msgBad=false;
+    if(P.got.size===P.pairs.length)return pzWin();pzDraw();return}
+  /* not a pair: it only counts as a mistake if it could have been avoided, i.e. the first card's partner
+     had already been turned over earlier, so the student could have found it */
+  const j1=P.up[0],mate=P.cards.findIndex((c,j)=>j!==j1&&c.i===P.cards[j1].i);if(P.seen.has(mate))P.bad++;P.up.forEach(j=>P.seen.add(j));
+  P.miss=P.up.slice();P.lock=true;P.msg="Not a pair. They'll turn back over.";P.msgBad=true;pzDraw();
+  setTimeout(()=>{if(PZ!==P)return;P.up=[];P.miss=null;P.lock=false;P.msg="";P.msgBad=false;pzDraw()},1100)}
 
 /* ---------- crossword ---------- */
 function pzDrawCross(st){const P=PZ,X=P.X;
@@ -158,6 +181,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-pz]");if(!
   if(a==="close")pzClose();
   else if(a==="again"){delete PZKEEP[PZ.lid+"-"+PZ.t];pzOpen(l,PZ.t)}
   else if(a==="pick")pzPick(b.dataset.side,+b.dataset.i);
+  else if(a==="flip")pzFlip(+b.dataset.k);
   else if(a==="check")pzCheck();
   else if(a==="reveal")pzReveal();
   else if(a==="clue"){const w=PZ.X.words.find(x=>x.i===+b.dataset.w);if(w){const ks=pzWordCells(w);PZ.cur=ks.find(k=>!PZ.X.cells[k].v)||ks[0];PZ.dir=w.d;pzDraw()}}});
@@ -177,8 +201,8 @@ document.addEventListener("keydown",e=>{if(!PZ||!$("#tzov.pzov"))return;
 addEventListener("resize",()=>{if(PZ&&PZ.t==="cross"&&$("#tzov.pzov"))pzDraw()});
 
 /* ---------- rows for the lesson's Puzzles card ---------- */
-function pzRows(l){return ["match","cross"].filter(t=>pzHas(l,t)).map(t=>{const r=pzRes(l.id,t),k=PZKEEP[l.id+"-"+t],need=typeof pzRequired==="function"&&pzRequired(l,t)&&!r;
-  const sub=t==="match"?`Match ${PZ_MATCH_N} terms to their meanings`:`Up to 10 key terms from the lesson`;
+function pzRows(l){return ["match","memory","cross"].filter(t=>pzHas(l,t)).map(t=>{const r=pzRes(l.id,t),k=PZKEEP[l.id+"-"+t],need=typeof pzRequired==="function"&&pzRequired(l,t)&&!r;
+  const sub=t==="match"?`Match ${PZ_MATCH_N} terms to their meanings`:t==="memory"?`Find ${PZ_MEM_N} pairs on face-down cards`:`Up to 10 key terms from the lesson`;
   return `<div class="tzmode"><div><b>${PZ_NAME[t]}${need?` <span class="chip start">Set</span>`:""}</b><small>${sub}</small>
     <span class="sub">${r?`Best ${r.best}% · fastest ${pzTime(r.secs)} · solved ${r.attempts}×`:k&&!k.solved?"In progress":"Not solved yet"}</span></div>
    <button class="btn small${!r&&need?" primary":""}" data-pz="open" data-l="${l.id}" data-t="${t}">${k&&!k.solved?"Carry on":r?"Play again":"Play"}</button></div>`}).join("")}

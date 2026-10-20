@@ -32,7 +32,7 @@ function rwStats(){const L=ALL_LESSONS,st={};
   st.cardsMade=Object.values(S.cards||{}).reduce((a,x)=>a+x.length,0);
   st.mastered=typeof fcPool==="function"?fcPool(L.map(l=>l.id),"both").filter(fcMastered).length:0;
   st.rounds=Object.values(S.fcs||{}).reduce((a,x)=>a+(x.rounds||0),0);
-  st.tzLessons=L.filter(l=>tzDone(l.id)||pzDone(l.id,"match")||pzDone(l.id,"cross")).length;st.cross=L.filter(l=>pzDone(l.id,"cross")).length;st.match=L.filter(l=>pzDone(l.id,"match")).length;const tc=L.map(l=>S.tz[l.id+"-c"]).filter(Boolean);
+  st.tzLessons=L.filter(l=>tzDone(l.id)||pzDone(l.id,"match")||pzDone(l.id,"memory")||pzDone(l.id,"cross")).length;st.memory=L.filter(l=>pzDone(l.id,"memory")).length;st.cross=L.filter(l=>pzDone(l.id,"cross")).length;st.match=L.filter(l=>pzDone(l.id,"match")).length;const tc=L.map(l=>S.tz[l.id+"-c"]).filter(Boolean);
   st.tzChallenge=tc.length;st.tzFlawless=tc.filter(x=>x.best>=100).length;st.tzFast=tc.filter(x=>x.secs&&x.secs<=300).length;
   const dy=rwDays();st.days=dy.n;st.streak=dy.best;st.curStreak=dy.cur;
   return st}
@@ -51,6 +51,7 @@ const RW_ACH=[
   ["tz-1","🔺","Puzzle solver","Solve a puzzle",s=>[s.tzLessons,1]],
   ["pz-cross","✏️","Wordsmith","Complete 5 crosswords",s=>[s.cross,5]],
   ["pz-match","🔗","Perfect pairs","Finish 5 pairs match games",s=>[s.match,5]],
+  ["pz-memory","🧠","Total recall","Finish 5 memory pairs games",s=>[s.memory,5]],
   ["tz-c","🧩","Challenge accepted","Solve a Challenge puzzle",s=>[s.tzChallenge,1]],
   ["tz-flawless","✨","Flawless","Solve a Challenge puzzle with no mistakes",s=>[s.tzFlawless,1]],
   ["tz-fast","⏱️","Speed run","Solve a Challenge puzzle in 5 minutes or less",s=>[s.tzFast,1]],
@@ -73,7 +74,7 @@ function rwCompute(){const st=rwStats();let les=0,act=0;
     if(lp.parts.every(p=>p.done))les+=25}
   const secVocab=TOPICS.reduce((a,t)=>a+(S.scores[t.id]?Math.round(S.scores[t.id].best/5):0),0);
   const exam=Object.values(S.ex||{}).reduce((a,r)=>a+5*(r.b||0),0);
-  const tz=ALL_LESSONS.reduce((a,l)=>a+Math.round(((S.tz[l.id+"-e"]||{}).best||0)/4)+Math.round(((S.tz[l.id+"-c"]||{}).best||0)/2)+Math.round(pzBest(l.id,"match")/5)+Math.round(pzBest(l.id,"cross")/4),0);
+  const tz=ALL_LESSONS.reduce((a,l)=>a+Math.round(((S.tz[l.id+"-e"]||{}).best||0)/4)+Math.round(((S.tz[l.id+"-c"]||{}).best||0)/2)+Math.round(pzBest(l.id,"match")/5)+Math.round(pzBest(l.id,"memory")/5)+Math.round(pzBest(l.id,"cross")/4),0);
   const fc=Object.values(S.fcs||{}).reduce((a,x)=>a+3*Math.min(x.rounds||0,10),0)+2*st.mastered+Object.values(S.cards||{}).reduce((a,x)=>a+2*Math.min(x.length,10),0);
   const ach=RW_ACH.filter(a=>{const [n,need]=a[4](st);return n>=need}).map(a=>a[0]);
   const parts=[
@@ -81,7 +82,7 @@ function rwCompute(){const st=rwStats();let les=0,act=0;
     ["Activities",act,"Up to 20 for each activity, from your overall score"],
     ["Sections secure",50*st.secure,"50 for each section at 80% or more"],
     ["Exam questions",exam,"5 for every mark, from your best try at each question"],
-    ["Puzzles",tz,"In each lesson: tarsia up to 25 for Easy and 50 for Challenge, pairs match up to 20, crossword up to 25"],
+    ["Puzzles",tz,"In each lesson: tarsia up to 25 for Easy and 50 for Challenge, pairs match and memory pairs up to 20 each, crossword up to 25"],
     ["Flash cards",fc,"3 a round (up to 10 rounds a lesson), 2 per card mastered, 2 per card you make"],
     ["Days studied",5*st.days,"5 for each day you study"],
     ["Achievements",RW_ACH_PTS*ach.length,`${RW_ACH_PTS} for each one unlocked`]];

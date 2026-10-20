@@ -77,12 +77,12 @@ with sync_playwright() as p:
     T.click('details[data-topen="p1"] > summary'); T.wait_for_timeout(100)
     T.evaluate('document.querySelectorAll("#asgForm details").forEach(d=>d.open=true)')
     T.check('[data-tl="1-2-sound"]'); T.wait_for_timeout(100)
-    ok('three puzzle types offered for lesson assignments', T.locator('[data-apz]').count() == 3)
-    for k in ['tarsia', 'match', 'cross']: T.check(f'[data-apz="{k}"]')
+    ok('four puzzle types offered for lesson assignments', T.locator('[data-apz]').count() == 4)
+    for k in ['tarsia', 'match', 'memory', 'cross']: T.check(f'[data-apz="{k}"]')
     T.click('#asgForm button[type=submit]'); idle(T)
-    ok('assignment saved with the puzzle types', sql("select spec->>'tz' || ' ' || (spec->'pz')::text from assignments where title='Sound with puzzles' order by created_at desc limit 1") == 'true ["tarsia", "match", "cross"]',
+    ok('assignment saved with the puzzle types', sql("select spec->>'tz' || ' ' || (spec->'pz')::text from assignments where title='Sound with puzzles' order by created_at desc limit 1") == 'true ["tarsia", "match", "memory", "cross"]',
        sql("select spec::text from assignments where title='Sound with puzzles' order by created_at desc limit 1"))
-    ok('teacher sees the puzzle types on the assignment', '+ tarsia, pairs match and crossword' in T.inner_text('#app'))
+    ok('teacher sees the puzzle types on the assignment', '+ tarsia, pairs match, memory pairs and crossword' in T.inner_text('#app'))
     # a second assignment with only the crossword
     T.click('[data-tc="newasg"]'); T.wait_for_timeout(200); T.fill('#atitle', 'Crossword only')
     T.evaluate('document.querySelectorAll("#asgForm details").forEach(d=>d.open=true)')
@@ -99,15 +99,15 @@ with sync_playwright() as p:
     S1.click('[data-lgt="tz"]'); S1.wait_for_timeout(200)
     ok('lesson card says the teacher set the puzzle', 'Set by your teacher' in S1.inner_text('#tzcard'))
     go(S1, 'todo'); S1.evaluate('document.querySelectorAll("details.todo").forEach(d=>d.open=true)')
-    ok('to-do card mentions the puzzles', '+ tarsia, pairs match and crossword' in S1.inner_text('#app') and '+ crossword' in S1.inner_text('#app'))
-    ok('only the crossword is required in the crossword-only lesson', S1.evaluate('(()=>{const l=ALL_LESSONS.find(x=>x.id==="1-2-images");return [pzRequired(l,"tarsia"),pzRequired(l,"match"),pzRequired(l,"cross")].join()})()') == 'false,false,true')
+    ok('to-do card mentions the puzzles', '+ tarsia, pairs match, memory pairs and crossword' in S1.inner_text('#app') and '+ crossword' in S1.inner_text('#app'))
+    ok('only the crossword is required in the crossword-only lesson', S1.evaluate('(()=>{const l=ALL_LESSONS.find(x=>x.id==="1-2-images");return [pzRequired(l,"tarsia"),pzRequired(l,"match"),pzRequired(l,"memory"),pzRequired(l,"cross")].join()})()') == 'false,false,false,true')
     go(S1, 'l-1-2-sound'); S1.wait_for_timeout(200)
     ok('student solves the Challenge puzzle by dragging', solve(S1, '1-2-sound', 'c'))
     ok('solved message shown', 'Solved' in S1.inner_text('#tzmsg'))
     S1.wait_for_timeout(800)
     ok('achievement toasts appear', S1.locator('.rwtoast').count() >= 1, S1.locator('#rwtoasts').count())
     S1.click('[data-tz="close"]'); S1.wait_for_timeout(200)
-    ok('card shows the puzzle solved', '1 of 3 solved' in S1.inner_text('.lgrp[data-lg="tz"] .lgsum') or 'Best 100%' in S1.inner_text('#tzcard'), S1.inner_text('#tzcard'))
+    ok('card shows the puzzle solved', '1 of 4 solved' in S1.inner_text('.lgrp[data-lg="tz"] .lgsum') or 'Best 100%' in S1.inner_text('#tzcard'), S1.inner_text('#tzcard'))
     # ---- pairs match: one wrong pick, then every pair
     if not S1.locator('[data-pz="open"][data-t="match"]').is_visible(): S1.click('[data-lgt="tz"]'); S1.wait_for_timeout(200)
     S1.click('[data-pz="open"][data-t="match"]'); S1.wait_for_timeout(200)
@@ -117,6 +117,24 @@ with sync_playwright() as p:
     for i in range(n):
         S1.click(f'[data-pz="pick"][data-side="r"][data-i="{i}"]'); S1.click(f'[data-pz="pick"][data-side="l"][data-i="{i}"]')
     ok('pairs match solved at 90%', 'Solved' in S1.inner_text('#pzmsg') and S1.evaluate('S.tz["1-2-sound-m"].best') == 90, S1.inner_text('#pzmsg'))
+    S1.click('[data-pz="close"]'); S1.wait_for_timeout(200)
+    # ---- memory pairs: an avoidable miss, then every pair
+    if not S1.locator('[data-pz="open"][data-t="memory"]').is_visible(): S1.click('[data-lgt="tz"]'); S1.wait_for_timeout(200)
+    S1.click('[data-pz="open"][data-t="memory"]'); S1.wait_for_timeout(200)
+    cards = S1.evaluate('PZ.cards.map(c=>c.i)'); ok('memory pairs has 12 face-down cards', len(cards) == 12 and S1.locator('.pzmc.up').count() == 0)
+    a0 = 0; mate0 = [j for j, c in enumerate(cards) if c == cards[0] and j != 0][0]
+    other = [j for j, c in enumerate(cards) if c != cards[0]][0]
+    # see card 0 and its mate's... first: turn 0 and a non-mate (not avoidable), then the mate and another non-mate (avoidable)
+    S1.click(f'[data-pz="flip"][data-k="{a0}"]'); S1.click(f'[data-pz="flip"][data-k="{other}"]'); S1.wait_for_timeout(1300)
+    ok('first miss is not counted (nothing known yet)', S1.evaluate('PZ.bad') == 0 and S1.locator('.pzmc.up').count() == 0)
+    other2 = [j for j, c in enumerate(cards) if c != cards[0] and j != other][0]
+    S1.click(f'[data-pz="flip"][data-k="{mate0}"]'); S1.click(f'[data-pz="flip"][data-k="{other2}"]'); S1.wait_for_timeout(1300)
+    ok('missing a pair already seen is counted', S1.evaluate('PZ.bad') == 1)
+    for i in sorted(set(cards)):
+        js = [j for j, c in enumerate(cards) if c == i]
+        S1.click(f'[data-pz="flip"][data-k="{js[0]}"]'); S1.click(f'[data-pz="flip"][data-k="{js[1]}"]'); S1.wait_for_timeout(450)
+    ok('memory pairs solved at 90%', 'Solved' in S1.inner_text('#pzmsg') and S1.evaluate('S.tz["1-2-sound-g"].best') == 90, S1.inner_text('#pzmsg'))
+    S1.screenshot(path='/tmp/claude-0/-home-claude/451fbb71-c1b0-527b-9371-00181eb45299/scratchpad/pz-mem.png')
     S1.click('[data-pz="close"]'); S1.wait_for_timeout(200)
     # ---- crossword: type every letter
     if not S1.locator('[data-pz="open"][data-t="cross"]').is_visible(): S1.click('[data-lgt="tz"]'); S1.wait_for_timeout(200)
@@ -133,13 +151,13 @@ with sync_playwright() as p:
     S1.screenshot(path='/tmp/claude-0/-home-claude/451fbb71-c1b0-527b-9371-00181eb45299/scratchpad/pz-cross.png')
     S1.click('[data-pz="close"]'); S1.wait_for_timeout(200)
     if not S1.locator('#tzcard').is_visible(): S1.click('[data-lgt="tz"]'); S1.wait_for_timeout(200)
-    ok('puzzles group shows all three solved', '3 of 3 solved' in S1.inner_text('.lgrp[data-lg="tz"]'), S1.inner_text('.lgrp[data-lg="tz"]'))
+    ok('puzzles group shows all four solved', '4 of 4 solved' in S1.inner_text('.lgrp[data-lg="tz"]'), S1.inner_text('.lgrp[data-lg="tz"]'))
     flushed(S1)
     ok('puzzle result saved to the account', sql(f"select data->>'best' from user_progress u join profiles p on p.id=u.user_id where kind='tz' and key='1-2-sound-c' and p.email='ada{tag}@student.org'") == '100')
     pts = S1.evaluate('rwCompute().total')
-    ok('points include the puzzles (50 Challenge, 18 match, 23 crossword)', pts >= 50 + 18 + 23 + 25, pts)
+    ok('points include the puzzles (50 Challenge, 18 match, 18 memory, 23 crossword)', pts >= 50 + 18 + 18 + 23 + 25, pts)
     flushed(S1)
-    ok('pairs match and crossword results saved to the account', sql(f"select string_agg(key || '=' || (data->>'best'), ',' order by key) from user_progress u join profiles p on p.id=u.user_id where kind='tz' and key in ('1-2-sound-m','1-2-sound-x') and p.email='ada{tag}@student.org'") == '1-2-sound-m=90,1-2-sound-x=90')
+    ok('pairs match and crossword results saved to the account', sql(f"select string_agg(key || '=' || (data->>'best'), ',' order by key) from user_progress u join profiles p on p.id=u.user_id where kind='tz' and key in ('1-2-sound-m','1-2-sound-g','1-2-sound-x') and p.email='ada{tag}@student.org'") == '1-2-sound-g=90,1-2-sound-m=90,1-2-sound-x=90')
     ok('points saved for the leaderboard', sql(f"select (data->>'points')::int from user_progress u join profiles p on p.id=u.user_id where kind='pts' and p.email='ada{tag}@student.org'") == str(pts))
     ok('rank shown in the menu bar', S1.locator('.rwnav').count() == 1 and str(pts) in S1.inner_text('.rwnav').replace(',', ''))
 
