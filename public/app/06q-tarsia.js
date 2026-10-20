@@ -187,12 +187,15 @@ document.addEventListener("keydown",e=>{if(!TZ||!$("#tzov"))return;
 addEventListener("resize",()=>{if(TZ&&$("#tzov"))tzDraw()});
 
 /* ---------- the card on the lesson page ---------- */
-function tzCard(l){const el=document.getElementById("tzcard");if(!el)return;if(!tzHas(l)){el.hidden=true;return}
+function tzCard(l){const el=document.getElementById("tzcard");if(!el)return;
+  const types=typeof pzTypesFor==="function"?pzTypesFor(l):tzHas(l)?["tarsia"]:[];if(!types.length){el.hidden=true;return}
   const need=typeof tzRequired==="function"&&tzRequired(l);
   const row=m=>{const r=tzRes(l.id,m),M=TZ_MODES[m],k=TZKEEP[l.id+"-"+m];
-    return `<div class="tzmode"><div><b>${M.name}</b><small>${M.n*M.n} pieces · ${M.pairs} pairs${m==="c"?" · more points":""}</small>
+    return `<div class="tzmode"><div><b>Tarsia · ${M.name}${m==="e"&&need&&!tzDone(l.id)?` <span class="chip start">Set</span>`:""}</b><small>${M.n*M.n} pieces · ${M.pairs} pairs${m==="c"?" · more points":""}</small>
       <span class="sub">${r?`Best ${r.best}% · fastest ${tzTime(r.secs)} · solved ${r.attempts}×`:k&&!k.solved?"In progress":"Not solved yet"}</span></div>
      <button class="btn small${m==="e"&&!r?" primary":""}" data-tz="open" data-l="${l.id}" data-m="${m}">${k&&!k.solved?"Carry on":r?"Play again":"Play"}</button></div>`};
-  el.innerHTML=`<div class="vhead tzh"><h3>Tarsia puzzle</h3>${tzDone(l.id)?`<span class="chip sec">Solved · ${tzBest(l.id)}%</span>`:need?`<span class="chip start">Set by your teacher</span>`:`<span class="chip none">Bonus</span>`}</div>
-   <div class="vbody"><p class="vfoot" style="margin:0">Rebuild the triangle so every pair of touching edges matches: a term and its meaning, or a question and its answer.${need?" <b>Your teacher has included this puzzle in an assignment.</b>":""}</p>
-   ${row("e")}${row("c")}</div>`}
+  const doneN=types.filter(t=>typeof pzDone==="function"?pzDone(l.id,t):tzDone(l.id)).length;
+  const setN=typeof pzRequired==="function"?types.filter(t=>pzRequired(l,t)&&!pzDone(l.id,t)).length:need?1:0;
+  el.innerHTML=`<div class="vhead tzh"><h3>Puzzles</h3>${setN?`<span class="chip start">Set by your teacher</span>`:doneN?`<span class="chip sec">${doneN} of ${types.length} solved</span>`:`<span class="chip none">Bonus</span>`}</div>
+   <div class="vbody"><p class="vfoot" style="margin:0">Practise this lesson's key terms and ideas.${setN?" <b>Your teacher has included the puzzles marked Set in an assignment.</b>":""}</p>
+   ${types.includes("tarsia")?row("e")+row("c"):""}${typeof pzRows==="function"?pzRows(l):""}</div>`}

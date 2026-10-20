@@ -57,18 +57,24 @@ function redoPart(l,a,since){const after=x=>!!(x&&x.date&&x.date>since),qc=S.les
   if(l.v){const v=S.scores["lv-"+l.id],t=after(v);parts.push({ok:t,t,pct:t?v.last:0})}
   (l.acts||[]).forEach(ac=>{const x=S.acts[l.id+"-"+ac.id],h=x&&x.hist?x.hist.filter(e=>e.date>since):[],last=h[h.length-1],q=x&&(x.qn||x.total);
     parts.push({ok:h.length>0,t:h.length>0,pct:last&&q?Math.round(last.n/q*100):0})});
-  if(asgTz(a)){const z=["e","c"].map(m=>S.tz[l.id+"-"+m]).filter(after);parts.push({ok:z.length>0,t:z.length>0,pct:z.length?Math.max(...z.map(x=>x.last)):0})}
+  asgPzFor(a,l).forEach(t=>{const z=pzResults(l.id,t).filter(after);parts.push({ok:z.length>0,t:z.length>0,pct:z.length?Math.max(...z.map(x=>x.last)):0})});
   return {l,ok:parts.every(p=>p.ok),started:parts.some(p=>p.t),pct:Math.round(parts.reduce((t,p)=>t+p.pct,0)/parts.length)}}
-/* lesson assignments can include each lesson's tarsia puzzle (06q-tarsia.js) */
-const asgTz=a=>!!(a&&a.kind==="lessons"&&a.mode!=="qc"&&a.spec&&a.spec.tz);
-/* is this lesson's puzzle part of an assignment the student still has to finish? */
-function tzRequired(l){const c=typeof myClass==="function"&&myClass();if(!c)return false;
-  return Object.values(SC.asg).some(a=>a.cls===c.id&&asgTz(a)&&a.lessons.includes(l.id))}
+/* lesson assignments can include each lesson's puzzles: the teacher picks the types (06q-tarsia.js, 06t-puzzles.js).
+   spec.pz lists them, e.g. ["tarsia","cross"]; older assignments have spec.tz, meaning the tarsia puzzle only. */
+const asgPz=a=>!(a&&a.kind==="lessons"&&a.mode!=="qc"&&a.spec)?[]:Array.isArray(a.spec.pz)?a.spec.pz:a.spec.tz?["tarsia"]:[];
+const asgTz=a=>asgPz(a).length>0;
+/* the puzzle types an assignment needs for one lesson (a lesson without a crossword just skips it) */
+const asgPzFor=(a,l)=>asgPz(a).filter(t=>typeof pzHas==="function"?pzHas(l,t):t==="tarsia");
+const pzList=ts=>{const n=ts.map(t=>({tarsia:"tarsia",match:"pairs match",cross:"crossword"})[t]);return n.length>1?n.slice(0,-1).join(", ")+" and "+n[n.length-1]:n[0]||""};
+/* is this lesson's puzzle of type t part of one of the student's class assignments? */
+function pzRequired(l,t){const c=typeof myClass==="function"&&myClass();if(!c)return false;
+  return Object.values(SC.asg).some(a=>a.cls===c.id&&a.lessons&&a.lessons.includes(l.id)&&asgPzFor(a,l).includes(t))}
+const tzRequired=l=>pzRequired(l,"tarsia");
 function asgStatus(a,id){if(a.kind==="exam")return asgExamStatus(a,id);const re=reOf(a.id,id),since=re?new Date(re.at).toISOString():null;
   return withProg(progOf(id),()=>{const ls=a.lessons.map(x=>ALL_LESSONS.find(l=>l.id===x)).filter(Boolean);
     const per=ls.map(l=>{if(since)return redoPart(l,a,since);const lp=lessonParts(l),qc=S.lessons[l.id];
       let ok=a.mode==="qc"?qcPassed(l):done(l),started=a.mode==="qc"?!!qc:lp.started,pct=a.mode==="qc"?(qc?qc.best:0):lp.overall;
-      if(asgTz(a)){const z=tzDone(l.id);ok=ok&&z;started=started||z;pct=Math.round((pct*lp.parts.length+tzBest(l.id))/(lp.parts.length+1))}
+      const pz=asgPzFor(a,l);if(pz.length){const n=lp.parts.length;let sum=pct*n;pz.forEach(t=>{const z=pzDone(l.id,t);ok=ok&&z;started=started||z;sum+=pzBest(l.id,t)});pct=Math.round(sum/(n+pz.length))}
       return {l,ok,started,pct}});
     const nOk=per.filter(x=>x.ok).length,score=per.length?Math.round(per.reduce((t,x)=>t+x.pct,0)/per.length):0;
     const complete=nOk===per.length&&per.length>0,started=per.some(x=>x.started||x.ok);
@@ -184,7 +190,7 @@ function classAssign(c){
      <div class="tpl">${t.lessons.map(l=>`<label><input type="checkbox" data-tl="${l.id}"${F.lessons.includes(l.id)?" checked":""}> ${l.n}. ${esc(l.title)}</label>`).join("")}</div></details>`}).join("")}</div></details>`}).join("");
   const list=as.length?as.map(a=>{if(a.kind==="exam")return examAsgCard(a,studs);const st=studs.map(s=>({s,r:asgStatus(a,s.id)})),nd=st.filter(x=>x.r.complete).length,
       sc=st.length?Math.round(st.reduce((t,x)=>t+x.r.score,0)/st.length):0,ls=a.lessons.map(id=>ALL_LESSONS.find(l=>l.id===id)).filter(Boolean);
-    return `<details class="panel tasg"${TV.open[a.id]?" open":""} data-topen="${a.id}"><summary><div><b>${esc(a.title)}</b><span class="sub">${dueText(a.due)} · ${plural(ls.length,"lesson")} · ${a.mode==="qc"?"quick checks only":"complete each lesson"}${asgTz(a)?" + tarsia puzzles":""}</span></div>
+    return `<details class="panel tasg"${TV.open[a.id]?" open":""} data-topen="${a.id}"><summary><div><b>${esc(a.title)}</b><span class="sub">${dueText(a.due)} · ${plural(ls.length,"lesson")} · ${a.mode==="qc"?"quick checks only":"complete each lesson"}${asgTz(a)?` + ${pzList(asgPz(a))}`:""}</span></div>
       <div class="tasum"><span class="mono">${nd}/${st.length}</span><span class="sub">completed</span></div></summary><div class="tasgb">
      ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}
      ${lessonAsgInsights(a,st)}
@@ -202,7 +208,7 @@ function classAssign(c){
     <div class="tkind" role="radiogroup" aria-label="Assignment type">${[["lessons","Lessons","Work through lessons and their tasks"],["exam","Exam questions","A fixed set of past paper questions"]].map(([k,n,d])=>`<label class="${F.kind===k?"on":""}"><input type="radio" name="akind" value="${k}" data-ta="kind"${F.kind===k?" checked":""}><span><b>${n}</b><small>${d}</small></span></label>`).join("")}</div>
     <div class="tform2"><label for="adue">Due date<input type="date" id="adue" value="${F.due}" min="${todayISO()}"></label>
      ${F.kind==="exam"?`<label for="an">Number of questions<select id="an" data-ta="n">${[5,10,15,20,30].map(n=>`<option value="${n}"${F.n===n?" selected":""}>${n}</option>`).join("")}</select></label>`:`<label for="amode">Students must<select id="amode"><option value="all"${F.mode==="all"?" selected":""}>Complete each lesson (all tasks)</option><option value="qc"${F.mode==="qc"?" selected":""}>Pass each quick check</option></select></label>`}</div>
-    ${F.kind!=="exam"&&F.mode!=="qc"?`<label class="tchkrow"><input type="checkbox" id="atz"${F.tz?" checked":""}> <span><b>Include the tarsia puzzles</b><small>Students also solve each lesson's puzzle, Easy or Challenge. Their best puzzle score counts as one more task.</small></span></label>`:""}
+    ${F.kind!=="exam"&&F.mode!=="qc"?`<fieldset class="tpz"><legend>Include puzzles <span class="sub">(optional)</span></legend><div class="tpzrow">${[["tarsia","Tarsia","Rebuild a triangle of matching pairs"],["match","Pairs match","Match terms to meanings"],["cross","Crossword","Key terms from the lesson"]].map(([k,n,d])=>`<label class="tchkrow"><input type="checkbox" data-apz="${k}"${(F.pz||[]).includes(k)?" checked":""}> <span><b>${n}</b><small>${d}</small></span></label>`).join("")}</div><small class="sub">Each puzzle you tick counts as one more task in every lesson. Students' best score counts.</small></fieldset>`:""}
     <label for="anote">Message to students <span class="sub">(optional)</span><textarea id="anote" rows="2" maxlength="300">${esc(F.note)}</textarea></label>
     ${F.kind==="exam"?examFields(F):`<div><span class="tlab">Lessons <span class="sub">${plural(F.lessons.length,"lesson")} chosen</span></span>${picker}</div>`}
     <p class="err" id="asgerr" hidden></p>
@@ -216,7 +222,7 @@ function todoPage(){const u=me(),c=myClass();
   markSeen();const as=myAsg().map(a=>({a,r:asgStatus(a,u.id)}));
   const todo=as.filter(x=>!x.r.complete),doneL=as.filter(x=>x.r.complete).reverse();
   const card=({a,r})=>{if(a.kind==="exam")return examTodoCard(a,r,c);const nx=r.per.find(x=>!x.ok);
-    return tdCard(a,r,c,`${r.complete?`Due ${fmtDay(myDue(a))}`:dueText(myDue(a))} · ${plural(r.per.length,"lesson")}${asgTz(a)?" + tarsia puzzles":""}`,tdBar(r.nOk,r.per.length),`
+    return tdCard(a,r,c,`${r.complete?`Due ${fmtDay(myDue(a))}`:dueText(myDue(a))} · ${plural(r.per.length,"lesson")}${asgTz(a)?` + ${pzList(asgPz(a))}`:""}`,tdBar(r.nOk,r.per.length),`
      ${a.note?`<p class="tnote">${esc(a.note)}</p>`:""}${reFeedback(r,c)}
      <ul class="tdl">${r.per.map(x=>`<li class="${x.ok?"ok":""}"><span class="fdot ${x.ok?"ok":x.started?"part":""}" aria-hidden="true">${x.ok?"✓":""}</span><a href="#l-${x.l.id}">${x.l.topic.code} · ${esc(x.l.title)}</a><span class="sub">${x.ok?"Done":x.started?x.pct+"%":a.mode==="qc"?"Quick check":"Not started"}</span></li>`).join("")}</ul>
      ${nx?`<a class="btn primary small" style="align-self:flex-start" href="#l-${nx.l.id}">${nx.started?"Continue":"Start"}: ${esc(nx.l.title)}</a>`:""}
@@ -277,7 +283,7 @@ document.addEventListener("change",e=>{const t=e.target;
     F.lessons.sort((a,b)=>ALL_LESSONS.findIndex(l=>l.id===a)-ALL_LESSONS.findIndex(l=>l.id===b));
     for(const d of [t.closest("details"),t.closest("details.tpaper")]){if(!d)continue;const n=d.querySelectorAll("[data-tl]:checked").length,s=d.querySelector(":scope > summary");s.querySelector(".chip")?.remove();if(n)s.insertAdjacentHTML("beforeend",`<span class="chip sec">${n} chosen</span>`)}
     const lab=document.querySelector(".tlab .sub");if(lab)lab.textContent=plural(F.lessons.length,"lesson")+" chosen"}
-  if(TV.form&&t.closest("#asgForm")){const F=TV.form;if(t.id==="adue")F.due=t.value;if(t.id==="amode"){F.mode=t.value;tRender()}if(t.id==="atz")F.tz=t.checked;
+  if(TV.form&&t.closest("#asgForm")){const F=TV.form;if(t.id==="adue")F.due=t.value;if(t.id==="amode"){F.mode=t.value;tRender()}if(t.dataset.apz){const k=t.dataset.apz,ps=(F.pz||[]).filter(x=>x!==k);F.pz=t.checked?PZ_TYPES.map(x=>x[0]).filter(x=>x===k||ps.includes(x)):ps}
     const k=t.dataset.ta;if(k){if(k==="kind")F.kind=t.value;else if(k==="n")F.n=+t.value;else if(k==="big")F.big=t.checked;
       else if(k==="paper"){const pp=+t.value;F.papers=t.checked?[...new Set([...F.papers,pp])]:F.papers.filter(x=>x!==pp);F.topics=F.topics.filter(id=>F.papers.includes(TOPICS.find(x=>x.id===id).ch.paper))}
       else if(k==="year"){const y=+t.value;F.years=t.checked?[...new Set([...F.years,y])]:F.years.filter(x=>x!==y)}
@@ -309,7 +315,7 @@ document.addEventListener("submit",e=>{const f=e.target,u=me();const err=(id,m)=
       const qids=shuffle(pool.map(q=>q.id)).slice(0,F.n).sort((x,y)=>EXQ.findIndex(q=>q.id===x)-EXQ.findIndex(q=>q.id===y));
       row={kind:"exam",cls:c.id,title:F.title,note:F.note,qids,due:F.due,spec:{papers:F.papers,topics:F.topics,years:F.years,big:F.big,n:F.n}}}
     else{if(!F.lessons.length)return err("asgerr","Choose at least one lesson.");
-      row={kind:"lessons",cls:c.id,title:F.title,note:F.note,lessons:F.lessons.slice(),mode:F.mode,due:F.due,spec:F.mode!=="qc"&&F.tz?{tz:true}:null}}
+      row={kind:"lessons",cls:c.id,title:F.title,note:F.note,lessons:F.lessons.slice(),mode:F.mode,due:F.due,spec:F.mode!=="qc"&&(F.pz||[]).length?{pz:F.pz.slice(),...(F.pz.includes("tarsia")?{tz:true}:{})}:null}}
     let id=null;tDo(async()=>{id=await SCH.A.createAssignment(row)},{err:"asgerr",ok:()=>{TV.lastKind=F.kind;TV.form=null;TV.newOpen=false}});return}
 });
 document.addEventListener("change",e=>{if(e.target.name==="role"){const l=$("#rcodel");if(l)l.hidden=e.target.value!=="student"}});

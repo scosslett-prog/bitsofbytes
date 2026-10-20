@@ -167,13 +167,19 @@ Set-up:
 
 The functions are in `supabase/functions/` and are deployed with JWT checking turned off (`supabase/config.toml`): `billing` checks the signed-in user itself, and the webhook checks Stripe's signature.
 
-## Tarsia puzzles and rewards
+## Puzzles and rewards
 
 - Every lesson has a tarsia puzzle: Easy (9 pieces) or Challenge (16 pieces). The pairs are in
   `public/app/06p-tarsia-pairs.js`, one line per pair (`half | other half`), at least 18 per lesson,
   and no half may appear twice in a lesson. Some number lessons make fresh pairs every time.
   The puzzle itself is `public/app/06q-tarsia.js`.
-- Teachers can include the puzzles in a lesson assignment (a tick box when "Complete each lesson" is chosen).
+- Each lesson also has a **pairs match** (8 pairs from the same tarsia pairs) and a **crossword**
+  (answers from the lesson's key terms and any tarsia pair whose term is one to three words), in
+  `public/app/06t-puzzles.js`. A few number-only lessons have too few words for a crossword and just skip it.
+  Results are saved beside the tarsia ones as `<lesson id>-m` and `<lesson id>-x` (no database change needed).
+- Teachers choose which puzzle types a lesson assignment includes (tarsia, pairs match, crossword) when
+  "Complete each lesson" is chosen. The choice is saved as `assignments.spec.pz`; older assignments with
+  `spec.tz` mean the tarsia puzzle only.
 - Points, ranks (Bit → Terabyte) and achievements are worked out in `public/app/06r-rewards.js`
   from each student's best results, so nothing is earned twice. The total is saved for the class
   leaderboard, which teachers can switch off on the class's Progress tab.
