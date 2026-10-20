@@ -3,6 +3,12 @@
 //   { action: "checkout", plan, quantity? }      signed in: start a Stripe Checkout page
 //        plan = "licences" (teachers; quantity = number of licences) | "student_monthly" | "student_yearly"
 //   { action: "portal" }                         signed in: Stripe's page to manage or cancel a subscription
+//   { action: "seller" }                         public: the licence price and the seller's details, for a quote
+//   { action: "invoice", quantity, school, email, address?, po? }
+//        teachers: a yearly licence subscription paid by invoice. Stripe emails the invoice to the school's
+//        finance email (payable by card or bank transfer within 30 days). The licences work straight away;
+//        if the invoice isn't paid, Stripe cancels the subscription (Settings → Billing → Subscriptions and
+//        emails → "Manage invoices sent to customers") and the licences stop.
 // Secrets (Supabase → Edge Functions → Secrets): STRIPE_SECRET_KEY, STRIPE_PRICE_LICENCE,
 // STRIPE_PRICE_STUDENT_MONTHLY, STRIPE_PRICE_STUDENT_YEARLY, SITE_URL (e.g. https://bitsofbytes.co).
 import Stripe from "npm:stripe@17.7.0";
@@ -50,6 +56,28 @@ async function customerFor(user: { id: string; email: string; full_name: string 
   return c.id;
 }
 
+const INVOICE_DAYS = 30;
+const clip = (v: unknown, n: number) => String(v ?? "").replace(/\s+/g, " ").trim().slice(0, n);
+const emailOk = (e: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e);
+/* the business details Stripe holds for the account (public details, Settings → Business → Public details) */
+async function seller() {
+  try {
+    const a = await stripe.accounts.retrieve();
+    const bp = (a.business_profile ?? {}) as Partial<Stripe.Account.BusinessProfile>;
+    const ad = bp.support_address ?? null;
+    return {
+      name: bp.name || a.settings?.dashboard?.display_name || "Bits of Bytes",
+      email: bp.support_email || a.email || "",
+      phone: bp.support_phone || "",
+      url: bp.url || SITE,
+      address: ad ? [ad.line1, ad.line2, ad.city, ad.state, ad.postal_code, ad.country].filter(Boolean).join(", ") : "",
+    };
+  } catch (e) {
+    console.warn("account details", e);
+    return { name: "Bits of Bytes", email: "", phone: "", url: SITE, address: "" };
+  }
+}
+
 const money = (p: Stripe.Price) => ({ id: p.id, amount: p.unit_amount, currency: p.currency, interval: p.recurring?.interval ?? null });
 
 Deno.serve(async (req) => {
@@ -62,6 +90,11 @@ Deno.serve(async (req) => {
       const out: Record<string, unknown> = {};
       for (const [k, id] of Object.entries(PRICES)) if (id) out[k] = money(await stripe.prices.retrieve(id));
       return reply(200, out);
+    }
+
+    if (action === "seller") {
+      const price = PRICES.licences ? money(await stripe.prices.retrieve(PRICES.licences)) : null;
+      return reply(200, { price, seller: await seller(), days: INVOICE_DAYS });
     }
 
     const user = await signedInUser(req);
@@ -92,6 +125,45 @@ Deno.serve(async (req) => {
         cancel_url: `${base}/?checkout=cancelled#${teacherPlan ? "teacher" : "pricing"}`,
       });
       return reply(200, { url: session.url });
+    }
+
+    if (action === "invoice") {
+      if (!["teacher", "admin"].includes(user.role)) return reply(403, { error: "Only teacher accounts can buy class licences." });
+      if (!PRICES.licences) return reply(400, { error: "Licences aren't on sale yet." });
+      const quantity = Math.floor(Number(body.quantity) || 0);
+      if (!(quantity >= 1 && quantity <= 1000)) return reply(400, { error: "Choose from 1 to 1000 licences." });
+      const school = clip(body.school, 120), email = clip(body.email, 200).toLowerCase(), po = clip(body.po, 60);
+      const address = String(body.address ?? "").split(/\n/).map((l) => clip(l, 100)).filter(Boolean).slice(0, 5);
+      if (!school) return reply(400, { error: "Enter the school's name." });
+      if (!emailOk(email)) return reply(400, { error: "Enter the email address the invoice should go to." });
+      // one Stripe customer per invoice, so it goes to the school's finance office, not the teacher's card account
+      const customer = await stripe.customers.create({
+        name: school, email,
+        ...(address.length ? { address: { line1: address[0], line2: address.slice(1).join(", ") || undefined } } : {}),
+        metadata: { user_id: user.id, teacher_email: user.email, kind: "invoice" },
+        invoice_settings: { custom_fields: [...(po ? [{ name: "Purchase order", value: po }] : []), { name: "Teacher", value: clip(`${user.full_name || ""} ${user.email}`, 140) }] },
+      });
+      const sub = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: PRICES.licences, quantity }],
+        collection_method: "send_invoice",
+        days_until_due: INVOICE_DAYS,
+        metadata: { user_id: user.id, plan: "licences", po },
+        description: `Class licences for ${school}${po ? ` (PO ${po})` : ""}`,
+      });
+      // finalise and email the first invoice now rather than in an hour
+      let inv = await stripe.invoices.retrieve(typeof sub.latest_invoice === "string" ? sub.latest_invoice : sub.latest_invoice!.id);
+      if (inv.status === "draft") inv = await stripe.invoices.finalizeInvoice(inv.id);
+      try { inv = await stripe.invoices.sendInvoice(inv.id); } catch (e) { console.warn("send invoice", e); }
+      // record it now too, so the licences show at once even before the webhook arrives
+      const item = sub.items.data[0];
+      const end = (sub as unknown as { current_period_end?: number }).current_period_end ?? (item as unknown as { current_period_end?: number })?.current_period_end;
+      await admin.from("subscriptions").upsert({
+        id: sub.id, user_id: user.id, plan: "licences", status: sub.status, quantity, price_id: PRICES.licences,
+        interval: item?.price?.recurring?.interval ?? null, current_period_end: end ? new Date(end * 1000).toISOString() : null,
+        cancel_at_period_end: false, collection: "send_invoice", updated_at: new Date().toISOString(),
+      });
+      return reply(200, { number: inv.number, url: inv.hosted_invoice_url, pdf: inv.invoice_pdf, email, total: inv.total, currency: inv.currency, due: inv.due_date });
     }
 
     if (action === "portal") {

@@ -30,7 +30,7 @@ async function save(sub: Stripe.Subscription) {
     id: sub.id, user_id, plan, status: sub.status, quantity: item?.quantity ?? 1, price_id: priceId,
     interval: item?.price?.recurring?.interval ?? null,
     current_period_end: end ? new Date(end * 1000).toISOString() : null,
-    cancel_at_period_end: !!sub.cancel_at_period_end, updated_at: new Date().toISOString(),
+    cancel_at_period_end: !!sub.cancel_at_period_end, collection: sub.collection_method ?? "charge_automatically", updated_at: new Date().toISOString(),
   });
   if (error) throw error;
 }

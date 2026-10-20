@@ -167,6 +167,17 @@ Set-up:
 
 The functions are in `supabase/functions/` and are deployed with JWT checking turned off (`supabase/config.toml`): `billing` checks the signed-in user itself, and the webhook checks Stripe's signature.
 
+## Paying by invoice
+
+- In the teacher's Licences panel, **Paying by invoice or purchase order?** lets them download a printable
+  **quote** (price, seller details from Stripe's public business details) and **send an invoice**.
+- Sending an invoice calls the `billing` function (action `invoice`): it makes a Stripe customer for the
+  school's finance email, a yearly licence subscription with `collection_method: send_invoice` (30 days to
+  pay) and emails the first invoice. The licences work straight away (`subscriptions.collection = 'send_invoice'`).
+- In Stripe, set Settings → Billing → Subscriptions and emails → *Manage invoices sent to customers* so an
+  unpaid invoice cancels the subscription after a few days past due; the licences then stop.
+- Database: `supabase/migrations/20261020010000_invoice_subscriptions.sql` (already applied).
+
 ## Offer codes (free licences)
 
 - On the Admin page, **Offer codes** makes a code with a number of licences for each teacher, an optional

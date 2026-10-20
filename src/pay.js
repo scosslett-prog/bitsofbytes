@@ -25,6 +25,8 @@ export function createPay(api, store, content) {
     return pay.prices;
   };
   pay.checkout = async (plan, quantity) => { const r = await api.fn('billing', { action: 'checkout', plan, quantity }); location.href = r.url; };
+  pay.seller = async () => { if (!pay.sellerInfo) pay.sellerInfo = await api.fn('billing', { action: 'seller' }); return pay.sellerInfo; };
+  pay.invoice = (d) => api.fn('billing', Object.assign({ action: 'invoice' }, d));
   pay.portal = async () => { const r = await api.fn('billing', { action: 'portal' }); location.href = r.url; };
   pay.money = (p) => (p && p.amount != null ? new Intl.NumberFormat('en-GB', { style: 'currency', currency: (p.currency || 'gbp').toUpperCase(), currencyDisplay: 'narrowSymbol', minimumFractionDigits: p.amount % 100 ? 2 : 0 }).format(p.amount / 100) : null);
   return pay;
