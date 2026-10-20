@@ -31,10 +31,11 @@ function accent(p){return p%2===1?"--accent:var(--p1);--accent-soft:var(--p1-sof
 function alBar(){if(!BOB.course||document.getElementById("albar"))return;{const f=document.querySelector("footer .wrap > span");if(f)f.textContent="Bits of Bytes · Pearson Edexcel IAL Computer Science (preview)"}const b=document.createElement("div");b.id="albar";b.setAttribute("role","note");
   b.innerHTML=`<span><b>${esc(CRS.short)} · preview</b> Only admin accounts can see this site.</span><a href="/#home">Back to the IGCSE site</a>`;document.body.prepend(b)}
 /* free-plan banner: a signed-in student without full access (no subscription, no class licence) */
-function trialBar(route){const P=BOB.pay,show=!BOB.course&&P&&P.enabled&&!P.full()&&S.user&&S.user.role==="student"&&route!=="pricing";
+function trialBar(route){const P=BOB.pay,tch=S.user&&S.user.role==="teacher",show=!BOB.course&&P&&P.enabled&&!P.full()&&S.user&&(S.user.role==="student"||tch)&&route!=="pricing"&&!(tch&&route==="teacher");
   let b=document.getElementById("trialbar");if(!show){if(b)b.remove();return}
   const cls=typeof myClass==="function"&&myClass();
-  const html=`<span><b>You're on the free trial.</b> ${cls?"Your class doesn't have full access yet. Ask your teacher, or subscribe yourself":"The first lesson of each section is open. Subscribe"} to unlock every lesson, activity and exam question.</span><a class="btn small primary" href="#pricing">See plans</a>`;
+  const html=tch?`<span><b>You're on the free trial.</b> The first lesson of each section is open. Buying your first student licences adds your teacher subscription and unlocks every lesson for you.</span><a class="btn small primary" href="#teacher">Get licences</a>`
+    :`<span><b>You're on the free trial.</b> ${cls?"Your class doesn't have full access yet. Ask your teacher, or subscribe yourself":"The first lesson of each section is open. Subscribe"} to unlock every lesson, activity and exam question.</span><a class="btn small primary" href="#pricing">See plans</a>`;
   if(!b){b=document.createElement("div");b.id="trialbar";b.setAttribute("role","note");document.body.prepend(b)}
   if(b.innerHTML!==html)b.innerHTML=html}
 function nav(route){alBar();trialBar(route);

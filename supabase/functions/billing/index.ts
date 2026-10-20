@@ -1,7 +1,8 @@
 // Bits of Bytes: payments called from the site.
 //   { action: "prices" }                         public: the prices to show on the pricing page
 //   { action: "checkout", plan, quantity? }      signed in: start a Stripe Checkout page
-//        plan = "licences" (teachers; quantity = number of licences) | "student_monthly" | "student_yearly"
+//        plan = "teacher" (a teacher's own yearly subscription) | "licences" (teachers; quantity = number of
+//        licences) | "student_monthly" | "student_yearly"
 //   { action: "portal" }                         signed in: Stripe's page to manage or cancel a subscription
 //   { action: "seller" }                         public: the licence price and the seller's details, for a quote
 //   { action: "invoice", quantity, school, email, address?, po? }
@@ -9,7 +10,9 @@
 //        finance email (payable by card or bank transfer within 30 days). The licences work straight away;
 //        if the invoice isn't paid, Stripe cancels the subscription (Settings → Billing → Subscriptions and
 //        emails → "Manage invoices sent to customers") and the licences stop.
-// Secrets (Supabase → Edge Functions → Secrets): STRIPE_SECRET_KEY, STRIPE_PRICE_LICENCE,
+//   A teacher's first licence purchase (card or invoice) also adds the yearly teacher subscription, if they
+//   don't already have full access; "seller" says whether it will (for a signed-in teacher).
+// Secrets (Supabase → Edge Functions → Secrets): STRIPE_SECRET_KEY, STRIPE_PRICE_LICENCE, STRIPE_PRICE_TEACHER,
 // STRIPE_PRICE_STUDENT_MONTHLY, STRIPE_PRICE_STUDENT_YEARLY, SITE_URL (e.g. https://bitsofbytes.co).
 import Stripe from "npm:stripe@17.7.0";
 import { createClient } from "npm:@supabase/supabase-js@2.49.4";
@@ -18,6 +21,7 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") ?? "", { httpClient:
 const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
 const PRICES = {
   licences: Deno.env.get("STRIPE_PRICE_LICENCE") ?? "",
+  teacher: Deno.env.get("STRIPE_PRICE_TEACHER") ?? "",
   student_monthly: Deno.env.get("STRIPE_PRICE_STUDENT_MONTHLY") ?? "",
   student_yearly: Deno.env.get("STRIPE_PRICE_STUDENT_YEARLY") ?? "",
 };
@@ -78,6 +82,27 @@ async function seller() {
   }
 }
 
+/* does this teacher already have full access (a live teacher subscription, or any licences)? If not, their
+   licence purchase also includes the yearly teacher subscription. Same rule as public._teacher_live. */
+async function teacherLive(uid: string) {
+  const { data, error } = await admin.rpc("_teacher_live", { u: uid });
+  if (error) throw error;
+  return !!data;
+}
+/* the same rows the webhook writes (see stripe-webhook), saved straight away */
+async function saveRows(sub: Stripe.Subscription, user_id: string) {
+  const items = sub.items.data;
+  for (const item of items) {
+    const priceId = item.price.id, plan = priceId === PRICES.teacher ? "teacher" : "licences";
+    const end = (sub as unknown as { current_period_end?: number }).current_period_end ?? (item as unknown as { current_period_end?: number })?.current_period_end;
+    await admin.from("subscriptions").upsert({
+      id: items.length === 1 ? sub.id : `${sub.id}:${plan}`, user_id, plan, status: sub.status, quantity: item.quantity ?? 1, price_id: priceId,
+      interval: item.price.recurring?.interval ?? null, current_period_end: end ? new Date(end * 1000).toISOString() : null,
+      cancel_at_period_end: false, collection: sub.collection_method ?? "send_invoice", updated_at: new Date().toISOString(),
+    });
+  }
+}
+
 const money = (p: Stripe.Price) => ({ id: p.id, amount: p.unit_amount, currency: p.currency, interval: p.recurring?.interval ?? null });
 
 Deno.serve(async (req) => {
@@ -94,7 +119,10 @@ Deno.serve(async (req) => {
 
     if (action === "seller") {
       const price = PRICES.licences ? money(await stripe.prices.retrieve(PRICES.licences)) : null;
-      return reply(200, { price, seller: await seller(), days: INVOICE_DAYS });
+      const teacher = PRICES.teacher ? money(await stripe.prices.retrieve(PRICES.teacher)) : null;
+      const me = await signedInUser(req).catch(() => null);
+      const firstBuy = !!me && ["teacher", "admin"].includes(me.role) && !!PRICES.teacher && !(await teacherLive(me.id));
+      return reply(200, { price, teacher, firstBuy, seller: await seller(), days: INVOICE_DAYS });
     }
 
     const user = await signedInUser(req);
@@ -105,10 +133,11 @@ Deno.serve(async (req) => {
       const plan = String(body.plan ?? "");
       const price = PRICES[plan as keyof typeof PRICES];
       if (!price) return reply(400, { error: "That plan isn't available." });
-      const teacherPlan = plan === "licences";
-      if (teacherPlan && !["teacher", "admin"].includes(user.role)) return reply(403, { error: "Only teacher accounts can buy class licences." });
+      const teacherPlan = plan === "licences" || plan === "teacher";
+      if (teacherPlan && !["teacher", "admin"].includes(user.role)) return reply(403, { error: plan === "teacher" ? "Teacher subscriptions are for teacher accounts." : "Only teacher accounts can buy class licences." });
       if (!teacherPlan && user.role !== "student") return reply(403, { error: "Student subscriptions are for student accounts." });
-      const quantity = teacherPlan ? Math.max(1, Math.min(1000, Math.floor(Number(body.quantity) || 0))) : 1;
+      if (plan === "teacher" && await teacherLive(user.id)) return reply(409, { error: "You already have full access as a teacher." });
+      const quantity = plan === "licences" ? Math.max(1, Math.min(1000, Math.floor(Number(body.quantity) || 0))) : 1;
       if (!teacherPlan) {
         const { data: live } = await admin.from("subscriptions").select("id").eq("user_id", user.id).eq("plan", "student").in("status", ["active", "trialing", "past_due"]);
         if (live?.length) return reply(409, { error: "You already have a subscription. Use Manage subscription to change it." });
@@ -117,8 +146,10 @@ Deno.serve(async (req) => {
         mode: "subscription",
         customer: await customerFor(user),
         client_reference_id: user.id,
-        line_items: [{ price, quantity, ...(teacherPlan ? { adjustable_quantity: { enabled: true, minimum: 1, maximum: 1000 } } : {}) }],
-        subscription_data: { metadata: { user_id: user.id, plan: teacherPlan ? "licences" : "student" } },
+        line_items: [
+          ...(plan === "licences" && PRICES.teacher && !(await teacherLive(user.id)) ? [{ price: PRICES.teacher, quantity: 1 }] : []),
+          { price, quantity, ...(plan === "licences" ? { adjustable_quantity: { enabled: true, minimum: 1, maximum: 1000 } } : {}) }],
+        subscription_data: { metadata: { user_id: user.id, plan: plan === "teacher" ? "teacher" : plan === "licences" ? "licences" : "student" } },
         allow_promotion_codes: true,
         billing_address_collection: "auto",
         success_url: `${base}/?checkout=success#${teacherPlan ? "teacher" : "account"}`,
@@ -130,6 +161,7 @@ Deno.serve(async (req) => {
     if (action === "invoice") {
       if (!["teacher", "admin"].includes(user.role)) return reply(403, { error: "Only teacher accounts can buy class licences." });
       if (!PRICES.licences) return reply(400, { error: "Licences aren't on sale yet." });
+      const withTeacher = !!PRICES.teacher && !(await teacherLive(user.id));
       const quantity = Math.floor(Number(body.quantity) || 0);
       if (!(quantity >= 1 && quantity <= 1000)) return reply(400, { error: "Choose from 1 to 1000 licences." });
       const school = clip(body.school, 120), email = clip(body.email, 200).toLowerCase(), po = clip(body.po, 60);
@@ -145,25 +177,19 @@ Deno.serve(async (req) => {
       });
       const sub = await stripe.subscriptions.create({
         customer: customer.id,
-        items: [{ price: PRICES.licences, quantity }],
+        items: [...(withTeacher ? [{ price: PRICES.teacher, quantity: 1 }] : []), { price: PRICES.licences, quantity }],
         collection_method: "send_invoice",
         days_until_due: INVOICE_DAYS,
         metadata: { user_id: user.id, plan: "licences", po },
-        description: `Class licences for ${school}${po ? ` (PO ${po})` : ""}`,
+        description: `${withTeacher ? "Teacher subscription and class licences" : "Class licences"} for ${school}${po ? ` (PO ${po})` : ""}`,
       });
       // finalise and email the first invoice now rather than in an hour
       let inv = await stripe.invoices.retrieve(typeof sub.latest_invoice === "string" ? sub.latest_invoice : sub.latest_invoice!.id);
       if (inv.status === "draft") inv = await stripe.invoices.finalizeInvoice(inv.id);
       try { inv = await stripe.invoices.sendInvoice(inv.id); } catch (e) { console.warn("send invoice", e); }
       // record it now too, so the licences show at once even before the webhook arrives
-      const item = sub.items.data[0];
-      const end = (sub as unknown as { current_period_end?: number }).current_period_end ?? (item as unknown as { current_period_end?: number })?.current_period_end;
-      await admin.from("subscriptions").upsert({
-        id: sub.id, user_id: user.id, plan: "licences", status: sub.status, quantity, price_id: PRICES.licences,
-        interval: item?.price?.recurring?.interval ?? null, current_period_end: end ? new Date(end * 1000).toISOString() : null,
-        cancel_at_period_end: false, collection: "send_invoice", updated_at: new Date().toISOString(),
-      });
-      return reply(200, { number: inv.number, url: inv.hosted_invoice_url, pdf: inv.invoice_pdf, email, total: inv.total, currency: inv.currency, due: inv.due_date });
+      await saveRows(sub, user.id);
+      return reply(200, { teacher: withTeacher, number: inv.number, url: inv.hosted_invoice_url, pdf: inv.invoice_pdf, email, total: inv.total, currency: inv.currency, due: inv.due_date });
     }
 
     if (action === "portal") {

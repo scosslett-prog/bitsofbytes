@@ -167,6 +167,15 @@ Set-up:
 
 The functions are in `supabase/functions/` and are deployed with JWT checking turned off (`supabase/config.toml`): `billing` checks the signed-in user itself, and the webhook checks Stripe's signature.
 
+## Teacher subscription
+
+- A teacher account on its own gets the free tier (the first lesson of each section), like a student.
+- A teacher's first licence purchase, by card or invoice, also adds the yearly **teacher subscription**
+  (Stripe price in the `STRIPE_PRICE_TEACHER` secret, used by both functions). Later purchases don't.
+- A teacher has full access while they have a live teacher subscription **or any licences**, so licences
+  from an offer code or the admin unlock it too. Offer codes can also give months of teacher subscription.
+- Database: `supabase/migrations/20261020020000_teacher_plan.sql` (already applied).
+
 ## Paying by invoice
 
 - In the teacher's Licences panel, **Paying by invoice or purchase order?** lets them download a printable

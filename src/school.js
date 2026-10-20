@@ -117,7 +117,7 @@ export function createSchool(api, getUser) {
     async redeemOffer(code) {
       const r = await db.rpc('redeem_offer_code', { c: code });
       if (!r || r.error) throw new Error((r && r.error) || "That offer code didn't work. Please try again.");
-      return r.licences;
+      return r;
     },
     createAssignment: async (a) => (await db.insert('assignments', [{ class_id: a.cls, teacher_id: me(), kind: a.kind, title: a.title, note: a.note,
       due_date: a.due, mode: a.kind === 'lessons' ? a.mode : null, lesson_ids: a.lessons || [], question_ids: a.qids || [], spec: a.spec || null }]))[0].id,

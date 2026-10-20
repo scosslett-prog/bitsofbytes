@@ -135,7 +135,8 @@ function pricing(){const P=BOB.pay,on=P.enabled;
     <ul><li>Every Paper 1 and Paper 2 lesson, with quick checks and activities</li><li>Hundreds of past paper questions, marked for you</li><li>Flash cards and key vocabulary tests</li><li>Personal progress dashboard</li></ul>
     ${act}</div>
    <div class="plan" style="${accent(2)}"><span class="eyebrow">For teachers</span><h2>Class licences</h2><div class="price">${on&&lic?`${lic}<small> per student / year</small>`:"Price TBC"}</div>
-    <ul><li>Licences for each student in your classes</li><li>Add students with a join code or email invitation</li><li>Class progress by lesson and syllabus section</li><li>Set lesson and exam-question assignments with due dates</li><li>See scores and students' answers, and adjust marks</li></ul>
+    ${on&&P.money(pr.teacher)?`<p class="vfoot" style="margin:-4px 0 0">Plus ${P.money(pr.teacher)} a year for your teacher subscription, added to your first purchase.</p>`:""}
+    <ul><li>Full access to every lesson for you, the teacher</li><li>Licences for each student in your classes</li><li>Add students with a join code or email invitation</li><li>Class progress by lesson and syllabus section</li><li>Set lesson and exam-question assignments with due dates</li><li>See scores and students' answers, and adjust marks</li></ul>
     <a class="btn primary" href="${isTeacher()?"#teacher":"#register"}">${isTeacher()?(on?"Buy licences in the teacher area":"Go to the teacher area"):"Create a teacher account"}</a>
     ${on?`<p class="vfoot" style="margin:0">Schools can also pay by invoice or purchase order: request licences from the teacher area.</p>`:""}</div>
   </div>`;
@@ -185,16 +186,17 @@ const admNewCode=()=>"BOB-"+Array.from({length:6},()=>"ABCDEFGHJKLMNPQRSTUVWXYZ2
 let ADMCODE=null;
 function admCodes(D){if(!D.codes)return `<section class="panel" style="margin-top:16px"><h3>Offer codes</h3><p class="sub" style="margin:0">Run <span class="mono">supabase/migrations/20261020000000_offer_codes.sql</span> in the SQL Editor to turn on offer codes.</p></section>`;
   const code=ADMCODE||(ADMCODE=admNewCode());
-  return `<section class="panel" style="margin-top:16px"><h3>Offer codes</h3><p class="sub">A teacher types the code into their Licences panel and gets that many licences free, once per teacher. Use a hard-to-guess code, and a limit on the number of teachers, so it can't be passed around.</p>
+  return `<section class="panel" style="margin-top:16px"><h3>Offer codes</h3><p class="sub">A teacher types the code into their Licences panel and gets that many licences free (and, if you choose, a free teacher subscription), once per teacher. Any teacher with licences has full access. Use a hard-to-guess code, and a limit on the number of teachers, so it can't be passed around.</p>
    <form id="codeForm" class="tform admcode" novalidate>
     <label for="ccode">Code<input type="text" id="ccode" value="${esc(code)}" maxlength="32" required autocapitalize="characters" spellcheck="false"></label>
-    <label for="cn">Licences for each teacher<input type="number" id="cn" min="1" max="10000" value="100" required></label>
+    <label for="cn">Licences for each teacher<input type="number" id="cn" min="0" max="10000" value="100" required></label>
+    <label for="cm">Free teacher subscription <span class="sub">(months, 0 for none)</span><input type="number" id="cm" min="0" max="36" value="12"></label>
     <label for="cmax">Up to this many teachers <span class="sub">(blank: no limit)</span><input type="number" id="cmax" min="1" max="10000" placeholder="No limit"></label>
     <label for="cexp">Last day it works <span class="sub">(optional)</span><input type="date" id="cexp"></label>
     <label for="cnote">Note <span class="sub">(optional, e.g. which school)</span><input type="text" id="cnote" maxlength="120"></label>
     <button class="btn primary" type="submit">Create code</button></form>
-   ${D.codes.length?`<div class="tscroll" style="margin-top:14px"><table class="table"><thead><tr><th>Code</th><th>Licences</th><th>Used</th><th>Last day</th><th>Note</th><th></th></tr></thead><tbody>
-    ${D.codes.map(k=>`<tr${k.active?"":` class="sub"`}><td class="mono"><b>${esc(k.code)}</b></td><td class="mono">${k.licences}</td><td class="mono">${k.uses}${k.max_uses?` / ${k.max_uses}`:""}</td><td class="sub">${k.expires?esc(k.expires):"–"}</td><td>${k.note?esc(k.note):`<span class="sub">–</span>`}</td>
+   ${D.codes.length?`<div class="tscroll" style="margin-top:14px"><table class="table"><thead><tr><th>Code</th><th>Licences</th><th>Teacher</th><th>Used</th><th>Last day</th><th>Note</th><th></th></tr></thead><tbody>
+    ${D.codes.map(k=>`<tr${k.active?"":` class="sub"`}><td class="mono"><b>${esc(k.code)}</b></td><td class="mono">${k.licences}</td><td class="mono">${k.teacher_months?k.teacher_months+" mo":"–"}</td><td class="mono">${k.uses}${k.max_uses?` / ${k.max_uses}`:""}</td><td class="sub">${k.expires?esc(k.expires):"–"}</td><td>${k.note?esc(k.note):`<span class="sub">–</span>`}</td>
      <td>${k.active?`<button class="btn small" data-adm="codeoff" data-v="${esc(k.code)}">Turn off</button>`:`<button class="btn small" data-adm="codeon" data-v="${esc(k.code)}">Turn on</button>`}</td></tr>`).join("")}</tbody></table></div>`:`<p class="sub" style="margin:14px 0 0">No codes yet.</p>`}</section>`}
 /* course content and the paywall */
 let ADMUP="",ADMAL="";
@@ -298,11 +300,11 @@ document.addEventListener("submit",async e=>{const f=e.target;
     await formBusy(f,async()=>{try{await BOB.auth.setPassword(p1);f.reset();pwUpdate(id);const ok=$("#"+okid);ok.innerHTML=reset?(isTeacher()?`Password saved. <a href="#teacher">Go to my classes</a>.`:`Password saved. <a href="#dashboard">Go to your dashboard</a>.`):"Password changed.";ok.hidden=false}catch(x){formErr(er,x.message)}});return}
   if(f.id==="profForm"){e.preventDefault();const name=$("#pname").value.trim();if(!name)return formErr("perr","Enter your name.");formErr("perr","");
     await formBusy(f,async()=>{try{await BOB.auth.updateProfile({name,school:$("#pschool").value.trim()});const ok=$("#pok");ok.textContent="Saved.";ok.hidden=false;nav("account")}catch(x){formErr("perr",x.message)}});return}
-  if(f.id==="codeForm"&&isAdmin()){e.preventDefault();const code=$("#ccode").value.trim().toUpperCase().replace(/\s+/g,"-"),n=Math.floor(+$("#cn").value),mx=$("#cmax").value?Math.floor(+$("#cmax").value):null,exp=$("#cexp").value||null;
+  if(f.id==="codeForm"&&isAdmin()){e.preventDefault();const code=$("#ccode").value.trim().toUpperCase().replace(/\s+/g,"-"),n=Math.floor(+$("#cn").value),tm=Math.floor(+$("#cm").value||0),mx=$("#cmax").value?Math.floor(+$("#cmax").value):null,exp=$("#cexp").value||null;
     if(!/^[A-Z0-9-]{4,32}$/.test(code)){ADM={err:"Codes use 4 to 32 letters, numbers and dashes.",ok:""};tRender();return}
-    if(!(n>=1&&n<=10000)){ADM={err:"Enter from 1 to 10,000 licences.",ok:""};tRender();return}
+    if(!(n>=0&&n<=10000)||!(tm>=0&&tm<=36)||!(n>0||tm>0)){ADM={err:"Give from 0 to 10,000 licences and 0 to 36 months of teacher subscription (at least one of them).",ok:""};tRender();return}
     if(SC.admin.codes&&SC.admin.codes.some(k=>k.code===code)){ADM={err:`There's already a code called ${code}.`,ok:""};tRender();return}
-    admDo(()=>BOB.school.admin.addCode({code,licences:n,max_uses:mx,expires:exp,note:$("#cnote").value.trim()}),`Code ${code} created: ${plural(n,"licence")} for each teacher who uses it.`).then(()=>{if(!ADM.err)ADMCODE=null;tRender()});return}
+    admDo(()=>BOB.school.admin.addCode({code,licences:n,teacher_months:tm,max_uses:mx,expires:exp,note:$("#cnote").value.trim()}),`Code ${code} created: ${[n?plural(n,"licence"):"",tm?`${tm} months of teacher subscription`:""].filter(Boolean).join(" and ")} for each teacher who uses it.`).then(()=>{if(!ADM.err)ADMCODE=null;tRender()});return}
   if(f.id==="grantForm"&&isAdmin()){e.preventDefault();const email=$("#gemail").value.trim(),n=Math.floor(+$("#gn").value);
     if(!email||!(n>=1))return;admDo(()=>BOB.school.admin.grant(email,n,$("#gnote").value.trim()),`${plural(n,"licence")} given to ${email}.`)}
 });

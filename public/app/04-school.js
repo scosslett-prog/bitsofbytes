@@ -300,7 +300,7 @@ document.addEventListener("submit",e=>{const f=e.target,u=me();const err=(id,m)=
     tDo(()=>SCH.A.joinCode(code),{err:"joinerr",ok:()=>BOB.refreshContent().catch(()=>{}).then(()=>{location.hash="todo";render()})});return}
   if(!isTeacher())return;
   if(f.id==="offerForm"){e.preventDefault();const code=$("#offc").value.trim();if(!code)return err("offerr","Enter the offer code.");
-    let n=0;TV.offerOk="";TV.offerOpen=true;tDo(async()=>{n=await SCH.A.redeemOffer(code)},{err:"offerr",ok:()=>{TV.offerOk=`Code accepted: ${plural(n,"licence")} added to your account.`}});return}
+    let r={};TV.offerOk="";TV.offerOpen=true;tDo(async()=>{r=await SCH.A.redeemOffer(code);await BOB.pay.load();await BOB.refreshContent().catch(()=>{})},{err:"offerr",ok:()=>{TV.offerOk=`Code accepted: ${[r.licences?`${plural(r.licences,"licence")} added to your account`:"",r.teacher_months?`a free teacher subscription for ${r.teacher_months} month${r.teacher_months>1?"s":""}`:""].filter(Boolean).join(" and ")}.`}});return}
   if(f.id==="reqForm"){e.preventDefault();const n=Math.floor(+$("#reqn").value);if(!(n>=1&&n<=1000))return err("reqerr","Enter a number of licences from 1 to 1000.");
     TV.req=n;tDo(()=>SCH.A.requestLicences(n,$("#reqm").value.trim()),{err:"reqerr"});return}
   if(f.id==="clsForm"){e.preventDefault();const name=$("#clsn").value.trim();if(!name)return err("clserr","Enter a name for the class.");
@@ -533,8 +533,8 @@ function paywallPage(l){const t=l.topic,first=t.lessons[0],stu=S.user&&!isTeache
   return `<div class="crumbs"><a href="#paper-${t.ch.paper}">${PAPERS[t.ch.paper].code}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
   <div class="formwrap lockpage"><div class="lockicon" aria-hidden="true">🔒</div><div><div class="eyebrow">${t.code} · Lesson ${l.n}</div><h1 style="margin-top:8px">${esc(l.title)}</h1></div>
    <p>This lesson is part of the full course. The first lesson in every section is free; subscribe to unlock all ${ALL_LESSONS.length} lessons with their quick checks, activities and past paper questions.</p>
-   <div class="tbb"><a class="btn primary" href="#pricing">See plans</a><a class="btn" href="#l-${first.id}">Try the free lesson: ${esc(first.title)}</a></div>
-   <p class="sub" style="margin:0">${stu?`In a school class? Enter your teacher's join code on your <a href="#dashboard">dashboard</a> for full access.`:S.user?"":`Already subscribed or in a school class? <a href="#login">Sign in</a>.`}</p></div>`}
+   <div class="tbb">${isTeacher()?`<a class="btn primary" href="#teacher">Get licences</a>`:`<a class="btn primary" href="#pricing">See plans</a>`}<a class="btn" href="#l-${first.id}">Try the free lesson: ${esc(first.title)}</a></div>
+   <p class="sub" style="margin:0">${isTeacher()?`Teachers: your first licence purchase includes your teacher subscription, which unlocks every lesson for you.`:stu?`In a school class? Enter your teacher's join code on your <a href="#dashboard">dashboard</a> for full access.`:S.user?"":`Already subscribed or in a school class? <a href="#login">Sign in</a>.`}</p></div>`}
 function lockedPage(l){if(!paidOpen(l))return paywallPage(l);const t=l.topic,c=myClass(),next=t.lessons.find(x=>x!==l&&lessonOpen(x));
   return `<div class="crumbs"><a href="#paper-${t.ch.paper}">${PAPERS[t.ch.paper].code}</a><span>/</span><a href="#t-${t.id}">${t.code} ${esc(t.title)}</a><span>/</span><span>${esc(l.title)}</span></div>
   <div class="formwrap lockpage"><div class="lockicon" aria-hidden="true">🔒</div><div><div class="eyebrow">${t.code} · Lesson ${l.n}</div><h1 style="margin-top:8px">${esc(l.title)}</h1></div>
@@ -624,11 +624,15 @@ function licBilling(){const P=BOB.pay;if(!P.enabled)return "";
   if(!P.prices){P.loadPrices().then(()=>{if(location.hash==="#teacher")tRender()});}
   const pr=P.prices&&P.prices.licences,each=pr?P.money(pr):null;
   const inv=x=>x.collection==="send_invoice",card=P.licenceSubs.filter(x=>!inv(x));
+  const T=P.access.teacher,tpr=P.prices&&P.prices.teacher,tfee=tpr?P.money(tpr):null,first=!P.access.staff&&!P.access.admin;
+  const tline=T?`<p class="tsubline"><b>Teacher subscription</b> <span class="sub">${T.collection==="offer"?"from an offer code · ends":T.cancel_at_period_end?"ends":"renews"} ${T.current_period_end?fmtD(T.current_period_end):""}</span></p>`
+    :P.access.staff&&!P.access.admin?`<p class="tsubline sub">Full access comes with your licences.</p>`
+    :first?`<div class="msg tfirst"><b>Your first purchase includes your teacher subscription${tfee?` (${tfee} a year)`:""}.</b> It unlocks every lesson, activity and exam question for you; until then you can open the first lesson of each section.</div>`:"";
   const subs=P.licenceSubs.map(x=>`<li><span><b>${plural(x.quantity,"licence")}</b> · ${inv(x)?"paid by invoice":"yearly subscription"}</span><span class="sub">${x.status==="past_due"?(inv(x)?"invoice overdue · ":"payment overdue · "):""}${x.cancel_at_period_end?"ends":"renews"} ${x.current_period_end?fmtD(x.current_period_end):""}</span></li>`).join("");
-  return `${subs?`<ul class="tlist tsubs">${subs}</ul>${card.length?`<button class="btn small" data-pay="portal" style="align-self:flex-start">Manage billing</button><p class="vfoot" style="margin:0">Change the number of licences, update your card, download invoices or cancel.</p>`:`<p class="vfoot" style="margin:0">Invoices are emailed to the school each year. To change or cancel, reply to the invoice email.</p>`}`:""}
+  return `${tline}${subs?`<ul class="tlist tsubs">${subs}</ul>${card.length?`<button class="btn small" data-pay="portal" style="align-self:flex-start">Manage billing</button><p class="vfoot" style="margin:0">Change the number of licences, update your card, download invoices or cancel.</p>`:`<p class="vfoot" style="margin:0">Invoices are emailed to the school each year. To change or cancel, reply to the invoice email.</p>`}`:""}
    <form id="buyForm" class="tbuy"><label for="buyn">${subs?"Buy more licences":"Number of licences"}<input type="number" id="buyn" min="1" max="1000" value="${TV.buy||10}" inputmode="numeric"></label>
     <button class="btn primary" type="submit">Buy licences</button>
-    <p class="vfoot" style="margin:0">${each?`${each} per student per year. `:""}Paid by card through Stripe and renewed each year; you can change the number or cancel at any time. One licence gives one student full access.</p></form>
+    <p class="vfoot" style="margin:0">${each?`${each} per student per year${first&&tfee?`, plus ${tfee} a year for your teacher subscription`:""}. `:""}Paid by card through Stripe and renewed each year; you can change the number or cancel at any time. One licence gives one student full access.</p></form>
    <p class="err" id="buyerr" hidden></p>`}
 document.addEventListener("submit",e=>{if(e.target.id!=="buyForm")return;e.preventDefault();const n=Math.floor(+$("#buyn").value),x=$("#buyerr");
   if(!(n>=1&&n<=1000)){x.textContent="Enter a number of licences from 1 to 1000.";x.hidden=false;return}TV.buy=n;
@@ -642,6 +646,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-pay="porta
 function licInvoice(){const F=TV.inv||(TV.inv={n:TV.buy||10,school:me().school||"",email:"",address:"",po:""}),done=TV.invDone;
   const f=(id,lab,inp)=>`<label for="${id}">${lab}${inp}</label>`;
   return `<details class="treqd tinv"${TV.invOpen?" open":""} data-invd><summary>Paying by invoice or purchase order?</summary>
+   ${!BOB.pay.access.staff&&!BOB.pay.access.admin?`<p class="vfoot" style="margin:8px 0"><b>Your teacher subscription is included</b> on this first invoice.</p>`:""}
    <p class="vfoot" style="margin:8px 0">Download a <b>quote</b> for your finance office if they need one to raise a purchase order. Then send the <b>invoice</b>: the licences are added straight away, and the school has 30 days to pay by card or bank transfer.</p>
    ${done?`<div class="msg ok" role="status"><b>Invoice ${esc(done.number||"")} sent to ${esc(done.email)}.</b> ${plural(done.n,"licence")} added to your account.${done.url?` <a href="${esc(done.url)}" target="_blank" rel="noopener">View or pay the invoice</a>`:""}${done.pdf?` · <a href="${esc(done.pdf)}" target="_blank" rel="noopener">Download PDF</a>`:""}</div>`:""}
    <form id="invForm" class="tform tinvf" novalidate>
@@ -662,7 +667,7 @@ document.addEventListener("submit",e=>{if(e.target.id!=="invForm")return;e.preve
   if(!confirm(`Send an invoice for ${plural(F.n,"licence")} to ${F.email}? The licences will be added straight away.`))return;
   const b=e.target.querySelector('[type=submit]');b.disabled=true;b.textContent="Sending…";
   BOB.pay.invoice({quantity:F.n,school:F.school,email:F.email,address:F.address,po:F.po}).then(async r=>{
-    TV.invDone=Object.assign({n:F.n},r);TV.invOpen=true;await BOB.pay.load();await SCH.load();tRender()})
+    TV.invDone=Object.assign({n:F.n},r);TV.invOpen=true;await BOB.pay.load();await BOB.refreshContent().catch(()=>{});await SCH.load();tRender()})
    .catch(err=>{b.disabled=false;b.textContent="Send the invoice";invErr(err.message)})});
 document.addEventListener("click",e=>{const b=e.target.closest('[data-inv="quote"]');if(!b)return;const F=invRead();invErr("");
   if(!(F.n>=1&&F.n<=1000))return invErr("Enter a number of licences from 1 to 1000.");
@@ -673,6 +678,7 @@ document.addEventListener("click",e=>{const b=e.target.closest('[data-inv="quote
   BOB.pay.seller().then(info=>{w.document.open();w.document.write(quoteHTML(F,info,me()));w.document.close()})
    .catch(err=>{w.close();invErr(err.message)})});
 function quoteHTML(F,info,u){const pr=info.price,S=info.seller||{},cur=(pr&&pr.currency||"gbp").toUpperCase(),unit=pr&&pr.amount!=null?pr.amount:null;
+  const tq=info.firstBuy&&info.teacher&&info.teacher.amount!=null?info.teacher.amount:null,lic=unit==null?null:unit*F.n,tot=lic==null?null:lic+(tq||0);
   const m=v=>v==null?"–":new Intl.NumberFormat("en-GB",{style:"currency",currency:cur,currencyDisplay:"narrowSymbol"}).format(v/100);
   const now=new Date(),valid=new Date(now.getTime()+30*864e5),d=x=>x.toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
   const no="Q-"+now.toISOString().slice(0,10).replace(/-/g,"")+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
@@ -692,8 +698,9 @@ td.n,th.n{text-align:right}.tot td{font-weight:700;border-bottom:0;font-size:17p
 <div class="cols"><div><div class="lab">Quote for</div><b>${e(F.school)}</b>${F.address?`<br>${e(F.address).replace(/\n/g,"<br>")}`:""}${u?`<br>For the attention of ${e(u.name||u.full_name||"")} (${e(u.email||"")})`:""}</div>
 <div><div class="lab">Date</div>${d(now)}<div class="lab" style="margin-top:10px">Valid until</div>${d(valid)}</div></div>
 <table><thead><tr><th>Description</th><th class="n">Quantity</th><th class="n">Unit price</th><th class="n">Amount</th></tr></thead><tbody>
-<tr><td>Bits of Bytes course licence: full access to the online course for one student for one year</td><td class="n">${F.n}</td><td class="n">${m(unit)}</td><td class="n">${m(unit==null?null:unit*F.n)}</td></tr>
-<tr class="tot"><td colspan="3" class="n">Total (${cur})</td><td class="n">${m(unit==null?null:unit*F.n)}</td></tr></tbody></table>
+${tq!=null?`<tr><td>Bits of Bytes teacher subscription: full access for the teacher, with class tools, for one year</td><td class="n">1</td><td class="n">${m(tq)}</td><td class="n">${m(tq)}</td></tr>`:""}
+<tr><td>Bits of Bytes course licence: full access to the online course for one student for one year</td><td class="n">${F.n}</td><td class="n">${m(unit)}</td><td class="n">${m(lic)}</td></tr>
+<tr class="tot"><td colspan="3" class="n">Total (${cur})</td><td class="n">${m(tot)}</td></tr></tbody></table>
 <div class="note"><b>How to order.</b> Your teacher can send the invoice from their Licences panel on ${e(String(S.url||"bitsofbytes.co").replace(/^https?:\/\//,""))}, adding your purchase order number. The licences start straight away and the invoice is payable within ${info.days||30} days by card or bank transfer. Licences renew each year unless cancelled.</div>
 </div></body></html>`}
 

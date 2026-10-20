@@ -23,7 +23,7 @@ with sync_playwright() as p:
     with T.expect_navigation(): T.click('#logForm button[type=submit]')
     T.wait_for_function('window.BOB && !document.getElementById("boot")')
     T.evaluate('''()=>{BOB.pay.prices={licences:{id:"price_x",amount:1500,currency:"gbp",interval:"year"}};
-      BOB.pay.seller=async()=>({price:{amount:1500,currency:"gbp"},seller:{name:"Bits of Bytes",email:"hello@bitsofbytes.co",url:"https://bitsofbytes.co",address:"Bangkok, Thailand",phone:""},days:30});
+      BOB.pay.seller=async()=>({price:{amount:1500,currency:"gbp"},teacher:{amount:130000,currency:"gbp"},firstBuy:true,seller:{name:"Bits of Bytes",email:"hello@bitsofbytes.co",url:"https://bitsofbytes.co",address:"Bangkok, Thailand",phone:""},days:30});
       window.__inv=null;BOB.pay.invoice=async d=>{window.__inv=d;return {number:"INV-0001",url:"https://invoice.stripe.com/i/x",pdf:"https://pay.stripe.com/invoice/x/pdf",email:d.email,total:1500*d.quantity,currency:"gbp"}}}''')
     T.evaluate('location.hash="teacher"'); T.wait_for_timeout(400)
     ok('invoice section shown when payments are on', T.locator('details.tinv').count() == 1 and T.locator('#reqForm').count() == 0)
@@ -34,7 +34,7 @@ with sync_playwright() as p:
     with ctx.expect_page() as q: T.click('[data-inv="quote"]')
     Q = q.value; Q.wait_for_load_state(); Q.wait_for_function('document.title.startsWith("Quote")')
     qt = Q.inner_text('body')
-    ok('quote shows the school, 25 licences and the total', 'Test School' in qt and '25' in qt and '£375.00' in qt and '£15.00' in qt, qt[:500])
+    ok('quote shows the school, 25 licences, the teacher subscription and the total', 'Test School' in qt and '25' in qt and '£375.00' in qt and 'teacher subscription' in qt and '£1,675.00' in qt, qt[:700])
     ok('quote has a number, a date and a valid-until date', 'Q-' in qt and 'valid until' in qt.lower())
     ok('quote shows the seller details', 'hello@bitsofbytes.co' in qt and 'Bangkok, Thailand' in qt)
     Q.screenshot(path=SHOT + 'quote.png', full_page=True); Q.close()
