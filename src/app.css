@@ -514,6 +514,7 @@ html.tzopen,html.tzopen body{overflow:hidden}
 .tpz{border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:0;display:flex;flex-direction:column;gap:8px}
 .tpz legend{font-weight:600;padding:0 4px}
 .tpzrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px 14px}
+.tpz label.tchkrow{flex-direction:row;align-items:flex-start;gap:8px;font-weight:400}.tpz .tchkrow input{width:auto;flex:none;margin-top:4px}
 @media (max-width:560px){.pzm{grid-template-columns:1fr 1fr;gap:8px}.pzcard{padding:8px 9px;font-size:.88rem}}
 @media (max-width:760px){.pzc{flex-direction:column;align-items:stretch;flex-wrap:nowrap}.pzgridwrap{align-items:center}.pzclues{grid-template-columns:minmax(0,1fr);max-width:none;flex:none;width:100%}}
 @media (max-width:640px){.tzbtns .btn{padding-inline:10px}.tzstat{order:3}}
