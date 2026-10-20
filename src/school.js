@@ -113,6 +113,12 @@ export function createSchool(api, getUser) {
     uninvite: (c, email) => db.delete('class_invites', { eq: { class_id: c, email } }),
     removeStudent: (c, s) => db.delete('class_members', { eq: { class_id: c, student_id: s } }),
     requestLicences: (n, message) => db.insert('licence_requests', [{ teacher_id: me(), quantity: n, message }]),
+    /* an offer code from the admin: free licences, added straight away */
+    async redeemOffer(code) {
+      const r = await db.rpc('redeem_offer_code', { c: code });
+      if (!r || r.error) throw new Error((r && r.error) || "That offer code didn't work. Please try again.");
+      return r.licences;
+    },
     createAssignment: async (a) => (await db.insert('assignments', [{ class_id: a.cls, teacher_id: me(), kind: a.kind, title: a.title, note: a.note,
       due_date: a.due, mode: a.kind === 'lessons' ? a.mode : null, lesson_ids: a.lessons || [], question_ids: a.qids || [], spec: a.spec || null }]))[0].id,
     deleteAssignment: (id) => db.delete('assignments', { eq: { id } }),
@@ -132,8 +138,11 @@ export function createSchool(api, getUser) {
       ]);
       const counts = await Promise.all(teachers.map((t) => db.rpc('licence_counts', { t: t.id }).then((r) => (Array.isArray(r) ? r[0] : r))));
       const site = await db.rpc('admin_site', {}).catch((e) => ({ error: e.message }));
+      /* offer codes (missing if the offer codes database step hasn't been run yet) */
+      const codes = await db.select('offer_codes', { order: [['created_at', 'desc']] }).catch(() => null);
       SC.admin = {
         site,
+        codes,
         req: rq.map((r) => ({ id: r.id, teacher: r.teacher_id, n: r.quantity, msg: r.message, status: r.status, date: ms(r.created_at), decided: ms(r.decided_at) })),
         teachers: teachers.map((t, i) => Object.assign(person(t), { total: counts[i] ? counts[i].total : 0, used: counts[i] ? counts[i].used : 0 })),
       };
@@ -143,6 +152,8 @@ export function createSchool(api, getUser) {
     putCourseFile: (c, n, body) => db.rpc('admin_put_course_file', { c, n, body }),
     putContent: (kind, rows) => db.rpc('admin_put_content', { kind, rows }),
     finishContent: (ids) => db.rpc('admin_finish_content', ids),
+    addCode: (row) => db.insert('offer_codes', [Object.assign({ created_by: me() }, row)]),
+    setCodeActive: (code, active) => db.update('offer_codes', { active }, { eq: { code } }),
     async grant(email, n, note) {
       const t = (await db.select('profiles', { eq: { email: email.toLowerCase() } }))[0];
       if (!t) throw new Error('No account has that email address.');

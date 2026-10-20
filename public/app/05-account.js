@@ -178,7 +178,24 @@ function adminPage(){
     <button class="btn primary" type="submit">Give licences</button></form></section>
    <section class="panel"><h3>Teachers (${D.teachers.length})</h3>${D.teachers.length?`<div class="tscroll"><table class="table"><thead><tr><th>Teacher</th><th>In use</th><th>Total</th></tr></thead><tbody>
     ${D.teachers.map(t=>`<tr><td><b>${esc(t.name)}</b><br><span class="sub mono">${esc(t.email)}</span>${t.school?` <span class="sub">· ${esc(t.school)}</span>`:""}</td><td class="mono">${t.used}</td><td class="mono">${t.total}</td></tr>`).join("")}</tbody></table></div>`:`<p class="sub" style="margin:0">No teacher accounts yet.</p>`}</section></div>
+  ${admCodes(D)}
   ${past.length?`<section class="panel" style="margin-top:16px"><h3>Recent decisions</h3><ul class="tlist">${past.map(r=>{const t=who(r.teacher);return `<li><span>${esc(t.name)} · ${plural(r.n,"licence")}</span><span class="chip ${r.status==="approved"?"sec":"start"}">${r.status==="approved"?"Approved":"Declined"} ${r.decided?dshort(r.decided):""}</span></li>`}).join("")}</ul></section>`:""}</div>`}
+/* offer codes: teachers type one into their Licences panel to get free licences */
+const admNewCode=()=>"BOB-"+Array.from({length:6},()=>"ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[Math.floor(Math.random()*32)]).join("");
+let ADMCODE=null;
+function admCodes(D){if(!D.codes)return `<section class="panel" style="margin-top:16px"><h3>Offer codes</h3><p class="sub" style="margin:0">Run <span class="mono">supabase/migrations/20261020000000_offer_codes.sql</span> in the SQL Editor to turn on offer codes.</p></section>`;
+  const code=ADMCODE||(ADMCODE=admNewCode());
+  return `<section class="panel" style="margin-top:16px"><h3>Offer codes</h3><p class="sub">A teacher types the code into their Licences panel and gets that many licences free, once per teacher. Use a hard-to-guess code, and a limit on the number of teachers, so it can't be passed around.</p>
+   <form id="codeForm" class="tform admcode" novalidate>
+    <label for="ccode">Code<input type="text" id="ccode" value="${esc(code)}" maxlength="32" required autocapitalize="characters" spellcheck="false"></label>
+    <label for="cn">Licences for each teacher<input type="number" id="cn" min="1" max="10000" value="100" required></label>
+    <label for="cmax">Up to this many teachers <span class="sub">(blank: no limit)</span><input type="number" id="cmax" min="1" max="10000" placeholder="No limit"></label>
+    <label for="cexp">Last day it works <span class="sub">(optional)</span><input type="date" id="cexp"></label>
+    <label for="cnote">Note <span class="sub">(optional, e.g. which school)</span><input type="text" id="cnote" maxlength="120"></label>
+    <button class="btn primary" type="submit">Create code</button></form>
+   ${D.codes.length?`<div class="tscroll" style="margin-top:14px"><table class="table"><thead><tr><th>Code</th><th>Licences</th><th>Used</th><th>Last day</th><th>Note</th><th></th></tr></thead><tbody>
+    ${D.codes.map(k=>`<tr${k.active?"":` class="sub"`}><td class="mono"><b>${esc(k.code)}</b></td><td class="mono">${k.licences}</td><td class="mono">${k.uses}${k.max_uses?` / ${k.max_uses}`:""}</td><td class="sub">${k.expires?esc(k.expires):"–"}</td><td>${k.note?esc(k.note):`<span class="sub">–</span>`}</td>
+     <td>${k.active?`<button class="btn small" data-adm="codeoff" data-v="${esc(k.code)}">Turn off</button>`:`<button class="btn small" data-adm="codeon" data-v="${esc(k.code)}">Turn on</button>`}</td></tr>`).join("")}</tbody></table></div>`:`<p class="sub" style="margin:14px 0 0">No codes yet.</p>`}</section>`}
 /* course content and the paywall */
 let ADMUP="",ADMAL="";
 /* the A-Level site: being built, so only admins can see it */
@@ -249,6 +266,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("[data-adm]");if(
   if(a==="reload"){SC.admin=null;ADM={err:"",ok:""};tRender();adminLoad();return}
   if(a==="upload"){admUpload();return}
   if(a==="alup"){admAlUpload();return}
+  if(a==="codeoff"||a==="codeon"){const on=a==="codeon";if(on||confirm(`Turn off ${v}? Teachers who already used it keep their licences.`))admDo(()=>BOB.school.admin.setCodeActive(v,on),`${v} is ${on?"on":"off"}.`);return}
   if(a==="paywall"){const on=v==="on";if(confirm(on?"Turn the paywall on? People without a subscription or a licensed class will only see the first lesson of each section.":"Turn the paywall off? Everyone will be able to open every lesson."))
     admDo(async()=>{await BOB.school.admin.setPayments(on);await BOB.refreshContent()},on?"The paywall is on.":"The paywall is off.");return}
   const r=SC.admin&&SC.admin.req.find(x=>x.id===v);if(!r)return;
@@ -280,6 +298,11 @@ document.addEventListener("submit",async e=>{const f=e.target;
     await formBusy(f,async()=>{try{await BOB.auth.setPassword(p1);f.reset();pwUpdate(id);const ok=$("#"+okid);ok.innerHTML=reset?(isTeacher()?`Password saved. <a href="#teacher">Go to my classes</a>.`:`Password saved. <a href="#dashboard">Go to your dashboard</a>.`):"Password changed.";ok.hidden=false}catch(x){formErr(er,x.message)}});return}
   if(f.id==="profForm"){e.preventDefault();const name=$("#pname").value.trim();if(!name)return formErr("perr","Enter your name.");formErr("perr","");
     await formBusy(f,async()=>{try{await BOB.auth.updateProfile({name,school:$("#pschool").value.trim()});const ok=$("#pok");ok.textContent="Saved.";ok.hidden=false;nav("account")}catch(x){formErr("perr",x.message)}});return}
+  if(f.id==="codeForm"&&isAdmin()){e.preventDefault();const code=$("#ccode").value.trim().toUpperCase().replace(/\s+/g,"-"),n=Math.floor(+$("#cn").value),mx=$("#cmax").value?Math.floor(+$("#cmax").value):null,exp=$("#cexp").value||null;
+    if(!/^[A-Z0-9-]{4,32}$/.test(code)){ADM={err:"Codes use 4 to 32 letters, numbers and dashes.",ok:""};tRender();return}
+    if(!(n>=1&&n<=10000)){ADM={err:"Enter from 1 to 10,000 licences.",ok:""};tRender();return}
+    if(SC.admin.codes&&SC.admin.codes.some(k=>k.code===code)){ADM={err:`There's already a code called ${code}.`,ok:""};tRender();return}
+    admDo(()=>BOB.school.admin.addCode({code,licences:n,max_uses:mx,expires:exp,note:$("#cnote").value.trim()}),`Code ${code} created: ${plural(n,"licence")} for each teacher who uses it.`).then(()=>{if(!ADM.err)ADMCODE=null;tRender()});return}
   if(f.id==="grantForm"&&isAdmin()){e.preventDefault();const email=$("#gemail").value.trim(),n=Math.floor(+$("#gn").value);
     if(!email||!(n>=1))return;admDo(()=>BOB.school.admin.grant(email,n,$("#gnote").value.trim()),`${plural(n,"licence")} given to ${email}.`)}
 });

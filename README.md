@@ -167,6 +167,15 @@ Set-up:
 
 The functions are in `supabase/functions/` and are deployed with JWT checking turned off (`supabase/config.toml`): `billing` checks the signed-in user itself, and the webhook checks Stripe's signature.
 
+## Offer codes (free licences)
+
+- On the Admin page, **Offer codes** makes a code with a number of licences for each teacher, an optional
+  limit on how many teachers can use it, and an optional last day. Codes can be turned off at any time.
+- Teachers type the code into **Have an offer code?** in their Licences panel. Each teacher can use a code
+  once, and the licences are added as an ordinary licence grant (note "Offer code …").
+- Only the admin can read the codes; more than 10 tries in 15 minutes are refused.
+- Database: `supabase/migrations/20261020000000_offer_codes.sql` (already applied to the live project).
+
 ## Puzzles and rewards
 
 - Every lesson has a tarsia puzzle: Easy (9 pieces) or Challenge (16 pieces). The pairs are in

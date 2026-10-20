@@ -110,6 +110,8 @@ function teacherPage(){const u=me();
     <div class="tlstats"><div><b>${L.bought}</b><span>total</span></div><div><b>${L.used}</b><span>in use</span></div><div><b>${L.free}</b><span>free</span></div></div>
     <div class="bar"><i style="width:${L.bought?Math.min(100,L.used/L.bought*100):0}%"></i></div>
     ${licBilling()}
+    <details class="treqd toffer"${TV.offerOpen||!L.bought?" open":""}><summary>Have an offer code?</summary><form id="offerForm" class="tinline"><label for="offc">Offer code<input type="text" id="offc" maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. SCHOOL-2026"></label><button class="btn" type="submit">Use code</button></form>
+     ${TV.offerOk?`<p class="msg ok" role="status">${esc(TV.offerOk)}</p>`:""}<p class="err" id="offerr" hidden></p></details>
     ${pend.length?`<div class="treq"><span class="sub">Waiting for approval</span><ul class="tlist">${pend.map(r=>`<li><span>${plural(r.n,"licence")}</span><span class="sub">requested ${dshort(r.date)}</span></li>`).join("")}</ul></div>`:""}
     ${BOB.pay.enabled?`<details class="treqd"><summary>Paying by invoice or purchase order?</summary>`:""}<form id="reqForm" class="tbuy"><label for="reqn">Number of licences<input type="number" id="reqn" min="1" max="1000" value="${TV.req}" inputmode="numeric"></label>
      <label for="reqm">Message <span class="sub">(optional)</span><textarea id="reqm" rows="2" maxlength="300" placeholder="e.g. School name, purchase order number"></textarea></label>
@@ -297,6 +299,8 @@ document.addEventListener("submit",e=>{const f=e.target,u=me();const err=(id,m)=
     if(!code)return err("joinerr","Enter the code your teacher gave you.");
     tDo(()=>SCH.A.joinCode(code),{err:"joinerr",ok:()=>BOB.refreshContent().catch(()=>{}).then(()=>{location.hash="todo";render()})});return}
   if(!isTeacher())return;
+  if(f.id==="offerForm"){e.preventDefault();const code=$("#offc").value.trim();if(!code)return err("offerr","Enter the offer code.");
+    let n=0;TV.offerOk="";TV.offerOpen=true;tDo(async()=>{n=await SCH.A.redeemOffer(code)},{err:"offerr",ok:()=>{TV.offerOk=`Code accepted: ${plural(n,"licence")} added to your account.`}});return}
   if(f.id==="reqForm"){e.preventDefault();const n=Math.floor(+$("#reqn").value);if(!(n>=1&&n<=1000))return err("reqerr","Enter a number of licences from 1 to 1000.");
     TV.req=n;tDo(()=>SCH.A.requestLicences(n,$("#reqm").value.trim()),{err:"reqerr"});return}
   if(f.id==="clsForm"){e.preventDefault();const name=$("#clsn").value.trim();if(!name)return err("clserr","Enter a name for the class.");
